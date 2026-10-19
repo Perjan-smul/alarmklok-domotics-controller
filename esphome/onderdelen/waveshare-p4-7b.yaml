@@ -120,7 +120,7 @@ speaker:
   # Drie geluidsbronnen worden gemengd naar de ene speaker:
   # muziek/radio, meldingen (TTS) en het wekgeluid.
   - platform: mixer
-    id: mixer_speaker
+    id: audio_mixer
     output_speaker: hw_speaker
     num_channels: 2
     source_speakers:

@@ -214,7 +214,7 @@ Voeg de code dan ook toe aan de lijst `glyphs:` van het font `f_icoon` in
 
 ## Bekende aandachtspunten
 
-- Deze configuratie is gevalideerd met `esphome config` (ESPHome 2026.9), maar
+- Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.9.1),
   **nog niet op echte hardware getest**. Bij de eerste keer flashen kan er nog
   iets bijgesteld moeten worden.
 - **Touch omgekeerd of gespiegeld?** Voeg in `onderdelen/waveshare-p4-7b.yaml`
