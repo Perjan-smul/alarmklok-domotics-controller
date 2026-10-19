@@ -1,0 +1,2269 @@
+From 5bc5335dc0b319f86f6f8fc2cf263f8236015806 Mon Sep 17 00:00:00 2001
+From: Perjan Smulders <perjan.smulders@gmail.com>
+Date: Mon, 19 Oct 2026 21:03:54 +0000
+Subject: [PATCH] Add Waveshare ESP32-P4-WIFI6-Touch-LCD-7B device profile
+
+Adds a profile for the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B, a 7" 1024x600
+ESP32-P4 board with an ESP32-C6 WiFi co-processor.
+
+- devices/waveshare-esp32-p4-wifi6-touch-lcd-7b: based on the JC1060P470
+  profile, using ESPHome's bundled WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B
+  display model, backlight on GPIO32 (active low), GT911 touch on the
+  shared I2C bus, production (rev 3.x) ESP32-P4 silicon, WiFi only
+- the panel is mounted upright, so the profile overrides the shared
+  1024x600 display profile's 180-degree display offset to 0
+- builds, product model, compatibility fixtures, docs page, install
+  selector and slug lists; regenerated outputs via npm run prepare:ci
+- check_web_smoke.js now reads each device's own features block, so a
+  device whose display offset differs from the first device is checked
+  correctly
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01CtYG5CCfVz9HHyKsYQVvyV
+---
+ .github/workflows/pages.yml                   |   4 +-
+ ...e-esp32-p4-wifi6-touch-lcd-7b.factory.yaml |  33 +
+ ...-esp32-p4-wifi6-touch-lcd-7b.recovery.yaml |   3 +
+ ...waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml |  34 +
+ .../fixtures/web_migration_baseline.json      |   1 +
+ components/espcontrol/cover_art.h             |   3 +-
+ .../.gitignore                                |   5 +
+ .../README.md                                 |  41 +
+ .../dev.yaml                                  |  27 +
+ .../device/device.yaml                        | 371 +++++++++
+ .../device/fonts.yaml                         | 114 +++
+ .../device/lvgl.yaml                          | 128 ++++
+ .../device/network_coprocessor.yaml           |  18 +
+ .../device/sensors.yaml                       | 716 ++++++++++++++++++
+ .../esphome.yaml                              |  34 +
+ .../packages.yaml                             | 156 ++++
+ docs/.vitepress/config.mts                    |   9 +
+ .../theme/components/EspInstallSelector.vue   |  19 +
+ docs/getting-started/manual-esphome-setup.md  |   1 +
+ docs/reference/faq.md                         |   2 +-
+ docs/screens/index.md                         |   2 +
+ docs/screens/waveshare-p4-7b.md               |  50 ++
+ product/model_v2.json                         |   1 +
+ product/v2/device_catalog.json                |  42 +
+ ...waveshare-esp32-p4-wifi6-touch-lcd-7b.json |  42 +
+ product/v2/product_compatibility.json         |   1 +
+ scripts/check_cover_art_contract.py           |   3 +-
+ scripts/check_device_profiles.py              |   4 +
+ scripts/check_firmware_modal_layouts.py       |   1 +
+ scripts/check_tasks_data.py                   |   1 +
+ scripts/check_web_smoke.js                    |   8 +-
+ .../firmware/card_curve_button_theme_test.py  |   1 +
+ 32 files changed, 1868 insertions(+), 7 deletions(-)
+ create mode 100644 builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.factory.yaml
+ create mode 100644 builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.recovery.yaml
+ create mode 100644 builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/.gitignore
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/README.md
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/dev.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/device.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/fonts.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/lvgl.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/network_coprocessor.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/sensors.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/esphome.yaml
+ create mode 100644 devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
+ create mode 100644 docs/screens/waveshare-p4-7b.md
+ create mode 100644 product/v2/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b.json
+
+diff --git a/.github/workflows/pages.yml b/.github/workflows/pages.yml
+index 261f2785e..dad577698 100644
+--- a/.github/workflows/pages.yml
++++ b/.github/workflows/pages.yml
+@@ -298,7 +298,7 @@ jobs:
+       - name: Verify firmware assets
+         run: |
+           MISSING=false
+-          OPTIONAL_FIRMWARE_SLUGS="guition-esp32-p4-jc8012p4a1 guition-esp32-p4-jc8012p4a1-v2 guition-esp32-p4-jc8012p4a1-v3 guition-esp32-p4-jc4880p443-v3 guition-esp32-p4-jc1060p470-v2 esp32-p4-86"
++          OPTIONAL_FIRMWARE_SLUGS="guition-esp32-p4-jc8012p4a1 guition-esp32-p4-jc8012p4a1-v2 guition-esp32-p4-jc8012p4a1-v3 guition-esp32-p4-jc4880p443-v3 guition-esp32-p4-jc1060p470-v2 esp32-p4-86 waveshare-esp32-p4-wifi6-touch-lcd-7b"
+           for SLUG in $DEVICE_SLUGS; do
+             MANIFEST="firmware/${SLUG}/manifest.json"
+             if [ ! -f "$MANIFEST" ]; then
+@@ -359,6 +359,6 @@ jobs:
+           python3 scripts/check_public_firmware.py
+           --base-url "${{ steps.deployment.outputs.page_url }}"
+           --manifest devices/manifest.json
+-          --optional-stable-slugs guition-esp32-p4-jc8012p4a1 guition-esp32-p4-jc8012p4a1-v2 guition-esp32-p4-jc8012p4a1-v3 guition-esp32-p4-jc4880p443-v3 guition-esp32-p4-jc1060p470-v2 esp32-p4-86
++          --optional-stable-slugs guition-esp32-p4-jc8012p4a1 guition-esp32-p4-jc8012p4a1-v2 guition-esp32-p4-jc8012p4a1-v3 guition-esp32-p4-jc4880p443-v3 guition-esp32-p4-jc1060p470-v2 esp32-p4-86 waveshare-esp32-p4-wifi6-touch-lcd-7b
+           --retries 5
+           --delay 20
+diff --git a/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.factory.yaml b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.factory.yaml
+new file mode 100644
+index 000000000..54d9d2b32
+--- /dev/null
++++ b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.factory.yaml
+@@ -0,0 +1,33 @@
++# =============================================================================
++# FACTORY BUILD - Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7" landscape)
++# =============================================================================
++# Factory image variant: bundles www.js inline (js_include) instead of loading
++# from GitHub CDN, so the web UI works on first boot before WiFi is configured.
++# firmware_version is overridden by the release workflow at build time.
++# dashboard_import enables one-click adoption in ESPHome Dashboard.
++# =============================================================================
++
++substitutions:
++  cover_art_placeholder_file: "../common/assets/cover_art_placeholder.svg"
++  firmware_version: "0.0.0"
++  espcontrol_component_url: "file:///config"
++  mdi_font_file: "/config/common/assets/fonts/materialdesignicons-webfont-7.4.47.ttf"
++  espcontrol_component_ref: "HEAD"
++
++packages:
++  core: !include waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
++  api_encryption: !include ../common/addon/api_encryption_dynamic.yaml
++
++esphome:
++  project:
++    name: jtenniswood.espcontrol
++    version: "${firmware_version}"
++
++dashboard_import:
++  package_import_url: github://jtenniswood/espcontrol/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/esphome.yaml@main
++
++web_server:
++  port: 80
++  version: 3
++  js_url: https://jtenniswood.github.io/espcontrol/webserver/www.js?device=${device_slug}&v=${firmware_version}&ui=20260714-shared
++  js_include: "../docs/public/webserver/embedded/www.js"
+diff --git a/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.recovery.yaml b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.recovery.yaml
+new file mode 100644
+index 000000000..3921abb08
+--- /dev/null
++++ b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.recovery.yaml
+@@ -0,0 +1,3 @@
++packages:
++  factory: !include waveshare-esp32-p4-wifi6-touch-lcd-7b.factory.yaml
++  c6_recovery: !include ../common/device/esp32_c6_recovery.yaml
+diff --git a/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+new file mode 100644
+index 000000000..05180cfda
+--- /dev/null
++++ b/builds/waveshare-esp32-p4-wifi6-touch-lcd-7b.yaml
+@@ -0,0 +1,34 @@
++# =============================================================================
++# BUILD PROFILE - Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7" landscape)
++# =============================================================================
++# CI/local build entry point. Includes the full device package and adds
++# MAC suffix for unique naming. Bundles the matching web UI so branch/release
++# builds do not load the shared GitHub Pages copy from main.
++# =============================================================================
++
++substitutions:
++  cover_art_placeholder_file: "../common/assets/cover_art_placeholder.svg"
++  name: "espcontrol-waveshare-7b"
++  friendly_name: "EspControl Waveshare 7B"
++  espcontrol_component_url: "file:///config"
++  mdi_font_file: "/config/common/assets/fonts/materialdesignicons-webfont-7.4.47.ttf"
++  espcontrol_component_ref: "HEAD"
++
++esp32:
++  partitions: "../common/device/partitions_16mb_card_images.csv"
++
++esphome:
++  name_add_mac_suffix: true
++
++packages:
++  espcontrol: !include ../devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
++
++wifi:
++  ap:
++    ssid: "${friendly_name}"
++
++captive_portal:
++
++web_server:
++  js_url: ""
++  js_include: "../docs/public/webserver/embedded/www.js"
+diff --git a/compatibility/fixtures/web_migration_baseline.json b/compatibility/fixtures/web_migration_baseline.json
+index 31fb0ecdd..6d70c01ad 100644
+--- a/compatibility/fixtures/web_migration_baseline.json
++++ b/compatibility/fixtures/web_migration_baseline.json
+@@ -8,6 +8,7 @@
+     "guition-esp32-p4-jc8012p4a1-v2",
+     "guition-esp32-p4-jc8012p4a1-v3",
+     "esp32-p4-86",
++    "waveshare-esp32-p4-wifi6-touch-lcd-7b",
+     "guition-esp32-s3-4848s040"
+   ],
+   "button": {
+diff --git a/components/espcontrol/cover_art.h b/components/espcontrol/cover_art.h
+index c08974a5c..36d947c81 100644
+--- a/components/espcontrol/cover_art.h
++++ b/components/espcontrol/cover_art.h
+@@ -390,7 +390,8 @@ inline bool rotation_is_landscape(const std::string &slug, const std::string &ro
+ inline Layout cover_art_layout(const std::string &slug, const std::string &rotation,
+                                int screen_width, int screen_height, int art_size, int title_height) {
+   const bool landscape = rotation_is_landscape(slug, rotation);
+-  if (slug == "guition-esp32-p4-jc1060p470" || slug == "guition-esp32-p4-jc1060p470-v2") return landscape
++  if (slug == "guition-esp32-p4-jc1060p470" || slug == "guition-esp32-p4-jc1060p470-v2" ||
++      slug == "waveshare-esp32-p4-wifi6-touch-lcd-7b") return landscape
+     ? Layout{1024,600,0,0,600,585,0,439,600,615,24,377,440,332,0,true,4}
+     : Layout{600,1024,0,0,600,0,600,600,424,30,634,540,360,162,0,true};
+   if (slug == "guition-esp32-p4-jc4880p443" || slug == "guition-esp32-p4-jc4880p443-v3") return landscape
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/.gitignore b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/.gitignore
+new file mode 100644
+index 000000000..d8b4157ae
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/.gitignore
+@@ -0,0 +1,5 @@
++# Gitignore settings for ESPHome
++# This is an example and may include too much for your use-case.
++# You can modify this file to suit your needs.
++/.esphome/
++/secrets.yaml
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/README.md b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/README.md
+new file mode 100644
+index 000000000..855de2560
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/README.md
+@@ -0,0 +1,41 @@
++# Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7")
++
++7-inch 1024x600 touchscreen board from Waveshare that runs EspControl firmware for Home Assistant. A fixed 3x5 grid of 15 configurable buttons lets you control lights, switches, fans, and other smart home devices with a single tap. The display also shows a live clock, indoor/outdoor temperature, and includes a screensaver with adjustable brightness.
++
++After the initial install, everything is configured through the built-in web page — no coding or file editing required.
++
++## Which board is this?
++
++This profile is for the Waveshare **ESP32-P4-WIFI6-Touch-LCD-7B**: an ESP32-P4 with an
++ESP32-C6 WiFi 6 co-processor and a 7-inch 1024x600 MIPI-DSI touchscreen. It is not the
++Guition JC1060P470, which has the same resolution but different pins.
++
++The board has no Ethernet port, so only the WiFi firmware is available.
++
++The profile assumes a production ESP32-P4 chip (revision 3.x). If the boot log shows
++`chip revision: v1.x`, set `engineering_sample: true` under `esp32:` in
++`device/device.yaml` and build the firmware yourself.
++
++## Quick links
++
++- **Full documentation:** [jtenniswood.github.io/espcontrol](https://jtenniswood.github.io/espcontrol/)
++- **Install guide:** [jtenniswood.github.io/espcontrol/install](https://jtenniswood.github.io/espcontrol/install)
++- **Web UI guide:** [jtenniswood.github.io/espcontrol/web-ui](https://jtenniswood.github.io/espcontrol/web-ui)
++
++## Features
++
++- **15 buttons** (3x5 grid) — control any Home Assistant device
++- **Drag-and-drop ordering** — rearrange buttons from your browser
++- **Automatic icons** — or choose from hundreds of icons manually
++- **Custom labels** — name buttons however you like
++- **Indoor and outdoor temperature** in the top bar
++- **Live clock** synced from NTP, with Home Assistant as a fallback
++- **Screensaver** with adjustable idle timeout and optional presence sensor to wake
++- **Day/night brightness** — adjusts automatically based on sunrise and sunset
++- **Over-the-air updates** — automatic or manual
++- **WiFi setup** — on-screen guide if the network is unavailable
++
++## Where to buy
++
++- **Board:** [Waveshare](https://www.waveshare.com/esp32-p4-wifi6-touch-lcd-7b.htm)
++- **Wiki:** [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-P4-WIFI6-Touch-LCD-7B)
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/dev.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/dev.yaml
+new file mode 100644
+index 000000000..a4fa2f119
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/dev.yaml
+@@ -0,0 +1,27 @@
++# =============================================================================
++# DEV CONFIG - Local development entry point (Waveshare 7" P4 panel)
++# =============================================================================
++# Flash with: esphome run dev.yaml
++# =============================================================================
++
++substitutions:
++  cover_art_placeholder_file: "../../common/assets/cover_art_placeholder.svg"
++  name: "espcontrol-waveshare-7b"
++  friendly_name: "EspControl Waveshare 7B"
++  espcontrol_component_url: "../.."
++  mdi_font_file: "../../common/assets/fonts/materialdesignicons-webfont-7.4.47.ttf"
++  espcontrol_component_ref: "HEAD"
++
++esp32:
++  partitions: "../../common/device/partitions_16mb_card_images.csv"
++
++wifi:
++  ssid: !secret wifi_ssid
++  password: !secret wifi_password
++
++web_server:
++  js_url: ""
++  js_include: "../../docs/public/webserver/embedded/www.js"
++
++packages:
++  espcontrol: !include packages.yaml
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/device.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/device.yaml
+new file mode 100644
+index 000000000..6572b9c24
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/device.yaml
+@@ -0,0 +1,371 @@
++# =============================================================================
++# DEVICE - Waveshare ESP32-P4-WIFI6-Touch-LCD-7B hardware definition
++# =============================================================================
++# Pin assignments, peripherals, and platform config for the 7" touch panel.
++# Includes the ESP32-P4 main SoC, MIPI DSI display (ESPHome's bundled
++# WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B model), GT911 capacitive touchscreen,
++# and backlight PWM. Pins follow Waveshare's board documentation:
++# I2C SDA GPIO7 / SCL GPIO8, backlight GPIO32 (active low), LCD reset GPIO33
++# (set by the ESPHome model). The board has no Ethernet port.
++#
++# Based on the Guition JC1060P470 profile; unlike that panel the display is
++# mounted upright, so no 180-degree display offset is applied.
++# =============================================================================
++
++substitutions:
++  espcontrol_component_url: "https://github.com/jtenniswood/espcontrol"
++  espcontrol_component_ref: "main"
++  mdi_font_file: "https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf"
++
++# ---------------------------------------------------------------------------
++# ESP32-P4 platform (16MB flash, ESP-IDF framework)
++# ---------------------------------------------------------------------------
++esp32:
++  variant: esp32p4
++  flash_size: 16MB
++  cpu_frequency: 360MHZ
++  # Waveshare ships this board with production (rev 3.x) ESP32-P4 chips. An
++  # early unit whose boot log shows "chip revision: v1.x" needs this set to
++  # true; firmware built for one revision does not boot on the other.
++  engineering_sample: false
++  framework:
++    type: esp-idf
++    # stick to recommended version, currently 5.5.4, 55.03.39 with tool-esptoolpy 5.3.0. No issues
++    #version: 5.5.2
++    # pioarduino 55.03.38-1 pulls tool-esptoolpy 5.2.0, which can install
++    # incompletely in ESPHome containers and then fail while creating .bin files.
++    #platform_version: 55.03.37
++    advanced:
++      enable_idf_experimental_features: true
++      execute_from_psram: true
++      disable_vfs_support_termios: false
++      disable_vfs_support_select: false
++      disable_vfs_support_dir: false
++    sdkconfig_options:
++      CONFIG_SDMMC_HOST_DEFAULT: "y"
++      # Eight API clients add five sockets above ESPHome's three-client
++      # baseline. Reserve those five explicitly on top of the generated
++      # 14-socket web, artwork, mDNS, OTA, and API budget.
++      CONFIG_LWIP_MAX_SOCKETS: "19"
++      # HTTPS firmware checks need more stack on ESP32-P4; the default main
++      # task stack can trip the stack protector during mbedTLS setup.
++      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"
++      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
++      # Native OTA can block loopTask while ESP-IDF erases the alternate app
++      # partition on this panel. Use the ESP-IDF maximum so the flash
++      # erase/prep step can finish before data upload continues.
++      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
++      # ESPHome 2026.5 / ESP-IDF 5.5.2 can make ESP-Hosted preallocate a
++      # large internal DMA buffer pool before ESPHome starts. On P4 display
++      # builds this can fail with "HS_MP: mempool create failed: no mem" and
++      # trigger OTA rollback, so use dynamic buffers and keep hosted task
++      # stacks in PSRAM.
++      CONFIG_ESP_HOSTED_USE_MEMPOOL: "n"
++      CONFIG_ESP_HOSTED_DFLT_TASK_FROM_SPIRAM: "y"
++      CONFIG_FREERTOS_THREAD_LOCAL_STORAGE_POINTERS: "1"
++      CONFIG_LOG_DEFAULT_LEVEL: "2"
++
++# ---------------------------------------------------------------------------
++# External component
++# ---------------------------------------------------------------------------
++external_components:
++  - source:
++      type: git
++      url: ${espcontrol_component_url}
++      ref: ${espcontrol_component_ref}
++      path: components
++    components: [espcontrol, captive_portal, web_server_idf, artwork_image]
++    refresh: 1s
++
++espcontrol:
++  id: espcontrol_app
++  # The native document is imported from these restored entities on first boot.
++  # The legacy entities remain live during the compatibility releases.
++  panel_config:
++    device_profile: ${device_slug}
++    button_order: button_order
++    button_on_color: button_on_color
++    buttons:
++      - config: button_1_config
++        subpage_chunks: [subpage_1_config, subpage_1_config_ext, subpage_1_config_ext_2, subpage_1_config_ext_3, subpage_1_config_ext_4, subpage_1_config_ext_5, subpage_1_config_ext_6, subpage_1_config_ext_7]
++      - config: button_2_config
++        subpage_chunks: [subpage_2_config, subpage_2_config_ext, subpage_2_config_ext_2, subpage_2_config_ext_3, subpage_2_config_ext_4, subpage_2_config_ext_5, subpage_2_config_ext_6, subpage_2_config_ext_7]
++      - config: button_3_config
++        subpage_chunks: [subpage_3_config, subpage_3_config_ext, subpage_3_config_ext_2, subpage_3_config_ext_3, subpage_3_config_ext_4, subpage_3_config_ext_5, subpage_3_config_ext_6, subpage_3_config_ext_7]
++      - config: button_4_config
++        subpage_chunks: [subpage_4_config, subpage_4_config_ext, subpage_4_config_ext_2, subpage_4_config_ext_3, subpage_4_config_ext_4, subpage_4_config_ext_5, subpage_4_config_ext_6, subpage_4_config_ext_7]
++      - config: button_5_config
++        subpage_chunks: [subpage_5_config, subpage_5_config_ext, subpage_5_config_ext_2, subpage_5_config_ext_3, subpage_5_config_ext_4, subpage_5_config_ext_5, subpage_5_config_ext_6, subpage_5_config_ext_7]
++      - config: button_6_config
++        subpage_chunks: [subpage_6_config, subpage_6_config_ext, subpage_6_config_ext_2, subpage_6_config_ext_3, subpage_6_config_ext_4, subpage_6_config_ext_5, subpage_6_config_ext_6, subpage_6_config_ext_7]
++      - config: button_7_config
++        subpage_chunks: [subpage_7_config, subpage_7_config_ext, subpage_7_config_ext_2, subpage_7_config_ext_3, subpage_7_config_ext_4, subpage_7_config_ext_5, subpage_7_config_ext_6, subpage_7_config_ext_7]
++      - config: button_8_config
++        subpage_chunks: [subpage_8_config, subpage_8_config_ext, subpage_8_config_ext_2, subpage_8_config_ext_3, subpage_8_config_ext_4, subpage_8_config_ext_5, subpage_8_config_ext_6, subpage_8_config_ext_7]
++      - config: button_9_config
++        subpage_chunks: [subpage_9_config, subpage_9_config_ext, subpage_9_config_ext_2, subpage_9_config_ext_3, subpage_9_config_ext_4, subpage_9_config_ext_5, subpage_9_config_ext_6, subpage_9_config_ext_7]
++      - config: button_10_config
++        subpage_chunks: [subpage_10_config, subpage_10_config_ext, subpage_10_config_ext_2, subpage_10_config_ext_3, subpage_10_config_ext_4, subpage_10_config_ext_5, subpage_10_config_ext_6, subpage_10_config_ext_7]
++      - config: button_11_config
++        subpage_chunks: [subpage_11_config, subpage_11_config_ext, subpage_11_config_ext_2, subpage_11_config_ext_3, subpage_11_config_ext_4, subpage_11_config_ext_5, subpage_11_config_ext_6, subpage_11_config_ext_7]
++      - config: button_12_config
++        subpage_chunks: [subpage_12_config, subpage_12_config_ext, subpage_12_config_ext_2, subpage_12_config_ext_3, subpage_12_config_ext_4, subpage_12_config_ext_5, subpage_12_config_ext_6, subpage_12_config_ext_7]
++      - config: button_13_config
++        subpage_chunks: [subpage_13_config, subpage_13_config_ext, subpage_13_config_ext_2, subpage_13_config_ext_3, subpage_13_config_ext_4, subpage_13_config_ext_5, subpage_13_config_ext_6, subpage_13_config_ext_7]
++      - config: button_14_config
++        subpage_chunks: [subpage_14_config, subpage_14_config_ext, subpage_14_config_ext_2, subpage_14_config_ext_3, subpage_14_config_ext_4, subpage_14_config_ext_5, subpage_14_config_ext_6, subpage_14_config_ext_7]
++      - config: button_15_config
++        subpage_chunks: [subpage_15_config, subpage_15_config_ext, subpage_15_config_ext_2, subpage_15_config_ext_3, subpage_15_config_ext_4, subpage_15_config_ext_5, subpage_15_config_ext_6, subpage_15_config_ext_7]
++# ---------------------------------------------------------------------------
++# ESPHome core (device name from substitutions)
++# ---------------------------------------------------------------------------
++esphome:
++  name: ${name}
++  friendly_name: ${friendly_name}
++  build_flags:
++    - "-Wno-deprecated-declarations"
++    # Force cached ESPHome objects to rebuild after the 2026.5
++    # core/scheduler/watchdog changes; stale 2026.4 objects can boot-loop.
++    - "-DESPCONTROL_ESPHOME_2026_5_REBUILD=1"
++    # Keep the ESP-IDF header warning suppressed without warning on C sources.
++    - "-Wno-literal-suffix"
++    - "-Wno-complain-wrong-lang"
++  on_boot:
++    - priority: 260
++      then:
++        - if:
++            condition:
++              lambda: |-
++                #ifdef USE_ESP32_CRASH_HANDLER
++                return esphome::esp32::crash_handler_has_data();
++                #else
++                return false;
++                #endif
++            then:
++              - lambda: |-
++                  #ifdef USE_ESP32_CRASH_HANDLER
++                  esphome::esp32::crash_handler_clear();
++                  #endif
++                  global_preferences->sync();
++                  ESP_LOGW("waveshare_p4_7b", "Cleared saved crash report before API logging; rebooting once while preserving the failed-boot counter");
++              - delay: 500ms
++              - lambda: |-
++                  // Avoid safe_reboot(): its safe-mode shutdown hook clears
++                  // the failed-boot counter before the replacement boot.
++                  App.reboot();
++    - priority: 250
++      then:
++        - lambda: |-
++            ESP_LOGI("waveshare_p4_7b", "Bootfix marker 2026-05-22 active");
++    - priority: -100
++      then:
++        - lambda: 'id(screen_rotation_ready) = true;'
++        - script.execute: apply_screen_rotation
++
++# The P4 panel has enough memory for additional native API clients. Allow
++# Home Assistant, ESPHome logs, and browser/configuration sessions to overlap
++# without rejecting connections at ESPHome's default five-client limit.
++api:
++  max_connections: 8
++
++# ---------------------------------------------------------------------------
++# PSRAM (video frame buffer memory)
++# ---------------------------------------------------------------------------
++psram:
++  mode: hex
++  speed: 200MHz
++
++# ---------------------------------------------------------------------------
++# OTA updates (ESPHome native + HTTP-based)
++# ---------------------------------------------------------------------------
++ota:
++  - platform: esphome
++    on_begin:
++      then:
++        - script.execute: show_update_writing
++        - script.wait: show_update_writing
++    on_end:
++      then:
++        - globals.set:
++            id: firmware_update_complete_pending
++            value: 'true'
++        - lambda: 'global_preferences->sync();'
++    on_error:
++      then:
++        - script.execute: show_update_failed
++  - platform: http_request
++    on_begin:
++      then:
++        - script.execute: show_update_writing
++        - script.wait: show_update_writing
++    on_end:
++      then:
++        - globals.set:
++            id: firmware_update_complete_pending
++            value: 'true'
++        - lambda: 'global_preferences->sync();'
++    on_error:
++      then:
++        - script.execute: show_update_failed
++
++safe_mode:
++  id: waveshare_p4_7b_safe_mode
++
++# ---------------------------------------------------------------------------
++# Shared infrastructure (API, logging, web server, restart button)
++# ---------------------------------------------------------------------------
++packages:
++  core_infra: !include ../../../common/device/core_infra.yaml
++
++# ---------------------------------------------------------------------------
++# Power management (LDO channel 3 powers the DSI PHY)
++# ---------------------------------------------------------------------------
++esp_ldo:
++  - channel: 3
++    id: dsi_phy_enable
++    voltage: 2.5V
++    adjustable: True
++
++# ---------------------------------------------------------------------------
++# Backlight (LEDC PWM output + monochromatic light entity)
++# ---------------------------------------------------------------------------
++output:
++  - platform: ledc
++    pin: GPIO32
++    id: gpio_backlight_pwm
++    # The backlight driver on this board is active low.
++    inverted: true
++    frequency: 1000Hz
++
++light:
++  - platform: monochromatic
++    output: gpio_backlight_pwm
++    name: Display Backlight
++    icon: mdi:lightbulb-on
++    id: display_backlight
++    restore_mode: RESTORE_DEFAULT_ON
++    default_transition_length: 0s
++    gamma_correct: 1.0
++    on_turn_on:
++      then:
++        - if:
++            condition:
++              lambda: |-
++                auto now = panel_time_or_fallback(id(panel_time).now(), id(homeassistant_time).now());
++                return (id(espcontrol_app).display().target_source_is(
++                            espcontrol::DisplayRequestSource::SCREEN_SCHEDULE) &&
++                        id(espcontrol_app).display().target_mode_is(
++                            espcontrol::DisplayMode::DISPLAY_OFF)) ||
++                       screen_schedule_waiting_for_time(
++                         id(screen_schedule_trigger).state,
++                         id(schedule_enabled).state,
++                         now.is_valid());
++            then:
++              - script.execute: backlight_force_display_off
++            else:
++              - if:
++                  condition:
++                    lambda: |-
++                      return id(espcontrol_app).display().current_mode_is(
++                          espcontrol::DisplayMode::DISPLAY_OFF);
++                  then:
++                    - script.execute: screensaver_wake
++    on_turn_off:
++      then:
++        - script.execute: display_backlight_handle_off
++    on_state:
++      then:
++        - script.execute: display_backlight_handle_state
++
++# ---------------------------------------------------------------------------
++# I2C bus and touchscreen (GT911 capacitive, wakes screensaver on touch)
++# ---------------------------------------------------------------------------
++i2c:
++  - id: bus_a
++    sda: GPIO07
++    scl: GPIO08
++    frequency: 400kHz
++
++touchscreen:
++  - platform: gt911
++    id: my_touchscreen
++    display: my_display
++    i2c_id: bus_a
++    on_touch:
++      - script.execute: cover_art_handle_touch
++
++# ---------------------------------------------------------------------------
++# Display (7" 1024x600 MIPI DSI panel)
++# ---------------------------------------------------------------------------
++display:
++  - platform: mipi_dsi
++    id: my_display
++    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B
++    update_interval: never
++    auto_clear_enabled: false
++
++# ---------------------------------------------------------------------------
++# LVGL base (display binding, must be before any page definitions)
++# ---------------------------------------------------------------------------
++lvgl:
++  id: main_lvgl
++  displays: my_display
++  rotation: 0
++  byte_order: little_endian
++  touchscreens:
++    - touchscreen_id: my_touchscreen
++      long_press_time: 3s
++
++script:
++  - id: apply_screen_rotation
++    then:
++      - if:
++          condition:
++            lambda: 'return id(screen_rotation_select).current_option() == "90";'
++          then:
++            - lvgl.display.set_rotation: 90
++          else:
++            - if:
++                condition:
++                  lambda: 'return id(screen_rotation_select).current_option() == "180";'
++                then:
++                  - lvgl.display.set_rotation: 180
++                else:
++                  - if:
++                      condition:
++                        lambda: 'return id(screen_rotation_select).current_option() == "270";'
++                      then:
++                        - lvgl.display.set_rotation: 270
++                      else:
++                        - lvgl.display.set_rotation: 0
++      # Grid refresh is delayed; update the pixel axis before screensaver layout.
++      - lambda: |-
++          const auto rotation = id(screen_rotation_select).current_option();
++          set_width_compensation_vertical_axis(rotation == "90" || rotation == "270");
++      - script.execute: cover_art_apply_responsive_layout
++      - script.execute: camera_screensaver_request_image
++
++select:
++  - platform: template
++    name: "${entity_screen_rotation}"
++    internal: true
++    disabled_by_default: true
++    id: screen_rotation_select
++    entity_category: config
++    icon: "mdi:screen-rotation"
++    optimistic: true
++    restore_value: true
++    initial_option: "0"
++    options:
++      - "0"
++      - "90"
++      - "180"
++      - "270"
++    on_value:
++      then:
++        - if:
++            condition:
++              lambda: 'return id(screen_rotation_ready);'
++            then:
++              - script.execute: apply_screen_rotation
++              - script.execute: refresh_button_grid
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/fonts.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/fonts.yaml
+new file mode 100644
+index 000000000..49a558c9b
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/fonts.yaml
+@@ -0,0 +1,114 @@
++# =============================================================================
++# FONTS - Generic style IDs for the 1060x470 display
++# =============================================================================
++# Feature YAML should reference these functional style IDs, not physical font
++# names or sizes. Sizes remain device-specific behind the same style names.
++# =============================================================================
++
++font:
++  # Main action/setup icons
++  - file: '${mdi_font_file}'
++    id: font_icon_main
++    size: 55
++    bpp: 4
++    glyphs: !include ../../../common/assets/icon_glyphs.yaml
++
++  # Smaller card icons
++  - file: '${mdi_font_file}'
++    id: font_icon_card
++    size: 41
++    bpp: 4
++    glyphs: !include ../../../common/assets/climate_card_icon_glyphs.yaml
++
++  # Status, network, and subpage icons
++  - file: '${mdi_font_file}'
++    id: font_icon_status
++    size: 24
++    bpp: 4
++    glyphs: !include ../../../common/assets/network_status_glyphs.yaml
++
++  # Main labels and setup body text
++  - file: "gfonts://Roboto"
++    id: font_text_body
++    size: 22
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Smaller secondary text
++  - file: "gfonts://Roboto"
++    id: font_text_small
++    size: 18
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Headings and media titles
++  - file: "gfonts://Roboto@Light"
++    id: font_text_title
++    size: 43
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo@Light"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Media cover-art screensaver title
++  - file: "gfonts://Roboto@Light"
++    id: font_cover_art_title
++    size: 76
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo@Light"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Media cover-art screensaver artist
++  - file: "gfonts://Roboto@Light"
++    id: font_cover_art_artist
++    size: 40
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo@Light"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Media cover-art screensaver elapsed time
++  - file: "gfonts://Roboto"
++    id: font_cover_art_time
++    size: 24
++    bpp: 4
++    glyphs: " 0123456789:/-"
++
++  # Larger modal/supporting labels
++  - file: "gfonts://Roboto"
++    id: font_text_large
++    size: 28
++    bpp: 4
++    glyphs: !include ../../../common/assets/text_glyphs.yaml
++    extras:
++      - file: "gfonts://Heebo"
++        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
++
++  # Normal sensor values
++  - file: "gfonts://Roboto@Light"
++    id: font_number_value
++    size: 55
++    bpp: 4
++    glyphs:
++      - "0123456789.-°/%"
++      - ":"
++      - " dhms"
++
++  # Large sensor values
++  - file: "gfonts://Roboto@Light"
++    id: font_number_value_large
++    size: 138
++    bpp: 2
++    glyphs:
++      - "0123456789.-°/%"
++      - ":"
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/lvgl.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/lvgl.yaml
+new file mode 100644
+index 000000000..db25d75a8
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/lvgl.yaml
+@@ -0,0 +1,128 @@
++# =============================================================================
++# LVGL MAIN PAGE - Top-layer HUD and button grid
++# =============================================================================
++# Defines the primary UI: a top-layer overlay with temperature and clock
++# labels, and the main page containing a 3x5 grid of 15 button widgets.
++# Uses LVGL grid layout for sparse cell placement on the 1024x600 landscape
++# display. Buttons start hidden; sensors.yaml unhides and places active
++# ones at boot via grid cell coords.
++# =============================================================================
++
++lvgl:
++  # ---------------------------------------------------------------------------
++  # Top layer (always visible above all pages)
++  # ---------------------------------------------------------------------------
++  top_layer:
++    widgets:
++      # Indoor/outdoor temperature (top-left)
++      - label:
++          text: "-°C"
++          id: temperatures
++          text_font: font_text_body
++          align: top_left
++          x: 8
++          y: 8
++          text_color: $theme_text_primary_color
++          hidden: true
++
++      # Clock (top-center, updated every minute by time.yaml)
++      - label:
++          text: "--:--"
++          id: display_time
++          text_font: font_text_body
++          align: top_mid
++          x: 0
++          y: 8
++          text_align: center
++          text_color: $theme_text_primary_color
++          hidden: true
++
++      # Network status (tappable, right side of clock bar)
++      - obj:
++          id: network_status_button
++          align: top_right
++          x: -4
++          y: 1
++          width: 48
++          height: 44
++          bg_opa: 0%
++          border_width: 0
++          pad_all: 0
++          scrollable: false
++          scrollbar_mode: "off"
++          clickable: true
++          hidden: true
++          widgets:
++            - label:
++                id: network_status_icon_label
++                text: "\U000F0928"
++                text_font: font_icon_status
++                align: center
++                text_align: center
++                text_color: $theme_text_primary_color
++          on_press:
++            then:
++              - script.execute: network_status_open_info
++
++      # Night mode indicator (schedule night period only). Starts hidden;
++      # clock_bar_apply positions and reveals it beside the network icon, so the
++      # x/y here are unused placeholders.
++      - obj:
++          id: night_mode_status_icon
++          align: top_right
++          x: 0
++          y: 0
++          width: 48
++          height: 44
++          bg_opa: 0%
++          border_width: 0
++          pad_all: 0
++          scrollable: false
++          scrollbar_mode: "off"
++          clickable: false
++          hidden: true
++          widgets:
++            - label:
++                id: night_mode_status_icon_label
++                text: "\U000F00DC"
++                text_font: font_icon_status
++                align: center
++                text_align: center
++                text_color: $theme_text_primary_color
++
++  # ---------------------------------------------------------------------------
++  # Main page (fixed 3x5 grid of button widgets)
++  # ---------------------------------------------------------------------------
++  pages:
++    - id: main_page
++      scrollbar_mode: "off"
++      layout:
++        type: grid
++        grid_columns: [FR(1), FR(1), FR(1), FR(1), FR(1)]
++        grid_rows: [FR(1), FR(1), FR(1)]
++        pad_row: ${main_page_card_gap}
++        pad_column: ${main_page_card_gap}
++      width: 100%
++      bg_color: $theme_background_color
++      bg_opa: cover
++      pad_top: ${main_page_pad_top}
++      pad_bottom: 5
++      pad_left: 5
++      pad_right: 5
++
++      widgets:
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "1" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "2" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "3" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "4" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "5" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "6" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "7" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "8" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "9" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "10" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "11" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "12" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "13" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "14" } }
++        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "15" } }
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/network_coprocessor.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/network_coprocessor.yaml
+new file mode 100644
+index 000000000..d0f8625a6
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/network_coprocessor.yaml
+@@ -0,0 +1,18 @@
++# =============================================================================
++# NETWORK CO-PROCESSOR - WiFi firmware variant
++# =============================================================================
++# The Waveshare 7B uses an ESP32-C6 co-processor for hosted WiFi 6/BLE over
++# SDIO (slot 1, ESPHome's default). Pins match the JC1060P470 panel.
++# =============================================================================
++
++esp32_hosted:
++  variant: esp32c6
++  reset_pin: GPIO54
++  cmd_pin: GPIO19
++  clk_pin: GPIO18
++  d0_pin: GPIO14
++  d1_pin: GPIO15
++  d2_pin: GPIO16
++  d3_pin: GPIO17
++  active_high: true
++  sdio_frequency: 20MHz
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/sensors.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/sensors.yaml
+new file mode 100644
+index 000000000..7c449be63
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/sensors.yaml
+@@ -0,0 +1,716 @@
++# =============================================================================
++# SENSORS - Dynamic HA entity subscriptions (P4-1060 - 15 buttons, 5×3 grid)
++# =============================================================================
++# Thin wiring layer: builds id()-based arrays and calls shared C++ functions
++# from button_grid.h for all grid layout, HA subscriptions, and subpage logic.
++# This device uses a landscape 5-column layout with label wrapping for
++# double-height buttons.
++# =============================================================================
++
++globals:
++  - id: indoor_temp
++    type: float
++    initial_value: 'NAN'
++  - id: outdoor_temp
++    type: float
++    initial_value: 'NAN'
++
++script:
++  - id: refresh_button_grid
++    mode: restart
++    then:
++      - delay: 3s
++      - script.execute: apply_button_grid
++  - id: apply_button_grid
++    mode: single
++    then:
++      - lambda: |-
++          // BEGIN GENERATED REFRESH GRID WIRING
++          // Generated by scripts/generate_device_slots.py from devices/manifest.json.
++          // Setup pages own the display until connectivity is configured.
++          // There is no visible grid to refresh during that flow.
++          if (id(connectivity_setup_display_active)) {
++            ESP_LOGI("sensors", "Skipping refresh grid during connectivity onboarding");
++            return;
++          }
++          #define BTN_SLOT(n) { button_##n##_config, button_##n, button_##n##_icon_label, button_##n##_text_label, button_##n##_sensor_container, button_##n##_sensor_label, button_##n##_unit_label, button_##n##_subpage_label }
++          BtnSlot slots[] = {
++            BTN_SLOT(1),
++            BTN_SLOT(2),
++            BTN_SLOT(3),
++            BTN_SLOT(4),
++            BTN_SLOT(5),
++            BTN_SLOT(6),
++            BTN_SLOT(7),
++            BTN_SLOT(8),
++            BTN_SLOT(9),
++            BTN_SLOT(10),
++            BTN_SLOT(11),
++            BTN_SLOT(12),
++            BTN_SLOT(13),
++            BTN_SLOT(14),
++            BTN_SLOT(15),
++          };
++          #undef BTN_SLOT
++          if (!id(screen_rotation_ready)) return;
++          GridConfig cfg = {};
++          cfg.num_slots = 15;
++          bool portrait = id(screen_rotation_select).current_option() == "90" || id(screen_rotation_select).current_option() == "270";
++          cfg.cols = portrait ? 3 : 5;
++          cfg.width_compensation_vertical = portrait;
++          cfg.subpage_chevrons_enabled = id(subpage_chevrons_enabled).state;
++          cfg.card_corner_radius = card_curve_radius(32, id(card_curve_select).current_option(), 8, 20);
++          cfg.continuous_card_corners = true;
++          cfg.wrap_tall_labels = true;
++          cfg.label_lines = 2;
++          cfg.label_lines_tall = 3;
++          cfg.width_compensation_percent = 95;
++          cfg.volume_width_compensation_percent = 95;
++          cfg.media_artwork_width_compensation_percent = 98;
++          cfg.modal_profile.layout_family = DisplayModalLayoutFamily::WIDE_LANDSCAPE;
++          cfg.modal_profile.density = DisplayModalDensity::COMFORTABLE;
++          cfg.modal_profile.memory_tier = DisplayModalMemoryTier::STANDARD;
++          cfg.modal_profile.base_touch_target = 57;
++          cfg.icon_font = id(font_icon_main)->get_lv_font();
++          cfg.sp_sensor_font = id(font_number_value)->get_lv_font();
++          cfg.sp_large_sensor_font = id(font_number_value_large)->get_lv_font();
++          cfg.large_sensor_unit_offset_percent = -10;
++          cfg.media_title_font = id(font_text_title)->get_lv_font();
++          cfg.media_control_title_font = id(font_cover_art_title)->get_lv_font();
++          cfg.media_cover_art_title_font = id(font_cover_art_title)->get_lv_font();
++          cfg.media_cover_art_artist_font = id(font_cover_art_artist)->get_lv_font();
++          cfg.volume_number_font = id(font_number_value_large)->get_lv_font();
++          cfg.volume_label_font = id(font_text_large)->get_lv_font();
++          cfg.small_text_font = id(font_text_small)->get_lv_font();
++          cfg.climate_card_icon_font = id(font_icon_card)->get_lv_font();
++          cfg.subpage_chevron_font = id(font_icon_status)->get_lv_font();
++          cfg.climate_option_title_font = id(font_text_body)->get_lv_font();
++          cfg.climate_option_value_font = id(font_text_body)->get_lv_font();
++          cfg.temperature_unit = id(temperature_unit_select).current_option();
++          cfg.timezone = id(timezone_select).current_option();
++          cfg.begin_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++            id(display_takeover_begin).execute(static_cast<int>(kind));
++          };
++          cfg.end_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++            id(display_takeover_end).execute(static_cast<int>(kind));
++          };
++          static esphome::artwork_image::ArtworkImage *image_card_downloaders[] = {
++            id(image_card_download_1),
++            id(image_card_download_2),
++            id(image_card_download_3),
++            id(image_card_download_4),
++            id(image_card_download_5),
++            id(image_card_download_6),
++          };
++          cfg.image_card_images = image_card_downloaders;
++          cfg.image_card_modal_image = id(image_card_modal_download_1);
++          cfg.image_card_image_count = 6;
++          cfg.home_assistant_base_url = []() {
++            std::string base = id(cover_art_home_assistant_base_url);
++            while (!base.empty() && base.back() == '/') base.pop_back();
++            return base;
++          };
++          register_webhook_sender([](const std::string &url, const std::string &method, const std::string &body, const std::vector<esphome::http_request::Header> &headers) {
++            auto response = id(http_req).start(url, method, body, headers);
++            if (response == nullptr) {
++              ESP_LOGW("webhook", "Webhook %s request failed to start", method.c_str());
++              return false;
++            }
++            int status = response->status_code;
++            response->end();
++            if (!esphome::http_request::is_success(status)) {
++              ESP_LOGW("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++              return false;
++            }
++            ESP_LOGI("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++            return true;
++          });
++          set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
++          set_text_width_compensation_percent(cfg.text_width_compensation_percent);
++          apply_text_width_compensation(id(display_time));
++          apply_text_width_compensation(id(temperatures));
++          apply_text_width_compensation(id(clock_label));
++          // END GENERATED REFRESH GRID WIRING
++          #define SP_CFG(n) subpage_##n##_config
++          #define SP_EXT(n) subpage_##n##_config_ext
++          #define SP_EXT2(n) subpage_##n##_config_ext_2
++          #define SP_EXT3(n) subpage_##n##_config_ext_3
++          #define SP_EXT4(n) subpage_##n##_config_ext_4
++          #define SP_EXT5(n) subpage_##n##_config_ext_5
++          #define SP_EXT6(n) subpage_##n##_config_ext_6
++          #define SP_EXT7(n) subpage_##n##_config_ext_7
++          esphome::text::Text *sp_cfgs[] = {
++            SP_CFG(1), SP_CFG(2), SP_CFG(3), SP_CFG(4),
++            SP_CFG(5), SP_CFG(6), SP_CFG(7), SP_CFG(8),
++            SP_CFG(9), SP_CFG(10), SP_CFG(11), SP_CFG(12),
++            SP_CFG(13), SP_CFG(14), SP_CFG(15),
++          };
++          esphome::text::Text *sp_ext[] = {
++            SP_EXT(1), SP_EXT(2), SP_EXT(3), SP_EXT(4),
++            SP_EXT(5), SP_EXT(6), SP_EXT(7), SP_EXT(8),
++            SP_EXT(9), SP_EXT(10), SP_EXT(11), SP_EXT(12),
++            SP_EXT(13), SP_EXT(14), SP_EXT(15),
++          };
++          esphome::text::Text *sp_ext2[] = {
++            SP_EXT2(1), SP_EXT2(2), SP_EXT2(3), SP_EXT2(4),
++            SP_EXT2(5), SP_EXT2(6), SP_EXT2(7), SP_EXT2(8),
++            SP_EXT2(9), SP_EXT2(10), SP_EXT2(11), SP_EXT2(12),
++            SP_EXT2(13), SP_EXT2(14), SP_EXT2(15),
++          };
++          esphome::text::Text *sp_ext3[] = {
++            SP_EXT3(1), SP_EXT3(2), SP_EXT3(3), SP_EXT3(4),
++            SP_EXT3(5), SP_EXT3(6), SP_EXT3(7), SP_EXT3(8),
++            SP_EXT3(9), SP_EXT3(10), SP_EXT3(11), SP_EXT3(12),
++            SP_EXT3(13), SP_EXT3(14), SP_EXT3(15),
++          };
++          esphome::text::Text *sp_ext4[] = {
++            SP_EXT4(1), SP_EXT4(2), SP_EXT4(3), SP_EXT4(4),
++            SP_EXT4(5), SP_EXT4(6), SP_EXT4(7), SP_EXT4(8),
++            SP_EXT4(9), SP_EXT4(10), SP_EXT4(11), SP_EXT4(12),
++            SP_EXT4(13), SP_EXT4(14), SP_EXT4(15),
++          };
++          esphome::text::Text *sp_ext5[] = {
++            SP_EXT5(1), SP_EXT5(2), SP_EXT5(3), SP_EXT5(4),
++            SP_EXT5(5), SP_EXT5(6), SP_EXT5(7), SP_EXT5(8),
++            SP_EXT5(9), SP_EXT5(10), SP_EXT5(11), SP_EXT5(12),
++            SP_EXT5(13), SP_EXT5(14), SP_EXT5(15),
++          };
++          esphome::text::Text *sp_ext6[] = {
++            SP_EXT6(1), SP_EXT6(2), SP_EXT6(3), SP_EXT6(4),
++            SP_EXT6(5), SP_EXT6(6), SP_EXT6(7), SP_EXT6(8),
++            SP_EXT6(9), SP_EXT6(10), SP_EXT6(11), SP_EXT6(12),
++            SP_EXT6(13), SP_EXT6(14), SP_EXT6(15),
++          };
++          esphome::text::Text *sp_ext7[] = {
++            SP_EXT7(1), SP_EXT7(2), SP_EXT7(3), SP_EXT7(4),
++            SP_EXT7(5), SP_EXT7(6), SP_EXT7(7), SP_EXT7(8),
++            SP_EXT7(9), SP_EXT7(10), SP_EXT7(11), SP_EXT7(12),
++            SP_EXT7(13), SP_EXT7(14), SP_EXT7(15),
++          };
++          #undef SP_CFG
++          #undef SP_EXT
++          #undef SP_EXT2
++          #undef SP_EXT3
++          #undef SP_EXT4
++          #undef SP_EXT5
++          #undef SP_EXT6
++          #undef SP_EXT7
++          grid_rebuild_all(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3, sp_ext4, sp_ext5, sp_ext6, sp_ext7,
++            id(button_order).state,
++            id(button_on_color).state,
++            id(main_page)->obj);
++      - script.execute: clock_bar_apply
++  - id: refresh_subpage_grid
++    mode: restart
++    then:
++      - delay: 3s
++      - lambda: |-
++          // BEGIN GENERATED SUBPAGE REFRESH WIRING
++          // Generated by scripts/generate_device_slots.py from devices/manifest.json.
++          // Setup pages own the display until connectivity is configured.
++          // There is no visible grid to refresh during that flow.
++          if (id(connectivity_setup_display_active)) {
++            ESP_LOGI("sensors", "Skipping subpage refresh during connectivity onboarding");
++            return;
++          }
++          #define BTN_SLOT(n) { button_##n##_config, button_##n, button_##n##_icon_label, button_##n##_text_label, button_##n##_sensor_container, button_##n##_sensor_label, button_##n##_unit_label, button_##n##_subpage_label }
++          BtnSlot slots[] = {
++            BTN_SLOT(1),
++            BTN_SLOT(2),
++            BTN_SLOT(3),
++            BTN_SLOT(4),
++            BTN_SLOT(5),
++            BTN_SLOT(6),
++            BTN_SLOT(7),
++            BTN_SLOT(8),
++            BTN_SLOT(9),
++            BTN_SLOT(10),
++            BTN_SLOT(11),
++            BTN_SLOT(12),
++            BTN_SLOT(13),
++            BTN_SLOT(14),
++            BTN_SLOT(15),
++          };
++          #undef BTN_SLOT
++          if (!id(screen_rotation_ready)) return;
++          GridConfig cfg = {};
++          cfg.num_slots = 15;
++          bool portrait = id(screen_rotation_select).current_option() == "90" || id(screen_rotation_select).current_option() == "270";
++          cfg.cols = portrait ? 3 : 5;
++          cfg.width_compensation_vertical = portrait;
++          cfg.subpage_chevrons_enabled = id(subpage_chevrons_enabled).state;
++          cfg.card_corner_radius = card_curve_radius(32, id(card_curve_select).current_option(), 8, 20);
++          cfg.continuous_card_corners = true;
++          cfg.wrap_tall_labels = true;
++          cfg.label_lines = 2;
++          cfg.label_lines_tall = 3;
++          cfg.width_compensation_percent = 95;
++          cfg.volume_width_compensation_percent = 95;
++          cfg.media_artwork_width_compensation_percent = 98;
++          cfg.modal_profile.layout_family = DisplayModalLayoutFamily::WIDE_LANDSCAPE;
++          cfg.modal_profile.density = DisplayModalDensity::COMFORTABLE;
++          cfg.modal_profile.memory_tier = DisplayModalMemoryTier::STANDARD;
++          cfg.modal_profile.base_touch_target = 57;
++          cfg.icon_font = id(font_icon_main)->get_lv_font();
++          cfg.sp_sensor_font = id(font_number_value)->get_lv_font();
++          cfg.sp_large_sensor_font = id(font_number_value_large)->get_lv_font();
++          cfg.large_sensor_unit_offset_percent = -10;
++          cfg.media_title_font = id(font_text_title)->get_lv_font();
++          cfg.media_control_title_font = id(font_cover_art_title)->get_lv_font();
++          cfg.media_cover_art_title_font = id(font_cover_art_title)->get_lv_font();
++          cfg.media_cover_art_artist_font = id(font_cover_art_artist)->get_lv_font();
++          cfg.volume_number_font = id(font_number_value_large)->get_lv_font();
++          cfg.volume_label_font = id(font_text_large)->get_lv_font();
++          cfg.small_text_font = id(font_text_small)->get_lv_font();
++          cfg.climate_card_icon_font = id(font_icon_card)->get_lv_font();
++          cfg.subpage_chevron_font = id(font_icon_status)->get_lv_font();
++          cfg.climate_option_title_font = id(font_text_body)->get_lv_font();
++          cfg.climate_option_value_font = id(font_text_body)->get_lv_font();
++          cfg.temperature_unit = id(temperature_unit_select).current_option();
++          cfg.timezone = id(timezone_select).current_option();
++          cfg.begin_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++            id(display_takeover_begin).execute(static_cast<int>(kind));
++          };
++          cfg.end_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++            id(display_takeover_end).execute(static_cast<int>(kind));
++          };
++          static esphome::artwork_image::ArtworkImage *image_card_downloaders[] = {
++            id(image_card_download_1),
++            id(image_card_download_2),
++            id(image_card_download_3),
++            id(image_card_download_4),
++            id(image_card_download_5),
++            id(image_card_download_6),
++          };
++          cfg.image_card_images = image_card_downloaders;
++          cfg.image_card_modal_image = id(image_card_modal_download_1);
++          cfg.image_card_image_count = 6;
++          cfg.home_assistant_base_url = []() {
++            std::string base = id(cover_art_home_assistant_base_url);
++            while (!base.empty() && base.back() == '/') base.pop_back();
++            return base;
++          };
++          register_webhook_sender([](const std::string &url, const std::string &method, const std::string &body, const std::vector<esphome::http_request::Header> &headers) {
++            auto response = id(http_req).start(url, method, body, headers);
++            if (response == nullptr) {
++              ESP_LOGW("webhook", "Webhook %s request failed to start", method.c_str());
++              return false;
++            }
++            int status = response->status_code;
++            response->end();
++            if (!esphome::http_request::is_success(status)) {
++              ESP_LOGW("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++              return false;
++            }
++            ESP_LOGI("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++            return true;
++          });
++          set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
++          set_text_width_compensation_percent(cfg.text_width_compensation_percent);
++          apply_text_width_compensation(id(display_time));
++          apply_text_width_compensation(id(temperatures));
++          apply_text_width_compensation(id(clock_label));
++          // END GENERATED SUBPAGE REFRESH WIRING
++          #define SP_CFG(n) subpage_##n##_config
++          #define SP_EXT(n) subpage_##n##_config_ext
++          #define SP_EXT2(n) subpage_##n##_config_ext_2
++          #define SP_EXT3(n) subpage_##n##_config_ext_3
++          #define SP_EXT4(n) subpage_##n##_config_ext_4
++          #define SP_EXT5(n) subpage_##n##_config_ext_5
++          #define SP_EXT6(n) subpage_##n##_config_ext_6
++          #define SP_EXT7(n) subpage_##n##_config_ext_7
++          esphome::text::Text *sp_cfgs[] = {
++            SP_CFG(1), SP_CFG(2), SP_CFG(3), SP_CFG(4),
++            SP_CFG(5), SP_CFG(6), SP_CFG(7), SP_CFG(8),
++            SP_CFG(9), SP_CFG(10), SP_CFG(11), SP_CFG(12),
++            SP_CFG(13), SP_CFG(14), SP_CFG(15),
++          };
++          esphome::text::Text *sp_ext[] = {
++            SP_EXT(1), SP_EXT(2), SP_EXT(3), SP_EXT(4),
++            SP_EXT(5), SP_EXT(6), SP_EXT(7), SP_EXT(8),
++            SP_EXT(9), SP_EXT(10), SP_EXT(11), SP_EXT(12),
++            SP_EXT(13), SP_EXT(14), SP_EXT(15),
++          };
++          esphome::text::Text *sp_ext2[] = {
++            SP_EXT2(1), SP_EXT2(2), SP_EXT2(3), SP_EXT2(4),
++            SP_EXT2(5), SP_EXT2(6), SP_EXT2(7), SP_EXT2(8),
++            SP_EXT2(9), SP_EXT2(10), SP_EXT2(11), SP_EXT2(12),
++            SP_EXT2(13), SP_EXT2(14), SP_EXT2(15),
++          };
++          esphome::text::Text *sp_ext3[] = {
++            SP_EXT3(1), SP_EXT3(2), SP_EXT3(3), SP_EXT3(4),
++            SP_EXT3(5), SP_EXT3(6), SP_EXT3(7), SP_EXT3(8),
++            SP_EXT3(9), SP_EXT3(10), SP_EXT3(11), SP_EXT3(12),
++            SP_EXT3(13), SP_EXT3(14), SP_EXT3(15),
++          };
++          esphome::text::Text *sp_ext4[] = {
++            SP_EXT4(1), SP_EXT4(2), SP_EXT4(3), SP_EXT4(4),
++            SP_EXT4(5), SP_EXT4(6), SP_EXT4(7), SP_EXT4(8),
++            SP_EXT4(9), SP_EXT4(10), SP_EXT4(11), SP_EXT4(12),
++            SP_EXT4(13), SP_EXT4(14), SP_EXT4(15),
++          };
++          esphome::text::Text *sp_ext5[] = {
++            SP_EXT5(1), SP_EXT5(2), SP_EXT5(3), SP_EXT5(4),
++            SP_EXT5(5), SP_EXT5(6), SP_EXT5(7), SP_EXT5(8),
++            SP_EXT5(9), SP_EXT5(10), SP_EXT5(11), SP_EXT5(12),
++            SP_EXT5(13), SP_EXT5(14), SP_EXT5(15),
++          };
++          esphome::text::Text *sp_ext6[] = {
++            SP_EXT6(1), SP_EXT6(2), SP_EXT6(3), SP_EXT6(4),
++            SP_EXT6(5), SP_EXT6(6), SP_EXT6(7), SP_EXT6(8),
++            SP_EXT6(9), SP_EXT6(10), SP_EXT6(11), SP_EXT6(12),
++            SP_EXT6(13), SP_EXT6(14), SP_EXT6(15),
++          };
++          esphome::text::Text *sp_ext7[] = {
++            SP_EXT7(1), SP_EXT7(2), SP_EXT7(3), SP_EXT7(4),
++            SP_EXT7(5), SP_EXT7(6), SP_EXT7(7), SP_EXT7(8),
++            SP_EXT7(9), SP_EXT7(10), SP_EXT7(11), SP_EXT7(12),
++            SP_EXT7(13), SP_EXT7(14), SP_EXT7(15),
++          };
++          #undef SP_CFG
++          #undef SP_EXT
++          #undef SP_EXT2
++          #undef SP_EXT3
++          #undef SP_EXT4
++          #undef SP_EXT5
++          #undef SP_EXT6
++          #undef SP_EXT7
++          grid_rebuild_all(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3, sp_ext4, sp_ext5, sp_ext6, sp_ext7,
++            id(button_order).state,
++            id(button_on_color).state,
++            id(main_page)->obj);
++
++  - id: refresh_display_sensor_subscriptions
++    mode: single
++    then:
++      - lambda: |-
++          lv_obj_t *temperature_labels[] = {
++            id(temperatures),
++          };
++          grid_phase3(
++            id(indoor_temp_enable).state,
++            id(outdoor_temp_enable).state,
++            id(indoor_temp_entity).state,
++            id(outdoor_temp_entity).state,
++            id(clock_bar_temperature_entities).state,
++            &id(indoor_temp), &id(outdoor_temp),
++            temperature_labels,
++            1,
++            id(main_page)->obj,
++            id(presence_sensor_entity).state,
++            &id(presence_detected),
++            id(screen_schedule_sensor_entity).state,
++            &id(schedule_presence_detected),
++            id(media_player_sleep_prevention_entity).state,
++            &id(media_player_playing),
++            []() {
++              return clock_bar_should_show(
++                  id(clock_bar_enabled).state,
++                  id(main_page)->obj,
++                  id(espcontrol_app).display().current_mode(),
++                  id(espcontrol_app).display().target_schedule_inactive());
++            },
++            []() {
++              id(screensaver_presence_wake).execute();
++            },
++            []() {
++              id(screensaver_presence_sleep).execute();
++            },
++            []() {
++              id(screen_schedule_check).execute();
++            },
++            []() {
++              return id(outdoor_temp_enable).state;
++            });
++          ha_reannounce_state_subscriptions();
++
++
++esphome:
++  on_boot:
++    - priority: -100
++      then:
++        # Phase 1: Parse config, position buttons, apply colors/icons/labels
++        - lambda: |-
++            // BEGIN GENERATED PHASE 1 GRID WIRING
++            // Generated by scripts/generate_device_slots.py from devices/manifest.json.
++            #define BTN_SLOT(n) { button_##n##_config, button_##n, button_##n##_icon_label, button_##n##_text_label, button_##n##_sensor_container, button_##n##_sensor_label, button_##n##_unit_label, button_##n##_subpage_label }
++            BtnSlot slots[] = {
++              BTN_SLOT(1),
++              BTN_SLOT(2),
++              BTN_SLOT(3),
++              BTN_SLOT(4),
++              BTN_SLOT(5),
++              BTN_SLOT(6),
++              BTN_SLOT(7),
++              BTN_SLOT(8),
++              BTN_SLOT(9),
++              BTN_SLOT(10),
++              BTN_SLOT(11),
++              BTN_SLOT(12),
++              BTN_SLOT(13),
++              BTN_SLOT(14),
++              BTN_SLOT(15),
++            };
++            #undef BTN_SLOT
++            GridConfig cfg = {};
++            cfg.num_slots = 15;
++            bool portrait = id(screen_rotation_select).current_option() == "90" || id(screen_rotation_select).current_option() == "270";
++            cfg.cols = portrait ? 3 : 5;
++            cfg.width_compensation_vertical = portrait;
++            cfg.subpage_chevrons_enabled = id(subpage_chevrons_enabled).state;
++            cfg.card_corner_radius = card_curve_radius(32, id(card_curve_select).current_option(), 8, 20);
++            cfg.continuous_card_corners = true;
++            cfg.wrap_tall_labels = true;
++            cfg.label_lines = 2;
++            cfg.label_lines_tall = 3;
++            cfg.width_compensation_percent = 95;
++            cfg.volume_width_compensation_percent = 95;
++            cfg.media_artwork_width_compensation_percent = 98;
++            cfg.modal_profile.layout_family = DisplayModalLayoutFamily::WIDE_LANDSCAPE;
++            cfg.modal_profile.density = DisplayModalDensity::COMFORTABLE;
++            cfg.modal_profile.memory_tier = DisplayModalMemoryTier::STANDARD;
++            cfg.modal_profile.base_touch_target = 57;
++            cfg.icon_font = id(font_icon_main)->get_lv_font();
++            cfg.sp_sensor_font = id(font_number_value)->get_lv_font();
++            cfg.sp_large_sensor_font = id(font_number_value_large)->get_lv_font();
++            cfg.large_sensor_unit_offset_percent = -10;
++            cfg.media_title_font = id(font_text_title)->get_lv_font();
++            cfg.media_control_title_font = id(font_cover_art_title)->get_lv_font();
++            cfg.media_cover_art_title_font = id(font_cover_art_title)->get_lv_font();
++            cfg.media_cover_art_artist_font = id(font_cover_art_artist)->get_lv_font();
++            cfg.volume_number_font = id(font_number_value_large)->get_lv_font();
++            cfg.volume_label_font = id(font_text_large)->get_lv_font();
++            cfg.small_text_font = id(font_text_small)->get_lv_font();
++            cfg.climate_card_icon_font = id(font_icon_card)->get_lv_font();
++            cfg.subpage_chevron_font = id(font_icon_status)->get_lv_font();
++            cfg.climate_option_title_font = id(font_text_body)->get_lv_font();
++            cfg.climate_option_value_font = id(font_text_body)->get_lv_font();
++            cfg.temperature_unit = id(temperature_unit_select).current_option();
++            cfg.timezone = id(timezone_select).current_option();
++            cfg.begin_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++              id(display_takeover_begin).execute(static_cast<int>(kind));
++            };
++            cfg.end_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++              id(display_takeover_end).execute(static_cast<int>(kind));
++            };
++            static esphome::artwork_image::ArtworkImage *image_card_downloaders[] = {
++              id(image_card_download_1),
++              id(image_card_download_2),
++              id(image_card_download_3),
++              id(image_card_download_4),
++              id(image_card_download_5),
++              id(image_card_download_6),
++            };
++            cfg.image_card_images = image_card_downloaders;
++            cfg.image_card_modal_image = id(image_card_modal_download_1);
++            cfg.image_card_image_count = 6;
++            cfg.home_assistant_base_url = []() {
++              std::string base = id(cover_art_home_assistant_base_url);
++              while (!base.empty() && base.back() == '/') base.pop_back();
++              return base;
++            };
++            register_webhook_sender([](const std::string &url, const std::string &method, const std::string &body, const std::vector<esphome::http_request::Header> &headers) {
++              auto response = id(http_req).start(url, method, body, headers);
++              if (response == nullptr) {
++                ESP_LOGW("webhook", "Webhook %s request failed to start", method.c_str());
++                return false;
++              }
++              int status = response->status_code;
++              response->end();
++              if (!esphome::http_request::is_success(status)) {
++                ESP_LOGW("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++                return false;
++              }
++              ESP_LOGI("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++              return true;
++            });
++            set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
++            set_text_width_compensation_percent(cfg.text_width_compensation_percent);
++            apply_text_width_compensation(id(display_time));
++            apply_text_width_compensation(id(temperatures));
++            apply_text_width_compensation(id(clock_label));
++            // END GENERATED PHASE 1 GRID WIRING
++            grid_phase1(slots, cfg,
++              id(button_order).state,
++              id(button_on_color).state,
++              id(main_page)->obj);
++        - delay: 100ms
++
++        # Phase 2: HA subscriptions + subpage creation
++        - lambda: |-
++            // BEGIN GENERATED PHASE 2 GRID WIRING
++            // Generated by scripts/generate_device_slots.py from devices/manifest.json.
++            #define BTN_SLOT(n) { button_##n##_config, button_##n, button_##n##_icon_label, button_##n##_text_label, button_##n##_sensor_container, button_##n##_sensor_label, button_##n##_unit_label, button_##n##_subpage_label }
++            #define SP_CFG(n) subpage_##n##_config
++            #define SP_EXT(n) subpage_##n##_config_ext
++            #define SP_EXT2(n) subpage_##n##_config_ext_2
++            #define SP_EXT3(n) subpage_##n##_config_ext_3
++            #define SP_EXT4(n) subpage_##n##_config_ext_4
++            #define SP_EXT5(n) subpage_##n##_config_ext_5
++            #define SP_EXT6(n) subpage_##n##_config_ext_6
++            #define SP_EXT7(n) subpage_##n##_config_ext_7
++            BtnSlot slots[] = {
++              BTN_SLOT(1),
++              BTN_SLOT(2),
++              BTN_SLOT(3),
++              BTN_SLOT(4),
++              BTN_SLOT(5),
++              BTN_SLOT(6),
++              BTN_SLOT(7),
++              BTN_SLOT(8),
++              BTN_SLOT(9),
++              BTN_SLOT(10),
++              BTN_SLOT(11),
++              BTN_SLOT(12),
++              BTN_SLOT(13),
++              BTN_SLOT(14),
++              BTN_SLOT(15),
++            };
++            esphome::text::Text *sp_cfgs[] = {
++              SP_CFG(1), SP_CFG(2), SP_CFG(3), SP_CFG(4),
++              SP_CFG(5), SP_CFG(6), SP_CFG(7), SP_CFG(8),
++              SP_CFG(9), SP_CFG(10), SP_CFG(11), SP_CFG(12),
++              SP_CFG(13), SP_CFG(14), SP_CFG(15),
++            };
++            esphome::text::Text *sp_ext[] = {
++              SP_EXT(1), SP_EXT(2), SP_EXT(3), SP_EXT(4),
++              SP_EXT(5), SP_EXT(6), SP_EXT(7), SP_EXT(8),
++              SP_EXT(9), SP_EXT(10), SP_EXT(11), SP_EXT(12),
++              SP_EXT(13), SP_EXT(14), SP_EXT(15),
++            };
++            esphome::text::Text *sp_ext2[] = {
++              SP_EXT2(1), SP_EXT2(2), SP_EXT2(3), SP_EXT2(4),
++              SP_EXT2(5), SP_EXT2(6), SP_EXT2(7), SP_EXT2(8),
++              SP_EXT2(9), SP_EXT2(10), SP_EXT2(11), SP_EXT2(12),
++              SP_EXT2(13), SP_EXT2(14), SP_EXT2(15),
++            };
++            esphome::text::Text *sp_ext3[] = {
++              SP_EXT3(1), SP_EXT3(2), SP_EXT3(3), SP_EXT3(4),
++              SP_EXT3(5), SP_EXT3(6), SP_EXT3(7), SP_EXT3(8),
++              SP_EXT3(9), SP_EXT3(10), SP_EXT3(11), SP_EXT3(12),
++              SP_EXT3(13), SP_EXT3(14), SP_EXT3(15),
++            };
++            esphome::text::Text *sp_ext4[] = {
++              SP_EXT4(1), SP_EXT4(2), SP_EXT4(3), SP_EXT4(4),
++              SP_EXT4(5), SP_EXT4(6), SP_EXT4(7), SP_EXT4(8),
++              SP_EXT4(9), SP_EXT4(10), SP_EXT4(11), SP_EXT4(12),
++              SP_EXT4(13), SP_EXT4(14), SP_EXT4(15),
++            };
++            esphome::text::Text *sp_ext5[] = {
++              SP_EXT5(1), SP_EXT5(2), SP_EXT5(3), SP_EXT5(4),
++              SP_EXT5(5), SP_EXT5(6), SP_EXT5(7), SP_EXT5(8),
++              SP_EXT5(9), SP_EXT5(10), SP_EXT5(11), SP_EXT5(12),
++              SP_EXT5(13), SP_EXT5(14), SP_EXT5(15),
++            };
++            esphome::text::Text *sp_ext6[] = {
++              SP_EXT6(1), SP_EXT6(2), SP_EXT6(3), SP_EXT6(4),
++              SP_EXT6(5), SP_EXT6(6), SP_EXT6(7), SP_EXT6(8),
++              SP_EXT6(9), SP_EXT6(10), SP_EXT6(11), SP_EXT6(12),
++              SP_EXT6(13), SP_EXT6(14), SP_EXT6(15),
++            };
++            esphome::text::Text *sp_ext7[] = {
++              SP_EXT7(1), SP_EXT7(2), SP_EXT7(3), SP_EXT7(4),
++              SP_EXT7(5), SP_EXT7(6), SP_EXT7(7), SP_EXT7(8),
++              SP_EXT7(9), SP_EXT7(10), SP_EXT7(11), SP_EXT7(12),
++              SP_EXT7(13), SP_EXT7(14), SP_EXT7(15),
++            };
++            #undef BTN_SLOT
++            #undef SP_CFG
++            #undef SP_EXT
++            #undef SP_EXT2
++            #undef SP_EXT3
++            #undef SP_EXT4
++            #undef SP_EXT5
++            #undef SP_EXT6
++            #undef SP_EXT7
++            GridConfig cfg = {};
++            cfg.num_slots = 15;
++            bool portrait = id(screen_rotation_select).current_option() == "90" || id(screen_rotation_select).current_option() == "270";
++            cfg.cols = portrait ? 3 : 5;
++            cfg.width_compensation_vertical = portrait;
++            cfg.subpage_chevrons_enabled = id(subpage_chevrons_enabled).state;
++            cfg.card_corner_radius = card_curve_radius(32, id(card_curve_select).current_option(), 8, 20);
++            cfg.continuous_card_corners = true;
++            cfg.wrap_tall_labels = true;
++            cfg.label_lines = 2;
++            cfg.label_lines_tall = 3;
++            cfg.width_compensation_percent = 95;
++            cfg.volume_width_compensation_percent = 95;
++            cfg.media_artwork_width_compensation_percent = 98;
++            cfg.modal_profile.layout_family = DisplayModalLayoutFamily::WIDE_LANDSCAPE;
++            cfg.modal_profile.density = DisplayModalDensity::COMFORTABLE;
++            cfg.modal_profile.memory_tier = DisplayModalMemoryTier::STANDARD;
++            cfg.modal_profile.base_touch_target = 57;
++            cfg.icon_font = id(font_icon_main)->get_lv_font();
++            cfg.sp_sensor_font = id(font_number_value)->get_lv_font();
++            cfg.sp_large_sensor_font = id(font_number_value_large)->get_lv_font();
++            cfg.large_sensor_unit_offset_percent = -10;
++            cfg.media_title_font = id(font_text_title)->get_lv_font();
++            cfg.media_control_title_font = id(font_cover_art_title)->get_lv_font();
++            cfg.media_cover_art_title_font = id(font_cover_art_title)->get_lv_font();
++            cfg.media_cover_art_artist_font = id(font_cover_art_artist)->get_lv_font();
++            cfg.volume_number_font = id(font_number_value_large)->get_lv_font();
++            cfg.volume_label_font = id(font_text_large)->get_lv_font();
++            cfg.small_text_font = id(font_text_small)->get_lv_font();
++            cfg.climate_card_icon_font = id(font_icon_card)->get_lv_font();
++            cfg.subpage_chevron_font = id(font_icon_status)->get_lv_font();
++            cfg.climate_option_title_font = id(font_text_body)->get_lv_font();
++            cfg.climate_option_value_font = id(font_text_body)->get_lv_font();
++            cfg.temperature_unit = id(temperature_unit_select).current_option();
++            cfg.timezone = id(timezone_select).current_option();
++            cfg.begin_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++              id(display_takeover_begin).execute(static_cast<int>(kind));
++            };
++            cfg.end_display_takeover = [](espcontrol::DisplayTakeoverKind kind) {
++              id(display_takeover_end).execute(static_cast<int>(kind));
++            };
++            static esphome::artwork_image::ArtworkImage *image_card_downloaders[] = {
++              id(image_card_download_1),
++              id(image_card_download_2),
++              id(image_card_download_3),
++              id(image_card_download_4),
++              id(image_card_download_5),
++              id(image_card_download_6),
++            };
++            cfg.image_card_images = image_card_downloaders;
++            cfg.image_card_modal_image = id(image_card_modal_download_1);
++            cfg.image_card_image_count = 6;
++            cfg.home_assistant_base_url = []() {
++              std::string base = id(cover_art_home_assistant_base_url);
++              while (!base.empty() && base.back() == '/') base.pop_back();
++              return base;
++            };
++            register_webhook_sender([](const std::string &url, const std::string &method, const std::string &body, const std::vector<esphome::http_request::Header> &headers) {
++              auto response = id(http_req).start(url, method, body, headers);
++              if (response == nullptr) {
++                ESP_LOGW("webhook", "Webhook %s request failed to start", method.c_str());
++                return false;
++              }
++              int status = response->status_code;
++              response->end();
++              if (!esphome::http_request::is_success(status)) {
++                ESP_LOGW("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++                return false;
++              }
++              ESP_LOGI("webhook", "Webhook %s returned HTTP %d", method.c_str(), status);
++              return true;
++            });
++            set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
++            set_text_width_compensation_percent(cfg.text_width_compensation_percent);
++            apply_text_width_compensation(id(display_time));
++            apply_text_width_compensation(id(temperatures));
++            apply_text_width_compensation(id(clock_label));
++            // END GENERATED PHASE 2 GRID WIRING
++            grid_phase2(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3, sp_ext4, sp_ext5, sp_ext6, sp_ext7,
++              id(button_order).state,
++              id(button_on_color).state,
++              id(main_page)->obj);
++        - script.execute: time_update
++        - delay: 100ms
++
++        # Bind display sensors after the initial grid is ready.
++        - script.execute: refresh_display_sensor_subscriptions
++        - delay: 500ms
++        - script.execute: refresh_button_grid
++        - delay: 1500ms
++        - script.execute: refresh_button_grid
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/esphome.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/esphome.yaml
+new file mode 100644
+index 000000000..ca440bcce
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/esphome.yaml
+@@ -0,0 +1,34 @@
++# =============================================================================
++# ESPHOME ENTRY POINT - Waveshare ESP32-P4-WIFI6-Touch-LCD-7B
++# =============================================================================
++# User-facing config file. Set your device name and WiFi credentials here.
++# The remote package reference pulls in the full device configuration from
++# GitHub so the device stays up-to-date automatically.
++# =============================================================================
++
++# ---------------------------------------------------------------------------
++# Device identity
++# ---------------------------------------------------------------------------
++substitutions:
++  name: "your-device-name"
++  friendly_name: "Your Device Name"
++
++# ---------------------------------------------------------------------------
++# WiFi credentials (stored in secrets.yaml)
++# ---------------------------------------------------------------------------
++wifi:
++  ssid: !secret wifi_ssid
++  password: !secret wifi_password
++
++# ---------------------------------------------------------------------------
++# Remote package (pulls full config from GitHub)
++# ---------------------------------------------------------------------------
++packages:
++  api_encryption:
++    url: https://github.com/jtenniswood/espcontrol/
++    file: common/addon/api_encryption_dynamic.yaml
++    refresh: 1s
++  setup:
++    url: https://github.com/jtenniswood/espcontrol/
++    file: devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
++    refresh: 1s
+diff --git a/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
+new file mode 100644
+index 000000000..e0a0e4109
+--- /dev/null
++++ b/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
+@@ -0,0 +1,156 @@
++# =============================================================================
++# PACKAGES - ESPHome include manifest
++# =============================================================================
++# Load order follows dependencies: device and assets first, then config,
++# addons, and screens. Loading screen must be the first page so LVGL shows
++# it at startup. Main page (lvgl.yaml) is included after setup screens.
++# =============================================================================
++
++substitutions:
++  cover_art_placeholder_file: "https://raw.githubusercontent.com/jtenniswood/espcontrol/main/common/assets/cover_art_placeholder.svg"
++  device_slug: "waveshare-esp32-p4-wifi6-touch-lcd-7b"
++  firmware_manifest_slug: "waveshare-esp32-p4-wifi6-touch-lcd-7b"
++  firmware_version: "dev"
++  screensaver_camera_supported: "true"
++  screen_width: "1024"
++  screen_height: "600"
++  content_width: "550"
++  setup_icon_font_id: font_icon_main
++  setup_title_font_id: font_text_title
++  setup_body_font_id: font_text_body
++  setup_pad_row: "20"
++  setup_loading_pad_row: "40"
++  setup_action_button_width: "200"
++  setup_action_button_height: "56"
++  setup_action_button_radius: "12"
++  icon_font: font_icon_main
++  subpage_chevron_font: font_icon_status
++  label_font: font_text_body
++  media_title_font: font_text_title
++  unit_font: font_text_body
++  sensor_value_font: font_number_value
++  padding: 16px
++  radius: 32px
++  main_page_card_gap: "10"
++  main_page_pad_top: "42"
++  main_page_compact_pad_top: "5"
++  clock_bar_item_gap: "80"
++  clock_bar_visual_gap: "10"
++  clock_font_size: "200"
++  clock_cx: "512"
++  clock_cy: "300"
++  screen_saver_clock_min_brightness: "1"
++  screen_saver_clock_default_brightness: "35"
++  screen_schedule_clock_min_brightness: "1"
++  screen_schedule_clock_default_brightness: "10"
++  card_curve_small_radius: 8px
++  card_curve_medium_radius: 20px
++  button_radius: 10px
++  cover_art_size: "600"
++  cover_art_decode_size: "600"
++  cover_art_x: "0"
++  cover_art_y: "0"
++  cover_art_accent_x: "585"
++  cover_art_accent_y: "0"
++  cover_art_accent_width: "439"
++  cover_art_accent_height: "600"
++  cover_art_accent_bg_opa: "100%"
++  cover_art_accent_opa: "100%"
++  cover_art_panel_x: "615"
++  cover_art_panel_y: "34"
++  cover_art_panel_width: "377"
++  cover_art_panel_height: "430"
++  cover_art_panel_pad_top: "0"
++  cover_art_panel_pad_bottom: "0"
++  cover_art_panel_pad_left: "0"
++  cover_art_panel_pad_right: "0"
++  cover_art_panel_pad_row: "0"
++  cover_art_title_font: "font_cover_art_title"
++  cover_art_title_max_height: "260"
++  cover_art_title_line_space: "-8"
++  cover_art_artist_font: "font_cover_art_artist"
++  cover_art_artist_pad_top: "10"
++  cover_art_artist_long_mode: "dot"
++  cover_art_time_font: "font_cover_art_time"
++  cover_art_time_pad_top: "14"
++  cover_art_progress_width: "1024"
++  cover_art_progress_height: "4"
++  cover_art_text_color: "0xFFFFFF"
++  cover_art_square_overlay: "false"
++  cover_art_live_image_updates: "false"
++  battery_status_apply_code: ""
++  battery_status_hide_code: ""
++  image_card_slot_capacity: "6"
++
++esphome:
++  build_flags:
++    - "-DESPCONTROL_IMAGE_CARD_MAX_CONTEXTS=${image_card_slot_capacity}"
++
++packages:
++  # ---------------------------------------------------------------------------
++  # Device, assets, and LVGL base
++  # ---------------------------------------------------------------------------
++  entity_names:    !include ../../common/config/entity_names.yaml
++  device:          !include device/device.yaml
++  network_coprocessor: !include device/network_coprocessor.yaml
++  esp32_c6_firmware_update: !include ../../common/device/esp32_c6_firmware_update.yaml
++  icons:           !include ../../common/assets/icons.yaml
++  fonts_device:    !include device/fonts.yaml
++  theme_colors:    !include ../../common/theme/colors.yaml
++  button_theme:    !include ../../common/theme/button.yaml
++  # ---------------------------------------------------------------------------
++  # Configuration (text/select/number components for web UI)
++  # ---------------------------------------------------------------------------
++  colors:          !include ../../common/config/colors.yaml
++  button_order:    !include ../../common/config/button_order.yaml
++  display_config:  !include ../../common/config/display.yaml
++  # BEGIN GENERATED BUTTON PACKAGES
++  # Generated by scripts/generate_device_slots.py from devices/manifest.json.
++  # Per-button entity/label/icon (15 slots - 3x5 grid)
++  btn_1:           !include { file: ../../common/config/button_template.yaml, vars: { num: "1" } }
++  btn_2:           !include { file: ../../common/config/button_template.yaml, vars: { num: "2" } }
++  btn_3:           !include { file: ../../common/config/button_template.yaml, vars: { num: "3" } }
++  btn_4:           !include { file: ../../common/config/button_template.yaml, vars: { num: "4" } }
++  btn_5:           !include { file: ../../common/config/button_template.yaml, vars: { num: "5" } }
++  btn_6:           !include { file: ../../common/config/button_template.yaml, vars: { num: "6" } }
++  btn_7:           !include { file: ../../common/config/button_template.yaml, vars: { num: "7" } }
++  btn_8:           !include { file: ../../common/config/button_template.yaml, vars: { num: "8" } }
++  btn_9:           !include { file: ../../common/config/button_template.yaml, vars: { num: "9" } }
++  btn_10:          !include { file: ../../common/config/button_template.yaml, vars: { num: "10" } }
++  btn_11:          !include { file: ../../common/config/button_template.yaml, vars: { num: "11" } }
++  btn_12:          !include { file: ../../common/config/button_template.yaml, vars: { num: "12" } }
++  btn_13:          !include { file: ../../common/config/button_template.yaml, vars: { num: "13" } }
++  btn_14:          !include { file: ../../common/config/button_template.yaml, vars: { num: "14" } }
++  btn_15:          !include { file: ../../common/config/button_template.yaml, vars: { num: "15" } }
++  # END GENERATED BUTTON PACKAGES
++  # ---------------------------------------------------------------------------
++  # Addons
++  # ---------------------------------------------------------------------------
++  connectivity:    !include ../../common/addon/connectivity.yaml
++  api_remote_actions: !include ../../common/device/api_remote_actions.yaml
++  api_open_modal:  !include ../../common/device/api_open_modal.yaml
++  api_navigate:    !include ../../common/device/api_navigate.yaml
++  time_sync:       !include ../../common/addon/time.yaml
++  backlight:       !include ../../common/addon/backlight.yaml
++  bl_schedule:     !include ../../common/addon/backlight_schedule.yaml
++  network:         !include ../../common/addon/network.yaml
++  memory_diag:     !include ../../common/addon/memory_diagnostics.yaml
++  fw_update:       !include ../../common/addon/firmware_update.yaml
++
++  # ---------------------------------------------------------------------------
++  # Screens (loading must be first page for LVGL startup)
++  # ---------------------------------------------------------------------------
++  screen_loading:  !include ../../common/device/screen_loading.yaml
++  screen_wifi:     !include ../../common/device/screen_wifi_setup.yaml
++  screen_ha:       !include ../../common/device/screen_ha_setup.yaml
++  screen_ha_act:   !include ../../common/device/screen_ha_actions.yaml
++  screen_setup:    !include ../../common/device/screen_button_setup.yaml
++  screen_clock:    !include ../../common/device/screen_clock.yaml
++  screen_art:      !include ../../common/device/screen_cover_art.yaml
++  screen_camera:   !include ../../common/device/screen_camera_screensaver.yaml
++  image_cards:     !include ../../common/device/image_cards_6.yaml
++  # ---------------------------------------------------------------------------
++  # Main page and dynamic sensor subscriptions (after setup screens)
++  # ---------------------------------------------------------------------------
++  lvgl:            !include device/lvgl.yaml
++  sensors:         !include device/sensors.yaml
+diff --git a/docs/.vitepress/config.mts b/docs/.vitepress/config.mts
+index 2eff64184..c9198a83a 100644
+--- a/docs/.vitepress/config.mts
++++ b/docs/.vitepress/config.mts
+@@ -156,6 +156,14 @@ const screenProducts: Record<string, Record<string, string>> = {
+     resolution: '1280 x 800',
+     processor: 'ESP32-P4',
+   },
++  'screens/waveshare-p4-7b.md': {
++    name: 'Waveshare ESP32-P4 7B',
++    brand: 'Waveshare',
++    model: 'ESP32-P4-WIFI6-Touch-LCD-7B',
++    size: '7 inches',
++    resolution: '1024 x 600',
++    processor: 'ESP32-P4',
++  },
+   'screens/p4-86.md': {
+     name: 'ESP32-P4 86',
+     brand: 'Waveshare',
+@@ -366,6 +374,7 @@ export default defineConfig({
+               { text: 'V3', link: '/screens/jc4880p443-v3' },
+             ],
+           },
++          { text: '7-inch Waveshare P4 7B', link: '/screens/waveshare-p4-7b' },
+           { text: '4-inch ESP32-P4 86', link: '/screens/p4-86' },
+           { text: '4-inch 4848S040', link: '/screens/4848s040' },
+           { text: 'Printable Stands', link: '/reference/3d-printable-stands' },
+diff --git a/docs/.vitepress/theme/components/EspInstallSelector.vue b/docs/.vitepress/theme/components/EspInstallSelector.vue
+index b711845aa..acee6e50b 100644
+--- a/docs/.vitepress/theme/components/EspInstallSelector.vue
++++ b/docs/.vitepress/theme/components/EspInstallSelector.vue
+@@ -188,6 +188,25 @@ const devices = [
+       }
+     ]
+   },
++  {
++    slug: 'waveshare-esp32-p4-wifi6-touch-lcd-7b',
++    name: 'Waveshare ESP32-P4 7B',
++    size: '7 inch',
++    resolution: '1024 x 600',
++    orientation: 'Landscape',
++    slots: 15,
++    cols: 5,
++    rows: 3,
++    aspect: '1024 / 600',
++    shape: 'landscape',
++    versions: [
++      {
++        slug: 'waveshare-esp32-p4-wifi6-touch-lcd-7b',
++        number: 1,
++        label: 'ESP32-P4-WIFI6-Touch-LCD-7B'
++      }
++    ]
++  },
+   {
+     slug: 'esp32-p4-86',
+     name: 'ESP32-P4 86 Panel',
+diff --git a/docs/getting-started/manual-esphome-setup.md b/docs/getting-started/manual-esphome-setup.md
+index 19e829850..84e4c307e 100644
+--- a/docs/getting-started/manual-esphome-setup.md
++++ b/docs/getting-started/manual-esphome-setup.md
+@@ -33,6 +33,7 @@ Each screen uses a different ESPHome package file. For the JC8012P4A1, confirm E
+ | 7-inch JC1060P470 V2 / new panel, case marked `V2` or board date code `2622` or higher | `devices/guition-esp32-p4-jc1060p470-v2/packages.yaml` |
+ | 4.3-inch JC4880P443 original | `devices/guition-esp32-p4-jc4880p443/packages.yaml` |
+ | [4.3-inch JC4880P443 V3](/screens/jc4880p443-v3) | `devices/guition-esp32-p4-jc4880p443-v3/packages.yaml` |
++| 7-inch Waveshare ESP32-P4-WIFI6-Touch-LCD-7B | `devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml` |
+ | 4-inch ESP32-P4 86 Panel | `devices/esp32-p4-86/packages.yaml` |
+ | 4-inch 4848S040 | `devices/guition-esp32-s3-4848s040/packages.yaml` |
+ 
+diff --git a/docs/reference/faq.md b/docs/reference/faq.md
+index fe31bead3..ebd51cd0a 100644
+--- a/docs/reference/faq.md
++++ b/docs/reference/faq.md
+@@ -22,7 +22,7 @@ Home Assistant is required for smart-home controls, entity readings, and media f
+ 
+ ### Which Panels Are Supported?
+ 
+-Supported families are Guition 4848S040, JC4880P443, JC1060P470, JC8012P4A1, and P4 86 Panel ETH-2RO. Exact revisions matter. Use [Choose a screen](/screens/) to compare them and find the matching installer.
++Supported families are Guition 4848S040, JC4880P443, JC1060P470, JC8012P4A1, Waveshare ESP32-P4-WIFI6-Touch-LCD-7B, and P4 86 Panel ETH-2RO. Exact revisions matter. Use [Choose a screen](/screens/) to compare them and find the matching installer.
+ 
+ ### Should I Choose the S3 or a P4 Screen?
+ 
+diff --git a/docs/screens/index.md b/docs/screens/index.md
+index dec3f0906..4946af20b 100644
+--- a/docs/screens/index.md
++++ b/docs/screens/index.md
+@@ -23,6 +23,7 @@ These are the standard home-screen layouts. A larger card occupies several slots
+ | 4.3-inch Guition JC4880P443 ([original](/screens/jc4880p443) / [V3](/screens/jc4880p443-v3)) | ESP32-P4 | 480 × 800, portrait | 6 | 6 |
+ | [4-inch P4 86 Panel, ETH-2RO](/screens/p4-86) | ESP32-P4 | 720 × 720, square | 9 | 6 |
+ | [7-inch Guition JC1060P470](/screens/jc1060p470) | ESP32-P4 | 1024 × 600, landscape | 15 | 6 |
++| [7-inch Waveshare ESP32-P4-WIFI6-Touch-LCD-7B](/screens/waveshare-p4-7b) | ESP32-P4 | 1024 × 600, landscape | 15 | 6 |
+ | [10.1-inch Guition JC8012P4A1](/screens/jc8012p4a1) | ESP32-P4 | 1280 × 800, landscape | 20 | 6 |
+ 
+ Camera and Media Cover Art cards share the image-slot limit **across all pages**. Moving one into a subpage does not free a slot. Cameras display still snapshots, not live video. Read the [camera limits](/card-types/cameras#practical-limits) before planning a camera-heavy layout.
+@@ -45,6 +46,7 @@ The Waveshare **ESP32-P4-86-Panel-ETH-2RO** supports USB-C power or its separate
+ 
+ - **10.1-inch JC8012P4A1:** check chip information first. ESP32-P4 v3.x production silicon needs [V3 firmware](/screens/jc8012p4a1-v3), regardless of the case date. Otherwise, rear-case markings `2627` or lower use [V1](/screens/jc8012p4a1-v1), and `2628` or higher use [V2](/screens/jc8012p4a1-v2).
+ - **7-inch JC1060P470:** a case marked `V2`, or a screen-board date `2622` or higher, identifies [V2](/screens/jc1060p470-v2). An unmarked case with an earlier board date identifies [V1](/screens/jc1060p470-v1). Follow the [identification guide](/screens/jc1060p470) if uncertain.
++- **7-inch Waveshare:** EspControl targets the **ESP32-P4-WIFI6-Touch-LCD-7B**. It is not interchangeable with the Guition JC1060P470 firmware.
+ - **4-inch P4:** EspControl targets **ESP32-P4-86-Panel-ETH-2RO**. Other rear boards or similarly named camera variants are not automatically supported.
+ 
+ Matching screen size, resolution, or processor is not sufficient. The common Cheap Yellow Display and other unlisted boards do not have ready-to-install EspControl firmware.
+diff --git a/docs/screens/waveshare-p4-7b.md b/docs/screens/waveshare-p4-7b.md
+new file mode 100644
+index 000000000..3eb1cc839
+--- /dev/null
++++ b/docs/screens/waveshare-p4-7b.md
+@@ -0,0 +1,50 @@
++---
++title: "Waveshare ESP32-P4 7B Home Assistant Setup"
++description:
++  EspControl on the Waveshare ESP32-P4-WIFI6-Touch-LCD-7B - a 7-inch 1024x600 landscape touchscreen with 15 cards, powered by ESP32-P4.
++---
++
++# 7-inch Waveshare ESP32-P4 7B
++
++The **Waveshare ESP32-P4-WIFI6-Touch-LCD-7B** is a 7-inch 1024x600 landscape touchscreen powered by an **ESP32-P4**, with an **ESP32-C6** co-processor for WiFi. It uses the same 3x5 EspControl layout as the Guition JC1060P470, but it is a different board with different pins, so it needs its own firmware.
++
++::: warning Community-contributed profile
++This profile compiles in CI but has not yet been confirmed on physical hardware. Please report what works and what does not in a GitHub issue.
++:::
++
++The board has no Ethernet port, so only the WiFi firmware is available. The profile assumes a production ESP32-P4 chip (revision 3.x). If the boot log shows `chip revision: v1.x`, build the firmware yourself with `engineering_sample: true`.
++
++## Card Grid
++
++<!--@include: ../generated/screens/waveshare-p4-7b-grid.md-->
++
++## Install
++
++Connect the display to your computer with a USB-C data cable, then click the button below.
++
++<!--@include: ../generated/screens/waveshare-p4-7b-install.md-->
++
++For WiFi setup and Home Assistant pairing, follow the [Install guide](/getting-started/install).
++
++## ESPHome Manual Setup
++
++```yaml
++substitutions:
++  name: "office-screen"
++  friendly_name: "Office Screen"
++
++wifi:
++  ssid: !secret wifi_ssid
++  password: !secret wifi_password
++
++packages:
++  setup:
++    url: https://github.com/jtenniswood/espcontrol/
++    file: devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/packages.yaml
++    refresh: 1sec
++```
++
++## Where to Buy
++
++- [Waveshare product page](https://www.waveshare.com/esp32-p4-wifi6-touch-lcd-7b.htm)
++- [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-P4-WIFI6-Touch-LCD-7B)
+diff --git a/product/model_v2.json b/product/model_v2.json
+index 8b27d4412..4d13ef755 100644
+--- a/product/model_v2.json
++++ b/product/model_v2.json
+@@ -99,6 +99,7 @@
+       "guition-esp32-p4-jc4880p443": "product/v2/devices/guition-esp32-p4-jc4880p443.json",
+       "guition-esp32-p4-jc4880p443-v3": "product/v2/devices/guition-esp32-p4-jc4880p443-v3.json",
+       "esp32-p4-86": "product/v2/devices/esp32-p4-86.json",
++      "waveshare-esp32-p4-wifi6-touch-lcd-7b": "product/v2/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b.json",
+       "guition-esp32-s3-4848s040": "product/v2/devices/guition-esp32-s3-4848s040.json"
+     }
+   }
+diff --git a/product/v2/device_catalog.json b/product/v2/device_catalog.json
+index 4b60057e1..68a2d7ec6 100644
+--- a/product/v2/device_catalog.json
++++ b/product/v2/device_catalog.json
+@@ -1319,6 +1319,48 @@
+         }
+       }
+     },
++    "waveshare-esp32-p4-wifi6-touch-lcd-7b": {
++      "profiles": {
++        "platform": "esp32-p4",
++        "display": "jc1060p470-1024x600",
++        "modal": "wide-landscape",
++        "fonts": "large-panel-p4",
++        "network": [
++          "c6-firmware-update",
++          "network-coprocessor"
++        ],
++        "artwork": "landscape-1024x600"
++      },
++      "config": {
++        "public": {
++          "name": "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B",
++          "docsPath": "/screens/waveshare-p4-7b"
++        },
++        "web": {
++          "continuousCorners": true,
++          "btn": {
++            "smallTextSize": 1.757812
++          }
++        },
++        "firmware": {
++          "package": {
++            "substitutions": {
++              "button_radius": "10px"
++            }
++          }
++        }
++      },
++      "overrides": {
++        "rotation": {
++          "displayOffset": 0
++        },
++        "web": {
++          "grid": {
++            "gap": 0.976562
++          }
++        }
++      }
++    },
+     "guition-esp32-s3-4848s040": {
+       "profiles": {
+         "platform": "esp32-s3",
+diff --git a/product/v2/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b.json b/product/v2/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b.json
+new file mode 100644
+index 000000000..ff0ff8c60
+--- /dev/null
++++ b/product/v2/devices/waveshare-esp32-p4-wifi6-touch-lcd-7b.json
+@@ -0,0 +1,42 @@
++{
++  "profiles": {
++    "platform": "esp32-p4",
++    "display": "jc1060p470-1024x600",
++    "modal": "wide-landscape",
++    "fonts": "large-panel-p4",
++    "network": [
++      "c6-firmware-update",
++      "network-coprocessor"
++    ],
++    "artwork": "landscape-1024x600"
++  },
++  "config": {
++    "public": {
++      "name": "Waveshare ESP32-P4-WIFI6-Touch-LCD-7B",
++      "docsPath": "/screens/waveshare-p4-7b"
++    },
++    "web": {
++      "continuousCorners": true,
++      "btn": {
++        "smallTextSize": 1.757812
++      }
++    },
++    "firmware": {
++      "package": {
++        "substitutions": {
++          "button_radius": "10px"
++        }
++      }
++    }
++  },
++  "overrides": {
++    "rotation": {
++      "displayOffset": 0
++    },
++    "web": {
++      "grid": {
++        "gap": 0.976562
++      }
++    }
++  }
++}
+diff --git a/product/v2/product_compatibility.json b/product/v2/product_compatibility.json
+index d72385148..98659b903 100644
+--- a/product/v2/product_compatibility.json
++++ b/product/v2/product_compatibility.json
+@@ -185,6 +185,7 @@
+         "guition-esp32-p4-jc8012p4a1-v2",
+         "guition-esp32-p4-jc8012p4a1-v3",
+         "esp32-p4-86",
++        "waveshare-esp32-p4-wifi6-touch-lcd-7b",
+         "guition-esp32-s3-4848s040"
+       ]
+     }
+diff --git a/scripts/check_cover_art_contract.py b/scripts/check_cover_art_contract.py
+index 541271e61..7fb5f771e 100644
+--- a/scripts/check_cover_art_contract.py
++++ b/scripts/check_cover_art_contract.py
+@@ -174,7 +174,8 @@ int main() {
+   auto seven_v2 = cover_art_layout("guition-esp32-p4-jc1060p470-v2", "0", 1024, 600, 600, 260);
+   assert(seven_v2.split && seven_v2.art_size == 600 && seven_v2.panel_x == 615);
+   // The 7-inch font has 89px lines with -8px spacing: four lines use 332px.
+-  for (const auto &slug : {"guition-esp32-p4-jc1060p470", "guition-esp32-p4-jc1060p470-v2"}) {
++  for (const auto &slug : {"guition-esp32-p4-jc1060p470", "guition-esp32-p4-jc1060p470-v2",
++                           "waveshare-esp32-p4-wifi6-touch-lcd-7b"}) {
+     for (const auto &rotation : {"0", "180"}) {
+       const auto layout = cover_art_layout(slug, rotation, 1024, 600, 600, 260);
+       const auto button = playback_button_layout(layout, 89, -8);
+diff --git a/scripts/check_device_profiles.py b/scripts/check_device_profiles.py
+index e83f13e46..ee16a658c 100644
+--- a/scripts/check_device_profiles.py
++++ b/scripts/check_device_profiles.py
+@@ -38,6 +38,7 @@ LEGACY_OTA_PARTITION_LAYOUTS = {
+     "esp32-p4-86": "partitions_32mb_card_images.csv",
+     "guition-esp32-p4-jc1060p470": "partitions_16mb_card_images.csv",
+     "guition-esp32-p4-jc1060p470-v2": "partitions_16mb_card_images.csv",
++    "waveshare-esp32-p4-wifi6-touch-lcd-7b": "partitions_16mb_card_images.csv",
+     "guition-esp32-p4-jc4880p443": "partitions_16mb_card_images.csv",
+     "guition-esp32-p4-jc8012p4a1": "partitions_16mb_card_images.csv",
+     "guition-esp32-p4-jc8012p4a1-v2": "partitions_16mb_card_images.csv",
+@@ -490,6 +491,7 @@ def test_p4_crash_restart_preserves_safe_mode_counter() -> None:
+     slugs = (
+         "guition-esp32-p4-jc1060p470",
+         "guition-esp32-p4-jc1060p470-v2",
++        "waveshare-esp32-p4-wifi6-touch-lcd-7b",
+         "guition-esp32-p4-jc4880p443",
+         "guition-esp32-p4-jc8012p4a1",
+         "guition-esp32-p4-jc8012p4a1-v2",
+@@ -546,6 +548,7 @@ def test_rotation_refresh_rebuilds_subpages() -> None:
+     slugs = (
+         "guition-esp32-p4-jc1060p470",
+         "guition-esp32-p4-jc1060p470-v2",
++        "waveshare-esp32-p4-wifi6-touch-lcd-7b",
+         "guition-esp32-p4-jc4880p443",
+         "guition-esp32-p4-jc8012p4a1",
+         "guition-esp32-p4-jc8012p4a1-v2",
+@@ -601,6 +604,7 @@ def test_seven_inch_width_compensation_rotates_with_screen() -> None:
+     for slug in (
+         "guition-esp32-p4-jc1060p470",
+         "guition-esp32-p4-jc1060p470-v2",
++        "waveshare-esp32-p4-wifi6-touch-lcd-7b",
+     ):
+         profile = profiles[slug]
+         assert profile["rotation"]["rotateWidthCompensation"], (
+diff --git a/scripts/check_firmware_modal_layouts.py b/scripts/check_firmware_modal_layouts.py
+index dfd3b4d74..ccc3ebf8f 100644
+--- a/scripts/check_firmware_modal_layouts.py
++++ b/scripts/check_firmware_modal_layouts.py
+@@ -49,6 +49,7 @@ def assert_profile_contract(fixtures: dict, profiles: dict[str, dict]) -> None:
+         "guition-esp32-p4-jc8012p4a1-v2": "guition-esp32-p4-jc8012p4a1",
+         "guition-esp32-p4-jc8012p4a1-v3": "guition-esp32-p4-jc8012p4a1",
+         "guition-esp32-p4-jc1060p470-v2": "guition-esp32-p4-jc1060p470",
++        "waveshare-esp32-p4-wifi6-touch-lcd-7b": "guition-esp32-p4-jc1060p470",
+     }
+     unexpected = sorted(set(missing) - set(allowed_aliases))
+     assert not unexpected, f"modal geometry fixtures missing devices: {', '.join(unexpected)}"
+diff --git a/scripts/check_tasks_data.py b/scripts/check_tasks_data.py
+index a600bce4a..6725de306 100644
+--- a/scripts/check_tasks_data.py
++++ b/scripts/check_tasks_data.py
+@@ -144,6 +144,7 @@ TASKS = (
+              "common/config/display.yaml",
+              "devices/guition-esp32-p4-jc1060p470/device/device.yaml",
+              "devices/guition-esp32-p4-jc1060p470-v2/device/device.yaml",
++             "devices/waveshare-esp32-p4-wifi6-touch-lcd-7b/device/device.yaml",
+              "components/espcontrol/button_grid_layout.h",
+              "components/espcontrol/button_grid_media_driver.h",
+              "components/espcontrol/button_grid_sliders.h",
+diff --git a/scripts/check_web_smoke.js b/scripts/check_web_smoke.js
+index 097a49198..0c8ff71ed 100644
+--- a/scripts/check_web_smoke.js
++++ b/scripts/check_web_smoke.js
+@@ -369,9 +369,13 @@ for (const [slug, device] of Object.entries(manifest.devices || {})) {
+ 
+ for (const [slug, device] of Object.entries(manifest.devices || {})) {
+   if (!device.rotation || !device.rotation.enabled) continue;
+-  const featureConfig = generated.match(/features:\{[^}]*\}/)?.[0] || "";
++  // Read this device's own features block; devices can differ (for example in
++  // their display offset), so the first block in the bundle is not enough.
++  const slugPattern = slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
++  const featureConfig =
++    generated.match(new RegExp(`"${slugPattern}":\\{[^]*?(features:\\{[^}]*\\})`))?.[1] || "";
+   assert(
+-    /features:\{[^}]*screenRotation:!0/.test(generated),
++    /features:\{[^}]*screenRotation:!0/.test(featureConfig),
+     `${slug}: generated web UI must expose screen rotation when rotation is enabled`
+   );
+   assert.deepStrictEqual(device.rotation.options, ALL_ROTATIONS, `${slug}: normal rotation options`);
+diff --git a/tests/firmware/card_curve_button_theme_test.py b/tests/firmware/card_curve_button_theme_test.py
+index 2a2732457..059b0dc65 100644
+--- a/tests/firmware/card_curve_button_theme_test.py
++++ b/tests/firmware/card_curve_button_theme_test.py
+@@ -20,6 +20,7 @@ BUTTON_RADII = {
+     "guition-esp32-p4-jc8012p4a1-v2": 11,
+     "guition-esp32-p4-jc8012p4a1-v3": 11,
+     "esp32-p4-86": 12,
++    "waveshare-esp32-p4-wifi6-touch-lcd-7b": 10,
+     "guition-esp32-s3-4848s040": 8,
+ }
+ parser = argparse.ArgumentParser(description=__doc__)
+-- 
+2.43.0
+
