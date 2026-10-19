@@ -1,8 +1,12 @@
 # =============================================================================
 #  Touch-interface (LVGL) voor 1024x600, liggend
 #
-#  Pagina's:  Klok  |  Bediening  |  Wekker   (+ "wekker gaat af")
-#  Onderaan staat een navigatiebalk (op de top_layer, dus op elke pagina).
+#  Navigatie (zoals de iPhone-slaapmodus / StandBy):
+#
+#     swipe links/rechts  ->  Klok | Verlichting | Klimaat | Muziek | Scènes | Wekker
+#     swipe omlaag/omhoog op de klok  ->  Digitaal / Analoog / Gestapeld / Info
+#
+#  Na 30 s zonder aanraking gaat het scherm terug naar de klok.
 # =============================================================================
 
 font:
@@ -11,6 +15,10 @@ font:
     id: f_klok
     size: 230
     glyphs: "0123456789:-"
+  - file: "gfonts://Roboto Condensed@300"
+    id: f_klok_mid
+    size: 140
+    glyphs: "0123456789:.-°"
   - file: "gfonts://Roboto@500"
     id: f_groot
     size: 56
@@ -28,13 +36,14 @@ font:
     ignore_missing_glyphs: true
   # Material Design Icons. Alleen deze iconen zitten in het lettertype;
   # wil je een ander icoon op een tegel, voeg de code dan hier toe.
-  - file:
+  - file: &mdi
       type: web
       url: https://raw.githubusercontent.com/Templarian/MaterialDesign-Webfont/v7.4.47/fonts/materialdesignicons-webfont.ttf
     id: f_icoon
     size: 64
     glyphs:
       - "\U000F0335"  # lightbulb
+      - "\U000F06E8"  # lightbulb-on
       - "\U000F1253"  # lightbulb-group
       - "\U000F0769"  # ceiling-light
       - "\U000F08DD"  # floor-lamp
@@ -46,26 +55,51 @@ font:
       - "\U000F1846"  # curtains
       - "\U000F075A"  # music
       - "\U000F0439"  # radio
+      - "\U000F043B"  # radio-tower
       - "\U000F04C3"  # speaker
       - "\U000F0502"  # television
+      - "\U000F0FCE"  # movie-open
       - "\U000F0210"  # fan
       - "\U000F0438"  # radiator
       - "\U000F0393"  # thermostat
+      - "\U000F050F"  # thermometer
       - "\U000F0904"  # power-sleep
       - "\U000F0594"  # weather-night
+      - "\U000F0595"  # weather-partly-cloudy
       - "\U000F059C"  # weather-sunset-up
       - "\U000F02DC"  # home
+      - "\U000F04B9"  # sofa
+      - "\U000F02E3"  # bed
+      - "\U000F0A70"  # silverware-fork-knife
       - "\U000F140B"  # lightning-bolt
       - "\U000F0020"  # alarm
       - "\U000F0023"  # alarm-off
       - "\U000F068E"  # alarm-snooze
       - "\U000F0493"  # cog
+      - "\U000F040A"  # play
+      - "\U000F03E4"  # pause
+      - "\U000F04AE"  # skip-previous
+      - "\U000F04AD"  # skip-next
+      - "\U000F057E"  # volume-high
+      - "\U000F0415"  # plus
+      - "\U000F0374"  # minus
+      - "\U000F005D"  # arrow-up
+      - "\U000F0045"  # arrow-down
+      - "\U000F04DB"  # stop
+  # Paginastippen
+  - file: *mdi
+    id: f_stip
+    size: 18
+    glyphs:
+      - "\U000F0765"  # circle
+      - "\U000F0766"  # circle-outline
 
 lvgl:
   displays: scherm
   touchscreens: touch
   default_font: f_klein
-  disp_bg_color: 0x000000
+  bottom_layer:
+    bg_color: 0x000000
   buffer_size: 100%
   on_idle:
     timeout: 30s
@@ -115,57 +149,45 @@ lvgl:
       bg_opa: COVER
       border_width: 0
       pad_all: 0
+      radius: 0
     - id: tegel_stijl
       bg_color: 0x23262D
       text_color: 0xE8EAED
       radius: 22
       pad_all: 8
+    - id: kaart
+      bg_color: 0x16181D
+      bg_opa: COVER
+      border_width: 0
+      radius: 22
+      pad_all: 20
     - id: leeg
       bg_opa: TRANSP
       border_width: 0
       pad_all: 0
       radius: 0
+    - id: titel
+      text_font: f_midden
+      text_color: 0xB0B6C0
+    # Kleuren van de klokken; 's nachts worden deze rood gemaakt
+    - id: klok_tekst
+      text_color: 0xFFFFFF
+    - id: klok_sub
+      text_color: 0xB0B6C0
+    - id: klok_accent
+      text_color: 0xF5A623
 
-  # ---- Altijd zichtbaar: navigatiebalk + onzichtbare "wek-laag" -----------------
+  # ---- Altijd zichtbaar: paginastippen + onzichtbare "wek-laag" --------------
   top_layer:
     widgets:
-      - obj:
-          id: navigatie
+      - label:
+          id: pagina_indicator
           align: BOTTOM_MID
-          width: 1024
-          height: 90
-          bg_color: 0x0E1014
-          border_width: 0
-          radius: 0
-          pad_all: 10
-          layout:
-            type: FLEX
-            flex_flow: ROW
-            flex_align_main: SPACE_EVENLY
-            flex_align_cross: CENTER
-          widgets:
-            - button:
-                width: 300
-                height: 70
-                on_click:
-                  - lvgl.page.show: { id: pagina_klok, animation: NONE }
-                widgets:
-                  - label: { text: "Klok", text_font: f_midden, align: CENTER }
-            - button:
-                width: 300
-                height: 70
-                on_click:
-                  - lvgl.page.show: { id: pagina_bediening, animation: NONE }
-                widgets:
-                  - label: { text: "Bediening", text_font: f_midden, align: CENTER }
-            - button:
-                width: 300
-                height: 70
-                on_click:
-                  - lvgl.page.show: { id: pagina_wekker, animation: NONE }
-                widgets:
-                  - label: { text: "Wekker", text_font: f_midden, align: CENTER }
-
+          y: -10
+          text_font: f_stip
+          text_color: 0x6C727C
+          text_letter_space: 10
+          text: ""
       # Vangt in de nachtstand de eerste tik op (alleen scherm wekken)
       - obj:
           id: wek_laag
@@ -178,268 +200,799 @@ lvgl:
           clickable: true
 
   pages:
-    # =========================================================================
-    #  Klok
-    # =========================================================================
-    - id: pagina_klok
+    - id: pagina_hoofd
       styles: pagina_stijl
       widgets:
-        - label:
-            id: lbl_datum
-            align: TOP_LEFT
-            x: 30
-            y: 20
-            text_font: f_midden
-            text_color: 0xB0B6C0
-            text: ""
-        - label:
-            id: lbl_verbinding
-            align: TOP_MID
-            y: 26
-            text_font: f_klein
-            text_color: 0xE05050
-            text: ""
-        - label:
-            id: lbl_temperatuur
-            align: TOP_RIGHT
-            x: -30
-            y: 20
-            text_font: f_midden
-            text_color: 0xB0B6C0
-            text: ""
-        - label:
-            id: lbl_tijd
-            align: CENTER
-            y: -60
-            text_font: f_klok
-            text_color: 0xFFFFFF
-            text: "--:--"
-        - label:
-            id: lbl_wekker_info
-            align: CENTER
-            y: 120
-            text_font: f_midden
-            text_color: 0xF5A623
-            text: ""
-
-    # =========================================================================
-    #  Bediening: 6 tegels + dimschuif
-    # =========================================================================
-    - id: pagina_bediening
-      styles: pagina_stijl
-      widgets:
-        - obj:
+        - tileview:
+            id: tv_hoofd
             x: 0
             y: 0
             width: 1024
-            height: 510
-            styles: leeg
-            pad_all: 20
-            layout:
-              type: GRID
-              pad_row: 18
-              pad_column: 18
-              grid_rows: [FR(1), FR(1), 70px]
-              grid_columns: [FR(1), FR(1), FR(1)]
-            widgets:
-              - !include { file: tegel.yaml, vars: { nr: 1, rij: 0, kolom: 0, naam: "${tegel_1_naam}", icoon: "${tegel_1_icoon}", entity: "${tegel_1_entity}" } }
-              - !include { file: tegel.yaml, vars: { nr: 2, rij: 0, kolom: 1, naam: "${tegel_2_naam}", icoon: "${tegel_2_icoon}", entity: "${tegel_2_entity}" } }
-              - !include { file: tegel.yaml, vars: { nr: 3, rij: 0, kolom: 2, naam: "${tegel_3_naam}", icoon: "${tegel_3_icoon}", entity: "${tegel_3_entity}" } }
-              - !include { file: tegel.yaml, vars: { nr: 4, rij: 1, kolom: 0, naam: "${tegel_4_naam}", icoon: "${tegel_4_icoon}", entity: "${tegel_4_entity}" } }
-              - !include { file: tegel.yaml, vars: { nr: 5, rij: 1, kolom: 1, naam: "${tegel_5_naam}", icoon: "${tegel_5_icoon}", entity: "${tegel_5_entity}" } }
-              - !include { file: tegel.yaml, vars: { nr: 6, rij: 1, kolom: 2, naam: "${tegel_6_naam}", icoon: "${tegel_6_icoon}", entity: "${tegel_6_entity}" } }
-              - slider:
-                  id: sl_dimmer
-                  grid_cell_row_pos: 2
-                  grid_cell_column_pos: 0
-                  grid_cell_column_span: 3
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: CENTER
-                  height: 36
-                  min_value: 0
-                  max_value: 255
-                  on_release:
-                    - if:
-                        condition:
-                          lambda: return x < 3;
-                        then:
-                          - homeassistant.action:
-                              action: light.turn_off
-                              data:
-                                entity_id: ${dim_lamp}
-                        else:
-                          - homeassistant.action:
-                              action: light.turn_on
-                              data:
-                                entity_id: ${dim_lamp}
-                                brightness: !lambda return std::to_string((int) x);
+            height: 600
+            styles: pagina_stijl
+            scrollbar_mode: "OFF"
+            on_value:
+              - script.execute: pagina_indicator_bijwerken
+            tiles:
+              # ===============================================================
+              #  Klok (swipe omlaag/omhoog voor een ander ontwerp)
+              # ===============================================================
+              - id: vak_klok
+                row: 0
+                column: 0
+                dir: HOR
+                widgets:
+                  - obj:
+                      id: klok_vlak
+                      x: 0
+                      y: 0
+                      width: 1024
+                      height: 600
+                      styles: leeg
+                      on_swipe_down:
+                        - select.next:
+                            id: klokontwerp
+                            cycle: true
+                      on_swipe_up:
+                        - select.previous:
+                            id: klokontwerp
+                            cycle: true
+                      widgets:
+                        # ---- 1. Digitaal ------------------------------------
+                        - obj:
+                            id: ontwerp_digitaal
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            widgets:
+                              - label:
+                                  id: lbl_datum
+                                  align: TOP_LEFT
+                                  x: 36
+                                  y: 28
+                                  text_font: f_midden
+                                  styles: klok_sub
+                                  text: ""
+                              - label:
+                                  id: lbl_verbinding
+                                  align: TOP_MID
+                                  y: 34
+                                  text_font: f_klein
+                                  text_color: 0xE05050
+                                  text: ""
+                              - label:
+                                  id: lbl_temperatuur
+                                  align: TOP_RIGHT
+                                  x: -60
+                                  y: 28
+                                  text_font: f_midden
+                                  styles: klok_sub
+                                  text: ""
+                              - label:
+                                  id: lbl_tijd
+                                  align: CENTER
+                                  y: -10
+                                  text_font: f_klok
+                                  styles: klok_tekst
+                                  text: "--:--"
+                              - label:
+                                  id: lbl_wekker_info
+                                  align: BOTTOM_MID
+                                  y: -60
+                                  text_font: f_midden
+                                  styles: klok_accent
+                                  text: ""
 
-    # =========================================================================
-    #  Wekker instellen
-    # =========================================================================
-    - id: pagina_wekker
-      styles: pagina_stijl
-      widgets:
-        # ---- Links: wektijd met twee rollers ----
-        - label:
-            x: 40
-            y: 24
-            text: "Wektijd"
-            text_font: f_midden
-            text_color: 0xB0B6C0
-        - roller:
-            id: rl_uur
-            x: 40
-            y: 80
-            width: 170
-            height: 380
-            text_font: f_groot
-            visible_row_count: 5
-            mode: NORMAL
-            options: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
-                      "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
-            on_change:
-              - lambda: |-
-                  auto call = id(wektijd).make_call();
-                  call.set_time((uint8_t) x, id(wektijd).minute, 0);
-                  call.perform();
-        - label:
-            x: 222
-            y: 232
-            text: ":"
-            text_font: f_groot
-        - roller:
-            id: rl_minuut
-            x: 250
-            y: 80
-            width: 170
-            height: 380
-            text_font: f_groot
-            visible_row_count: 5
-            mode: NORMAL
-            options: ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
-            on_change:
-              - lambda: |-
-                  auto call = id(wektijd).make_call();
-                  call.set_time(id(wektijd).hour, (uint8_t) (x * 5), 0);
-                  call.perform();
+                        # ---- 2. Analoog -------------------------------------
+                        - obj:
+                            id: ontwerp_analoog
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - meter:
+                                  id: analoge_klok
+                                  align: LEFT_MID
+                                  x: 50
+                                  width: 520
+                                  height: 520
+                                  bg_color: 0x0E1014
+                                  border_width: 0
+                                  text_color: 0xE8EAED
+                                  text_font: f_midden
+                                  scales:
+                                    # Minuutstreepjes + minuten- en secondewijzer
+                                    - range_from: 0
+                                      range_to: 60
+                                      angle_range: 360
+                                      rotation: 270
+                                      ticks:
+                                        count: 61
+                                        width: 2
+                                        length: 12
+                                        color: 0x4A4F58
+                                      indicators:
+                                        - line:
+                                            id: wijzer_minuut
+                                            width: 8
+                                            color: 0xFFFFFF
+                                            r_mod: -40
+                                        - line:
+                                            id: wijzer_seconde
+                                            width: 3
+                                            color: 0xF5A623
+                                            r_mod: -20
+                                    # Uurcijfers
+                                    - range_from: 1
+                                      range_to: 12
+                                      angle_range: 330
+                                      rotation: 300
+                                      ticks:
+                                        count: 12
+                                        width: 1
+                                        length: 1
+                                        color: 0x000000
+                                        major:
+                                          stride: 1
+                                          width: 5
+                                          length: 22
+                                          color: 0xE8EAED
+                                          label_gap: 24
+                                    # Uurwijzer (0..720 minuten = 12 uur)
+                                    - range_from: 0
+                                      range_to: 720
+                                      angle_range: 360
+                                      rotation: 270
+                                      indicators:
+                                        - line:
+                                            id: wijzer_uur
+                                            width: 12
+                                            color: 0xFFFFFF
+                                            r_mod: -110
+                              - obj:
+                                  x: 620
+                                  y: 110
+                                  width: 380
+                                  height: 400
+                                  styles: leeg
+                                  layout:
+                                    type: FLEX
+                                    flex_flow: COLUMN
+                                    flex_align_main: CENTER
+                                    pad_row: 14
+                                  widgets:
+                                    - label:
+                                        id: lbl_a_tijd
+                                        text_font: f_groot
+                                        styles: klok_tekst
+                                        text: ""
+                                    - label:
+                                        id: lbl_a_datum
+                                        text_font: f_midden
+                                        styles: klok_sub
+                                        text: ""
+                                    - label:
+                                        id: lbl_a_temp
+                                        text_font: f_groot
+                                        styles: klok_sub
+                                        text: ""
+                                    - label:
+                                        id: lbl_a_wekker
+                                        text_font: f_klein
+                                        styles: klok_accent
+                                        text: ""
 
-        # ---- Rechts: overige instellingen ----
-        - label:
-            x: 480
-            y: 34
-            text: "Wekker aan"
-            text_font: f_midden
-        - switch:
-            id: sw_wekker
-            x: 860
-            y: 26
-            width: 110
-            height: 52
-            on_change:
-              - lambda: |-
-                  if (x) id(wekker_aan).turn_on();
-                  else id(wekker_aan).turn_off();
+                        # ---- 3. Gestapeld -----------------------------------
+                        - obj:
+                            id: ontwerp_gestapeld
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - label:
+                                  id: lbl_s_uur
+                                  x: 70
+                                  y: 0
+                                  text_font: f_klok
+                                  styles: klok_accent
+                                  text: "--"
+                              - label:
+                                  id: lbl_s_min
+                                  x: 70
+                                  y: 290
+                                  text_font: f_klok
+                                  styles: klok_tekst
+                                  text: "--"
+                              - label:
+                                  id: lbl_s_datum
+                                  x: 520
+                                  y: 210
+                                  width: 460
+                                  text_font: f_groot
+                                  styles: klok_sub
+                                  long_mode: WRAP
+                                  text: ""
+                              - label:
+                                  id: lbl_s_wekker
+                                  x: 520
+                                  y: 370
+                                  text_font: f_midden
+                                  styles: klok_accent
+                                  text: ""
 
-        - label:
-            x: 480
-            y: 110
-            text: "Dagen"
-            text_font: f_klein
-            text_color: 0xB0B6C0
-        - dropdown:
-            id: dd_wekdagen
-            x: 640
-            y: 98
-            width: 330
-            text_font: f_midden
-            options: ["Elke dag", "Werkdagen", "Weekend"]
-            dropdown_list:
-              bg_color: 0x23262D
-              text_color: 0xE8EAED
-              text_font: f_midden
-              selected:
-                checked:
-                  bg_color: 0xF5A623
-            on_change:
-              - select.set_index:
-                  id: wekdagen
-                  index: !lambda return x;
+                        # ---- 4. Info ----------------------------------------
+                        - obj:
+                            id: ontwerp_info
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - label:
+                                  id: lbl_i_tijd
+                                  x: 50
+                                  y: 30
+                                  text_font: f_klok_mid
+                                  styles: klok_tekst
+                                  text: "--:--"
+                              - label:
+                                  id: lbl_i_datum
+                                  x: 56
+                                  y: 200
+                                  text_font: f_midden
+                                  styles: klok_sub
+                                  text: ""
+                              - obj:
+                                  x: 40
+                                  y: 300
+                                  width: 940
+                                  height: 230
+                                  styles: leeg
+                                  layout:
+                                    type: GRID
+                                    grid_rows: [FR(1)]
+                                    grid_columns: [FR(1), FR(1), FR(1)]
+                                    pad_column: 20
+                                  widgets:
+                                    - obj:
+                                        grid_cell_row_pos: 0
+                                        grid_cell_column_pos: 0
+                                        grid_cell_x_align: STRETCH
+                                        grid_cell_y_align: STRETCH
+                                        styles: kaart
+                                        widgets:
+                                          - label: { text: "\U000F0595", text_font: f_icoon, styles: klok_sub }
+                                          - label: { text: "Buiten", y: 80, styles: klok_sub }
+                                          - label: { id: lbl_i_temp, text: "--", y: 115, text_font: f_groot, styles: klok_tekst }
+                                    - obj:
+                                        grid_cell_row_pos: 0
+                                        grid_cell_column_pos: 1
+                                        grid_cell_x_align: STRETCH
+                                        grid_cell_y_align: STRETCH
+                                        styles: kaart
+                                        widgets:
+                                          - label: { text: "\U000F0020", text_font: f_icoon, styles: klok_accent }
+                                          - label: { text: "Wekker", y: 80, styles: klok_sub }
+                                          - label: { id: lbl_i_wekker, text: "", y: 118, width: 260, long_mode: WRAP, text_font: f_klein, styles: klok_tekst }
+                                    - obj:
+                                        grid_cell_row_pos: 0
+                                        grid_cell_column_pos: 2
+                                        grid_cell_x_align: STRETCH
+                                        grid_cell_y_align: STRETCH
+                                        styles: kaart
+                                        widgets:
+                                          - label: { text: "\U000F059C", text_font: f_icoon, styles: klok_sub }
+                                          - label: { text: "Wake-up light", y: 80, styles: klok_sub }
+                                          - label: { id: lbl_i_wakeup, text: "", y: 118, text_font: f_midden, styles: klok_tekst }
 
-        - label:
-            x: 480
-            y: 180
-            text: "Geluid"
-            text_font: f_klein
-            text_color: 0xB0B6C0
-        - dropdown:
-            id: dd_wekgeluid
-            x: 640
-            y: 168
-            width: 330
-            text_font: f_midden
-            options: ["Klassiek", "Zacht", "Mario", "Radio"]
-            dropdown_list:
-              bg_color: 0x23262D
-              text_color: 0xE8EAED
-              text_font: f_midden
-              selected:
-                checked:
-                  bg_color: 0xF5A623
-            on_change:
-              - select.set_index:
-                  id: wekgeluid
-                  index: !lambda return x;
+                        # Stippen rechts: welk klokontwerp?
+                        - label:
+                            id: lbl_ontwerp_stippen
+                            align: RIGHT_MID
+                            x: -16
+                            text_font: f_stip
+                            text_color: 0x4A4F58
+                            text_line_space: 8
+                            text: ""
 
-        - label:
-            id: lbl_volume
-            x: 480
-            y: 250
-            text: "Wekvolume"
-            text_font: f_klein
-            text_color: 0xB0B6C0
-        - slider:
-            id: sl_volume
-            x: 490
-            y: 292
-            width: 470
-            height: 30
-            min_value: 10
-            max_value: 100
-            on_release:
-              - number.set:
-                  id: volume
-                  value: !lambda return roundf(x / 10.0f) * 10.0f;
+              # ===============================================================
+              #  Verlichting
+              # ===============================================================
+              - id: vak_verlichting
+                row: 0
+                column: 1
+                dir: HOR
+                widgets:
+                  - label: { text: "Verlichting", x: 36, y: 22, styles: titel }
+                  - obj:
+                      x: 0
+                      y: 60
+                      width: 1024
+                      height: 510
+                      styles: leeg
+                      pad_all: 20
+                      layout:
+                        type: GRID
+                        grid_rows: [FR(1), FR(1), 70px]
+                        grid_columns: [FR(1), FR(1), FR(1)]
+                        pad_row: 18
+                        pad_column: 18
+                      widgets:
+                        - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle, naam: "${licht_1_naam}", icoon: "${licht_1_icoon}", entity: "${licht_1_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle, naam: "${licht_2_naam}", icoon: "${licht_2_icoon}", entity: "${licht_2_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 0, kolom: 2, actie: homeassistant.toggle, naam: "${licht_3_naam}", icoon: "${licht_3_icoon}", entity: "${licht_3_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 0, actie: homeassistant.toggle, naam: "${licht_4_naam}", icoon: "${licht_4_icoon}", entity: "${licht_4_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 1, kolom: 1, actie: homeassistant.toggle, naam: "${licht_5_naam}", icoon: "${licht_5_icoon}", entity: "${licht_5_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 1, kolom: 2, actie: homeassistant.toggle, naam: "${licht_6_naam}", icoon: "${licht_6_icoon}", entity: "${licht_6_entity}" } }
+                        - slider:
+                            id: sl_dimmer
+                            grid_cell_row_pos: 2
+                            grid_cell_column_pos: 0
+                            grid_cell_column_span: 3
+                            grid_cell_x_align: STRETCH
+                            grid_cell_y_align: CENTER
+                            height: 36
+                            min_value: 0
+                            max_value: 255
+                            on_release:
+                              - if:
+                                  condition:
+                                    lambda: return x < 3;
+                                  then:
+                                    - homeassistant.action:
+                                        action: light.turn_off
+                                        data:
+                                          entity_id: ${dim_lamp}
+                                  else:
+                                    - homeassistant.action:
+                                        action: light.turn_on
+                                        data:
+                                          entity_id: ${dim_lamp}
+                                          brightness: !lambda return std::to_string((int) x);
 
-        - label:
-            id: lbl_wakeup
-            x: 480
-            y: 345
-            text: "Wake-up light"
-            text_font: f_klein
-            text_color: 0xB0B6C0
-        - slider:
-            id: sl_wakeup
-            x: 490
-            y: 387
-            width: 470
-            height: 30
-            min_value: 0
-            max_value: 60
-            on_release:
-              - number.set:
-                  id: wakeup_minuten
-                  value: !lambda return roundf(x / 5.0f) * 5.0f;
+              # ===============================================================
+              #  Klimaat & rolluik
+              # ===============================================================
+              - id: vak_klimaat
+                row: 0
+                column: 2
+                dir: HOR
+                widgets:
+                  - label: { text: "Klimaat & rolluik", x: 36, y: 22, styles: titel }
+                  # ---- Thermostaat ----
+                  - obj:
+                      x: 30
+                      y: 80
+                      width: 470
+                      height: 470
+                      styles: kaart
+                      widgets:
+                        - label: { text: "\U000F0393", text_font: f_icoon, text_color: 0xF5A623 }
+                        - label: { text: "Thermostaat", x: 80, y: 18, text_font: f_midden }
+                        - label:
+                            id: lbl_klimaat_doel
+                            align: CENTER
+                            y: -10
+                            text_font: f_klok_mid
+                            text: "--"
+                        - label:
+                            id: lbl_klimaat_huidig
+                            align: CENTER
+                            y: 80
+                            text_color: 0xB0B6C0
+                            text: ""
+                        - button:
+                            align: BOTTOM_LEFT
+                            width: 190
+                            height: 90
+                            on_click:
+                              - homeassistant.action:
+                                  action: climate.set_temperature
+                                  data:
+                                    entity_id: ${thermostaat}
+                                    temperature: !lambda |-
+                                      char buf[8];
+                                      snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state - 0.5f);
+                                      return std::string(buf);
+                            widgets:
+                              - label: { text: "\U000F0374", text_font: f_icoon, align: CENTER }
+                        - button:
+                            align: BOTTOM_RIGHT
+                            width: 190
+                            height: 90
+                            on_click:
+                              - homeassistant.action:
+                                  action: climate.set_temperature
+                                  data:
+                                    entity_id: ${thermostaat}
+                                    temperature: !lambda |-
+                                      char buf[8];
+                                      snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state + 0.5f);
+                                      return std::string(buf);
+                            widgets:
+                              - label: { text: "\U000F0415", text_font: f_icoon, align: CENTER }
+                  # ---- Rolluik ----
+                  - obj:
+                      x: 524
+                      y: 80
+                      width: 470
+                      height: 470
+                      styles: kaart
+                      widgets:
+                        - label: { text: "\U000F111C", text_font: f_icoon, text_color: 0xF5A623 }
+                        - label: { text: "Rolluik", x: 80, y: 18, text_font: f_midden }
+                        - label:
+                            id: lbl_rolluik
+                            align: TOP_MID
+                            y: 110
+                            text_font: f_groot
+                            text: "--"
+                        - slider:
+                            id: sl_rolluik
+                            align: CENTER
+                            y: 30
+                            width: 380
+                            height: 36
+                            min_value: 0
+                            max_value: 100
+                            on_release:
+                              - homeassistant.action:
+                                  action: cover.set_cover_position
+                                  data:
+                                    entity_id: ${rolluik}
+                                    position: !lambda return std::to_string((int) x);
+                        - obj:
+                            align: BOTTOM_MID
+                            width: 430
+                            height: 90
+                            styles: leeg
+                            layout:
+                              type: FLEX
+                              flex_flow: ROW
+                              flex_align_main: SPACE_BETWEEN
+                            widgets:
+                              - button:
+                                  width: 130
+                                  height: 90
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: cover.open_cover
+                                        data:
+                                          entity_id: ${rolluik}
+                                  widgets:
+                                    - label: { text: "\U000F005D", text_font: f_icoon, align: CENTER }
+                              - button:
+                                  width: 130
+                                  height: 90
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: cover.stop_cover
+                                        data:
+                                          entity_id: ${rolluik}
+                                  widgets:
+                                    - label: { text: "\U000F04DB", text_font: f_icoon, align: CENTER }
+                              - button:
+                                  width: 130
+                                  height: 90
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: cover.close_cover
+                                        data:
+                                          entity_id: ${rolluik}
+                                  widgets:
+                                    - label: { text: "\U000F0045", text_font: f_icoon, align: CENTER }
 
-        - button:
-            x: 480
-            y: 438
-            width: 230
-            height: 56
-            on_click:
-              - script.execute: start_wekker
-            widgets:
-              - label: { text: "Test wekker", align: CENTER }
+              # ===============================================================
+              #  Muziek
+              # ===============================================================
+              - id: vak_muziek
+                row: 0
+                column: 3
+                dir: HOR
+                widgets:
+                  - label: { text: "Muziek", x: 36, y: 22, styles: titel }
+                  - obj:
+                      x: 30
+                      y: 80
+                      width: 964
+                      height: 300
+                      styles: kaart
+                      widgets:
+                        - obj:
+                            x: 0
+                            y: 0
+                            width: 180
+                            height: 180
+                            bg_color: 0x2A2D34
+                            border_width: 0
+                            radius: 18
+                            widgets:
+                              - label: { text: "\U000F075A", text_font: f_icoon, align: CENTER, text_color: 0xF5A623 }
+                        - label:
+                            id: lbl_media_titel
+                            x: 210
+                            y: 30
+                            width: 700
+                            long_mode: DOT
+                            text_font: f_groot
+                            text: "Niets aan het afspelen"
+                        - label:
+                            id: lbl_media_artiest
+                            x: 212
+                            y: 110
+                            width: 700
+                            long_mode: DOT
+                            text_font: f_midden
+                            text_color: 0xB0B6C0
+                            text: ""
+                        - obj:
+                            x: 0
+                            y: 196
+                            width: 920
+                            height: 70
+                            styles: leeg
+                            widgets:
+                              - button:
+                                  x: 0
+                                  width: 120
+                                  height: 70
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: media_player.media_previous_track
+                                        data:
+                                          entity_id: ${mediaspeler}
+                                  widgets:
+                                    - label: { text: "\U000F04AE", text_font: f_icoon, align: CENTER }
+                              - button:
+                                  x: 135
+                                  width: 120
+                                  height: 70
+                                  bg_color: 0xF5A623
+                                  text_color: 0x000000
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: media_player.media_play_pause
+                                        data:
+                                          entity_id: ${mediaspeler}
+                                  widgets:
+                                    - label: { id: lbl_media_playpause, text: "\U000F040A", text_font: f_icoon, align: CENTER }
+                              - button:
+                                  x: 270
+                                  width: 120
+                                  height: 70
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: media_player.media_next_track
+                                        data:
+                                          entity_id: ${mediaspeler}
+                                  widgets:
+                                    - label: { text: "\U000F04AD", text_font: f_icoon, align: CENTER }
+                              - label: { text: "\U000F057E", text_font: f_icoon, x: 430, y: 2, text_color: 0xB0B6C0 }
+                              - slider:
+                                  id: sl_media_volume
+                                  x: 520
+                                  y: 20
+                                  width: 390
+                                  height: 30
+                                  min_value: 0
+                                  max_value: 100
+                                  on_release:
+                                    - homeassistant.action:
+                                        action: media_player.volume_set
+                                        data:
+                                          entity_id: ${mediaspeler}
+                                          volume_level: !lambda |-
+                                            char buf[8];
+                                            snprintf(buf, sizeof(buf), "%.2f", x / 100.0f);
+                                            return std::string(buf);
+                  - label: { text: "Radio", x: 36, y: 400, styles: titel }
+                  - obj:
+                      x: 30
+                      y: 445
+                      width: 964
+                      height: 110
+                      styles: leeg
+                      layout:
+                        type: GRID
+                        grid_rows: [FR(1)]
+                        grid_columns: [FR(1), FR(1), FR(1)]
+                        pad_column: 18
+                      widgets:
+                        - !include { file: radio-knop.yaml, vars: { kolom: 0, naam: "${radio_1_naam}", url: "${radio_1_url}" } }
+                        - !include { file: radio-knop.yaml, vars: { kolom: 1, naam: "${radio_2_naam}", url: "${radio_2_url}" } }
+                        - !include { file: radio-knop.yaml, vars: { kolom: 2, naam: "${radio_3_naam}", url: "${radio_3_url}" } }
+
+              # ===============================================================
+              #  Scènes
+              # ===============================================================
+              - id: vak_scenes
+                row: 0
+                column: 4
+                dir: HOR
+                widgets:
+                  - label: { text: "Scènes", x: 36, y: 22, styles: titel }
+                  - obj:
+                      x: 0
+                      y: 60
+                      width: 1024
+                      height: 510
+                      styles: leeg
+                      pad_all: 20
+                      layout:
+                        type: GRID
+                        grid_rows: [FR(1), FR(1)]
+                        grid_columns: [FR(1), FR(1), FR(1)]
+                        pad_row: 18
+                        pad_column: 18
+                      widgets:
+                        - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on, naam: "${scene_1_naam}", icoon: "${scene_1_icoon}", entity: "${scene_1_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on, naam: "${scene_2_naam}", icoon: "${scene_2_icoon}", entity: "${scene_2_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 0, kolom: 2, actie: homeassistant.turn_on, naam: "${scene_3_naam}", icoon: "${scene_3_icoon}", entity: "${scene_3_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 0, actie: homeassistant.turn_on, naam: "${scene_4_naam}", icoon: "${scene_4_icoon}", entity: "${scene_4_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 1, kolom: 1, actie: homeassistant.turn_on, naam: "${scene_5_naam}", icoon: "${scene_5_icoon}", entity: "${scene_5_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 1, kolom: 2, actie: homeassistant.turn_on, naam: "${scene_6_naam}", icoon: "${scene_6_icoon}", entity: "${scene_6_entity}" } }
+
+              # ===============================================================
+              #  Wekker instellen
+              # ===============================================================
+              - id: vak_wekker
+                row: 0
+                column: 5
+                dir: HOR
+                widgets:
+                  # ---- Links: wektijd met twee rollers ----
+                  - label: { text: "Wektijd", x: 36, y: 22, styles: titel }
+                  - roller:
+                      id: rl_uur
+                      x: 40
+                      y: 80
+                      width: 170
+                      height: 400
+                      text_font: f_groot
+                      visible_row_count: 5
+                      mode: NORMAL
+                      options: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
+                                "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
+                      on_change:
+                        - lambda: |-
+                            auto call = id(wektijd).make_call();
+                            call.set_time((uint8_t) x, id(wektijd).minute, 0);
+                            call.perform();
+                  - label:
+                      x: 222
+                      y: 242
+                      text: ":"
+                      text_font: f_groot
+                  - roller:
+                      id: rl_minuut
+                      x: 250
+                      y: 80
+                      width: 170
+                      height: 400
+                      text_font: f_groot
+                      visible_row_count: 5
+                      mode: NORMAL
+                      options: ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
+                      on_change:
+                        - lambda: |-
+                            auto call = id(wektijd).make_call();
+                            call.set_time(id(wektijd).hour, (uint8_t) (x * 5), 0);
+                            call.perform();
+
+                  # ---- Rechts: overige instellingen ----
+                  - label:
+                      x: 480
+                      y: 34
+                      text: "Wekker aan"
+                      text_font: f_midden
+                  - switch:
+                      id: sw_wekker
+                      x: 860
+                      y: 26
+                      width: 110
+                      height: 52
+                      on_change:
+                        - lambda: |-
+                            if (x) id(wekker_aan).turn_on();
+                            else id(wekker_aan).turn_off();
+
+                  - label:
+                      x: 480
+                      y: 110
+                      text: "Dagen"
+                      text_color: 0xB0B6C0
+                  - dropdown:
+                      id: dd_wekdagen
+                      x: 640
+                      y: 98
+                      width: 330
+                      text_font: f_midden
+                      options: ["Elke dag", "Werkdagen", "Weekend"]
+                      dropdown_list:
+                        bg_color: 0x23262D
+                        text_color: 0xE8EAED
+                        text_font: f_midden
+                        selected:
+                          checked:
+                            bg_color: 0xF5A623
+                      on_change:
+                        - select.set_index:
+                            id: wekdagen
+                            index: !lambda return x;
+
+                  - label:
+                      x: 480
+                      y: 180
+                      text: "Geluid"
+                      text_color: 0xB0B6C0
+                  - dropdown:
+                      id: dd_wekgeluid
+                      x: 640
+                      y: 168
+                      width: 330
+                      text_font: f_midden
+                      options: ["Klassiek", "Zacht", "Mario", "Radio"]
+                      dropdown_list:
+                        bg_color: 0x23262D
+                        text_color: 0xE8EAED
+                        text_font: f_midden
+                        selected:
+                          checked:
+                            bg_color: 0xF5A623
+                      on_change:
+                        - select.set_index:
+                            id: wekgeluid
+                            index: !lambda return x;
+
+                  - label:
+                      id: lbl_volume
+                      x: 480
+                      y: 250
+                      text: "Wekvolume"
+                      text_color: 0xB0B6C0
+                  - slider:
+                      id: sl_volume
+                      x: 490
+                      y: 292
+                      width: 470
+                      height: 30
+                      min_value: 10
+                      max_value: 100
+                      on_release:
+                        - number.set:
+                            id: volume
+                            value: !lambda return roundf(x / 10.0f) * 10.0f;
+
+                  - label:
+                      id: lbl_wakeup
+                      x: 480
+                      y: 345
+                      text: "Wake-up light"
+                      text_color: 0xB0B6C0
+                  - slider:
+                      id: sl_wakeup
+                      x: 490
+                      y: 387
+                      width: 470
+                      height: 30
+                      min_value: 0
+                      max_value: 60
+                      on_release:
+                        - number.set:
+                            id: wakeup_minuten
+                            value: !lambda return roundf(x / 5.0f) * 5.0f;
+
+                  - button:
+                      x: 480
+                      y: 448
+                      width: 230
+                      height: 56
+                      on_click:
+                        - script.execute: start_wekker
+                      widgets:
+                        - label: { text: "Test wekker", align: CENTER }
 
     # =========================================================================
     #  Wekker gaat af

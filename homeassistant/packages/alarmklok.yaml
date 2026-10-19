@@ -15,7 +15,7 @@
 # =============================================================================
 
 script:
-  # Voorbeeld voor tegel 6 ("Welterusten"). Pas aan naar wens.
+  # Voorbeeld voor scèneknop 1 ("Welterusten"). Pas aan naar wens.
   welterusten:
     alias: Welterusten
     icon: mdi:power-sleep
@@ -36,6 +36,20 @@ script:
       - action: light.turn_off
         target:
           entity_id: light.slaapkamer
+        continue_on_error: true
+
+  # Voorbeeld voor scèneknop 6 ("Alles uit").
+  alles_uit:
+    alias: Alles uit
+    icon: mdi:lightning-bolt
+    mode: single
+    sequence:
+      - action: light.turn_off
+        target:
+          entity_id: all
+      - action: media_player.media_stop
+        target:
+          entity_id: all
         continue_on_error: true
 
 automation:

@@ -37,6 +37,18 @@ inline std::string datum_tekst(int day_of_week, int day_of_month, int month) {
   return buf;
 }
 
+// Paginastippen: gevuld bolletje voor de actieve pagina, open bolletjes voor de rest
+// (Material Design Icons "circle" en "circle-outline").
+inline std::string stippen(int actief, int aantal, const char *scheiding) {
+  std::string tekst;
+  for (int i = 0; i < aantal; i++) {
+    if (i > 0)
+      tekst += scheiding;
+    tekst += i == actief ? "\U000F0765" : "\U000F0766";
+  }
+  return tekst;
+}
+
 inline const char *melodie(const std::string &naam) {
   if (naam == "Mario")
     return "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b";

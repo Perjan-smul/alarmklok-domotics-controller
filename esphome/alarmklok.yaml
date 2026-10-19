@@ -11,6 +11,7 @@
 #    alarmklok.yaml                   <- dit bestand: instellingen + wekker-logica
 #    onderdelen/waveshare-p4-7b.yaml  <- hardware (scherm, touch, audio, wifi)
 #    onderdelen/scherm.yaml           <- de touch-interface (LVGL)
+#    onderdelen/ha-bediening.yaml     <- statussen uit HA voor de bedieningspagina's
 #    onderdelen/tegel*.yaml           <- één bedieningstegel
 # =============================================================================
 
@@ -18,46 +19,82 @@ substitutions:
   name: alarmklok
   friendly_name: Alarmklok
   tijdzone: Europe/Amsterdam
-  # Sensor uit Home Assistant die rechtsboven op het klokscherm staat.
+  # Sensor uit Home Assistant die op de klokschermen staat.
   temperatuur_sensor: sensor.buitentemperatuur
-  # Lamp voor de dimschuif op het bedieningsscherm.
-  dim_lamp: light.slaapkamer
   # Na zoveel minuten stopt een wekker die niet uitgezet wordt vanzelf.
   max_afgaan_minuten: "30"
 
-  # ---- Bedieningstegels (2 rijen x 3) ----------------------------------------
-  # Een tik doet "homeassistant.toggle" op de entiteit. Dat werkt voor lampen,
-  # schakelaars, rolluiken, mediaspelers, scripts, automations en input_boolean.
-  # Wil je een scène? Maak dan een script dat de scène aanzet.
-  # Iconen: zie de lijst in README.md.
-  tegel_1_naam: Bedlamp
-  tegel_1_entity: light.slaapkamer
-  tegel_1_icoon: "\U000F095F"   # desk-lamp
-  tegel_2_naam: Plafond
-  tegel_2_entity: light.slaapkamer_plafond
-  tegel_2_icoon: "\U000F0769"   # ceiling-light
-  tegel_3_naam: Rolluik
-  tegel_3_entity: cover.slaapkamer
-  tegel_3_icoon: "\U000F111C"   # window-shutter
-  tegel_4_naam: Muziek
-  tegel_4_entity: media_player.alarmklok_speaker
-  tegel_4_icoon: "\U000F075A"   # music
-  tegel_5_naam: Ventilator
-  tegel_5_entity: fan.slaapkamer
-  tegel_5_icoon: "\U000F0210"   # fan
-  tegel_6_naam: Welterusten
-  tegel_6_entity: script.welterusten
-  tegel_6_icoon: "\U000F0904"   # power-sleep
+  # ===========================================================================
+  #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)
+  #  Iconen: zie de lijst in README.md.
+  # ===========================================================================
+
+  # ---- Pagina "Verlichting": 6 tegels + dimschuif ---------------------------
+  # Een tik doet "homeassistant.toggle" (lamp, schakelaar, ventilator, ...).
+  dim_lamp: light.slaapkamer
+  licht_1_naam: Bedlamp
+  licht_1_entity: light.slaapkamer
+  licht_1_icoon: "\U000F095F"   # desk-lamp
+  licht_2_naam: Plafond
+  licht_2_entity: light.slaapkamer_plafond
+  licht_2_icoon: "\U000F0769"   # ceiling-light
+  licht_3_naam: Leeslamp
+  licht_3_entity: light.leeslamp
+  licht_3_icoon: "\U000F08DD"   # floor-lamp
+  licht_4_naam: Gang
+  licht_4_entity: light.gang
+  licht_4_icoon: "\U000F0335"   # lightbulb
+  licht_5_naam: Ventilator
+  licht_5_entity: fan.slaapkamer
+  licht_5_icoon: "\U000F0210"   # fan
+  licht_6_naam: Alle lampen
+  licht_6_entity: light.alle_lampen
+  licht_6_icoon: "\U000F1253"   # lightbulb-group
+
+  # ---- Pagina "Klimaat & rolluik" -------------------------------------------
+  thermostaat: climate.slaapkamer
+  rolluik: cover.slaapkamer
+
+  # ---- Pagina "Muziek" --------------------------------------------------------
+  mediaspeler: media_player.alarmklok_speaker
+  radio_1_naam: NPO Radio 2
+  radio_1_url: https://icecast.omroep.nl/radio2-bb-mp3
+  radio_2_naam: NPO 3FM
+  radio_2_url: https://icecast.omroep.nl/3fm-bb-mp3
+  radio_3_naam: Radio 538
+  radio_3_url: https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3
+
+  # ---- Pagina "Scènes": 6 knoppen ---------------------------------------------
+  # Een tik doet "homeassistant.turn_on" (scene, script, automation, ...).
+  scene_1_naam: Welterusten
+  scene_1_entity: script.welterusten
+  scene_1_icoon: "\U000F0904"   # power-sleep
+  scene_2_naam: Opstaan
+  scene_2_entity: scene.opstaan
+  scene_2_icoon: "\U000F059C"   # weather-sunset-up
+  scene_3_naam: Lezen
+  scene_3_entity: scene.lezen
+  scene_3_icoon: "\U000F06B5"   # lamp
+  scene_4_naam: Film
+  scene_4_entity: scene.film
+  scene_4_icoon: "\U000F0FCE"   # movie-open
+  scene_5_naam: Etenstijd
+  scene_5_entity: scene.eten
+  scene_5_icoon: "\U000F0A70"   # silverware-fork-knife
+  scene_6_naam: Alles uit
+  scene_6_entity: script.alles_uit
+  scene_6_icoon: "\U000F140B"   # lightning-bolt
 
 packages:
   hardware: !include onderdelen/waveshare-p4-7b.yaml
   scherm: !include onderdelen/scherm.yaml
-  tegel_1: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 1, entity: "${tegel_1_entity}" } }
-  tegel_2: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 2, entity: "${tegel_2_entity}" } }
-  tegel_3: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 3, entity: "${tegel_3_entity}" } }
-  tegel_4: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 4, entity: "${tegel_4_entity}" } }
-  tegel_5: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 5, entity: "${tegel_5_entity}" } }
-  tegel_6: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 6, entity: "${tegel_6_entity}" } }
+  ha_bediening: !include onderdelen/ha-bediening.yaml
+  licht_1: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_1, entity: "${licht_1_entity}" } }
+  licht_2: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_2, entity: "${licht_2_entity}" } }
+  licht_3: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_3, entity: "${licht_3_entity}" } }
+  licht_4: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_4, entity: "${licht_4_entity}" } }
+  licht_5: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_5, entity: "${licht_5_entity}" } }
+  licht_6: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_6, entity: "${licht_6_entity}" } }
 
 esphome:
   name: ${name}
@@ -242,6 +279,26 @@ select:
           then:
             - script.execute: ui_synchroniseren
 
+  # Swipe omlaag/omhoog op de klok wisselt hiertussen
+  - platform: template
+    id: klokontwerp
+    name: Klokontwerp
+    icon: mdi:clock-digital
+    optimistic: true
+    restore_value: true
+    options:
+      - Digitaal
+      - Analoog
+      - Gestapeld
+      - Info
+    initial_option: Digitaal
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: toon_klokontwerp
+
 number:
   - platform: template
     id: snooze_minuten
@@ -353,17 +410,6 @@ sensor:
     entity_id: ${temperatuur_sensor}
     internal: true
 
-  # Helderheid (0-255) van de dimlamp; leeg/NaN als de lamp uit staat
-  - platform: homeassistant
-    id: dim_lamp_helderheid
-    entity_id: ${dim_lamp}
-    attribute: brightness
-    internal: true
-    on_value:
-      - lvgl.slider.update:
-          id: sl_dimmer
-          value: !lambda "return std::isnan(x) ? 0 : x;"
-
   - platform: wifi_signal
     name: WiFi signaal
     update_interval: 60s
@@ -418,7 +464,7 @@ script:
       - text_sensor.template.publish:
           id: wekker_status
           state: Gaat af
-      - lvgl.widget.hide: navigatie
+      - lvgl.widget.hide: pagina_indicator
       - lvgl.page.show:
           id: pagina_wekker_gaat_af
           animation: NONE
@@ -537,10 +583,15 @@ script:
 
   - id: naar_klokscherm
     then:
-      - lvgl.widget.show: navigatie
       - lvgl.page.show:
-          id: pagina_klok
+          id: pagina_hoofd
           animation: NONE
+      - lvgl.tileview.select:
+          id: tv_hoofd
+          row: 0
+          column: 0
+          animated: true
+      - script.execute: pagina_indicator_bijwerken
 
   # Aangeroepen bij elke aanraking van het scherm
   - id: aangeraakt
@@ -549,56 +600,120 @@ script:
       - script.execute: helderheid_regelen
 
   # ---------------------------------------------------------------------------
+  #  Klokontwerpen (swipe omlaag/omhoog op de klok)
+  # ---------------------------------------------------------------------------
+  - id: toon_klokontwerp
+    then:
+      - lvgl.widget.hide: [ontwerp_digitaal, ontwerp_analoog, ontwerp_gestapeld, ontwerp_info]
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 1;
+          then:
+            - lvgl.widget.show: ontwerp_analoog
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 2;
+          then:
+            - lvgl.widget.show: ontwerp_gestapeld
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 3;
+          then:
+            - lvgl.widget.show: ontwerp_info
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 0;
+          then:
+            - lvgl.widget.show: ontwerp_digitaal
+      - lvgl.label.update:
+          id: lbl_ontwerp_stippen
+          text: !lambda |-
+            return alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 4, "\n");
+
+  # Stippen onderaan: op welke pagina ben je?
+  - id: pagina_indicator_bijwerken
+    then:
+      - lvgl.label.update:
+          id: pagina_indicator
+          text: !lambda |-
+            auto *tile = lv_tileview_get_tile_active(id(tv_hoofd));
+            int index = tile == nullptr ? 0 : lv_obj_get_x(tile) / 1024;
+            return alarmklok::stippen(index, 6, "");
+
+  # ---------------------------------------------------------------------------
   #  Scherm
   # ---------------------------------------------------------------------------
   - id: scherm_bijwerken
     then:
-      - lvgl.label.update:
-          id: lbl_tijd
-          text: !lambda |-
-            auto nu = id(klok).now();
-            return nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
-      - lvgl.label.update:
-          id: lbl_tijd_alarm
-          text: !lambda |-
-            auto nu = id(klok).now();
-            return nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
-      - lvgl.label.update:
-          id: lbl_datum
-          text: !lambda |-
-            auto nu = id(klok).now();
-            if (!nu.is_valid())
-              return std::string("Tijd ophalen...");
-            return alarmklok::datum_tekst(nu.day_of_week, nu.day_of_month, nu.month);
-      - lvgl.label.update:
-          id: lbl_temperatuur
-          text: !lambda |-
-            float t = id(buitentemperatuur).state;
-            if (std::isnan(t))
-              return std::string("");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f°", t);
-            return std::string(buf);
-      - lvgl.label.update:
-          id: lbl_wekker_info
-          text: !lambda |-
-            char buf[64];
-            if (id(snoozet) && id(snooze_tot) > 0) {
-              auto t = ESPTime::from_epoch_local(id(snooze_tot));
-              snprintf(buf, sizeof(buf), "Snooze tot %02d:%02d", t.hour, t.minute);
-            } else if (id(wekker_aan).state) {
-              snprintf(buf, sizeof(buf), "Wekker %02d:%02d  (%s)", id(wektijd).hour,
-                       id(wektijd).minute, id(wekdagen).current_option().c_str());
-            } else {
-              snprintf(buf, sizeof(buf), "Wekker uit");
-            }
-            return std::string(buf);
-      - lvgl.label.update:
-          id: lbl_verbinding
-          text: !lambda |-
-            return std::string(id(api_verbonden).state ? "" : "Geen verbinding met Home Assistant");
+      - lambda: |-
+          auto nu = id(klok).now();
+          std::string tijd = nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
+          std::string datum = nu.is_valid()
+              ? alarmklok::datum_tekst(nu.day_of_week, nu.day_of_month, nu.month)
+              : std::string("Tijd ophalen...");
 
-  # Wekker-scherm gelijkzetten met de huidige instellingen
+          char temp[16] = "";
+          if (!std::isnan(id(buitentemperatuur).state))
+            snprintf(temp, sizeof(temp), "%.1f°", id(buitentemperatuur).state);
+
+          char wekker[64];
+          if (id(snoozet) && id(snooze_tot) > 0) {
+            auto t = ESPTime::from_epoch_local(id(snooze_tot));
+            snprintf(wekker, sizeof(wekker), "Snooze tot %02d:%02d", t.hour, t.minute);
+          } else if (id(wekker_aan).state) {
+            snprintf(wekker, sizeof(wekker), "Wekker %02d:%02d  (%s)", id(wektijd).hour,
+                     id(wektijd).minute, id(wekdagen).current_option().c_str());
+          } else {
+            snprintf(wekker, sizeof(wekker), "Wekker uit");
+          }
+
+          // Digitaal
+          lv_label_set_text(id(lbl_tijd), tijd.c_str());
+          lv_label_set_text(id(lbl_datum), datum.c_str());
+          lv_label_set_text(id(lbl_temperatuur), temp);
+          lv_label_set_text(id(lbl_wekker_info), wekker);
+          lv_label_set_text(id(lbl_verbinding),
+              id(api_verbonden).state ? "" : "Geen verbinding met Home Assistant");
+          // Analoog (de wijzers worden hieronder gezet)
+          lv_label_set_text(id(lbl_a_tijd), tijd.c_str());
+          lv_label_set_text(id(lbl_a_datum), datum.c_str());
+          lv_label_set_text(id(lbl_a_temp), temp);
+          lv_label_set_text(id(lbl_a_wekker), wekker);
+          // Gestapeld
+          lv_label_set_text(id(lbl_s_uur), tijd.substr(0, 2).c_str());
+          lv_label_set_text(id(lbl_s_min), tijd.substr(3, 2).c_str());
+          lv_label_set_text(id(lbl_s_datum), datum.c_str());
+          lv_label_set_text(id(lbl_s_wekker), wekker);
+          // Info
+          lv_label_set_text(id(lbl_i_tijd), tijd.c_str());
+          lv_label_set_text(id(lbl_i_datum), datum.c_str());
+          lv_label_set_text(id(lbl_i_temp), temp[0] ? temp : "--");
+          lv_label_set_text(id(lbl_i_wekker), wekker);
+          char wakeup[32];
+          if (id(wakeup_minuten).state > 0)
+            snprintf(wakeup, sizeof(wakeup), "%.0f min vooraf", id(wakeup_minuten).state);
+          else
+            snprintf(wakeup, sizeof(wakeup), "Uit");
+          lv_label_set_text(id(lbl_i_wakeup), wakeup);
+          // Wekker gaat af
+          lv_label_set_text(id(lbl_tijd_alarm), tijd.c_str());
+      - if:
+          condition:
+            lambda: return id(klok).now().is_valid();
+          then:
+            - lvgl.indicator.update:
+                id: wijzer_uur
+                value: !lambda |-
+                  auto nu = id(klok).now();
+                  return (nu.hour % 12) * 60 + nu.minute;
+            - lvgl.indicator.update:
+                id: wijzer_minuut
+                value: !lambda return id(klok).now().minute;
+            - lvgl.indicator.update:
+                id: wijzer_seconde
+                value: !lambda return id(klok).now().second;
+
+  # Alle widgets gelijkzetten met de huidige instellingen
   - id: ui_synchroniseren
     mode: queued
     max_runs: 3
@@ -635,6 +750,7 @@ script:
           text:
             format: "Wake-up light: %.0f min vooraf"
             args: [id(wakeup_minuten).state]
+      - script.execute: toon_klokontwerp
       - script.execute: scherm_bijwerken
 
   # Helderheid: overdag/'s nachts, en na aanraken even fel.
@@ -664,22 +780,17 @@ script:
                   lambda: return !id(overlay_zichtbaar);
                 then:
                   - lambda: id(overlay_zichtbaar) = true;
-                  - lvgl.widget.hide: navigatie
-                  - lvgl.page.show:
-                      id: pagina_klok
-                      animation: NONE
+                  - script.execute: naar_klokscherm
+                  - lvgl.widget.hide: [pagina_indicator, lbl_ontwerp_stippen]
                   - lvgl.widget.show: wek_laag
-                  - lvgl.label.update:
-                      id: lbl_tijd
+                  - lvgl.style.update:
+                      id: klok_tekst
                       text_color: 0x9A2A1A
-                  - lvgl.label.update:
-                      id: lbl_datum
+                  - lvgl.style.update:
+                      id: klok_sub
                       text_color: 0x5A1A10
-                  - lvgl.label.update:
-                      id: lbl_wekker_info
-                      text_color: 0x5A1A10
-                  - lvgl.label.update:
-                      id: lbl_temperatuur
+                  - lvgl.style.update:
+                      id: klok_accent
                       text_color: 0x5A1A10
           else:
             - if:
@@ -688,23 +799,21 @@ script:
                 then:
                   - lambda: id(overlay_zichtbaar) = false;
                   - lvgl.widget.hide: wek_laag
-                  - lvgl.label.update:
-                      id: lbl_tijd
+                  - lvgl.widget.show: lbl_ontwerp_stippen
+                  - lvgl.style.update:
+                      id: klok_tekst
                       text_color: 0xFFFFFF
-                  - lvgl.label.update:
-                      id: lbl_datum
+                  - lvgl.style.update:
+                      id: klok_sub
                       text_color: 0xB0B6C0
-                  - lvgl.label.update:
-                      id: lbl_wekker_info
+                  - lvgl.style.update:
+                      id: klok_accent
                       text_color: 0xF5A623
-                  - lvgl.label.update:
-                      id: lbl_temperatuur
-                      text_color: 0xB0B6C0
                   - if:
                       condition:
                         lambda: return !id(gaat_af);
                       then:
-                        - lvgl.widget.show: navigatie
+                        - lvgl.widget.show: pagina_indicator
       - lambda: |-
           float doel;
           if (id(gaat_af))

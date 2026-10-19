@@ -1,0 +1,97 @@
+# =============================================================================
+#  Statussen uit Home Assistant voor de bedieningspagina's
+#  (thermostaat, rolluik, mediaspeler en de dimlamp)
+# =============================================================================
+
+sensor:
+  # Helderheid (0-255) van de dimlamp; NaN als de lamp uit staat
+  - platform: homeassistant
+    id: dim_lamp_helderheid
+    entity_id: ${dim_lamp}
+    attribute: brightness
+    internal: true
+    on_value:
+      - lvgl.slider.update:
+          id: sl_dimmer
+          value: !lambda "return std::isnan(x) ? 0 : x;"
+
+  - platform: homeassistant
+    id: klimaat_huidig
+    entity_id: ${thermostaat}
+    attribute: current_temperature
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: lbl_klimaat_huidig
+          text:
+            format: "Nu %.1f°"
+            args: [x]
+
+  - platform: homeassistant
+    id: klimaat_doel
+    entity_id: ${thermostaat}
+    attribute: temperature
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: lbl_klimaat_doel
+          text:
+            format: "%.1f°"
+            args: [x]
+
+  - platform: homeassistant
+    id: rolluik_positie
+    entity_id: ${rolluik}
+    attribute: current_position
+    internal: true
+    on_value:
+      - lvgl.slider.update:
+          id: sl_rolluik
+          value: !lambda "return std::isnan(x) ? 0 : x;"
+      - lvgl.label.update:
+          id: lbl_rolluik
+          text:
+            format: "Open: %.0f%%"
+            args: [x]
+
+  # volume_level is 0..1
+  - platform: homeassistant
+    id: media_volume
+    entity_id: ${mediaspeler}
+    attribute: volume_level
+    internal: true
+    on_value:
+      - lvgl.slider.update:
+          id: sl_media_volume
+          value: !lambda "return std::isnan(x) ? 0 : x * 100.0f;"
+
+text_sensor:
+  - platform: homeassistant
+    id: media_status
+    entity_id: ${mediaspeler}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: lbl_media_playpause
+          text: !lambda |-
+            return std::string(x == "playing" ? "\U000F03E4" : "\U000F040A");
+
+  - platform: homeassistant
+    id: media_titel
+    entity_id: ${mediaspeler}
+    attribute: media_title
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: lbl_media_titel
+          text: !lambda "return x.empty() ? std::string(\"Niets aan het afspelen\") : x;"
+
+  - platform: homeassistant
+    id: media_artiest
+    entity_id: ${mediaspeler}
+    attribute: media_artist
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: lbl_media_artiest
+          text: !lambda return x;

@@ -16,6 +16,7 @@ cards:
       - entity: select.alarmklok_wekgeluid
       - entity: number.alarmklok_wekvolume
       - type: divider
+      - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf
       - entity: time.alarmklok_nachtstand_tot
       - entity: number.alarmklok_helderheid_overdag

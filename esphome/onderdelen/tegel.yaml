@@ -1,4 +1,5 @@
-# Eén bedieningstegel op het bedieningsscherm. Een tik schakelt de entiteit.
+# Eén bedieningstegel. Een tik voert ${actie} uit op de entiteit
+# (homeassistant.toggle voor lampen e.d., homeassistant.turn_on voor scènes).
 button:
   id: tegel_${nr}
   grid_cell_row_pos: ${rij}
@@ -21,6 +22,6 @@ button:
         text_font: f_midden
   on_click:
     - homeassistant.action:
-        action: homeassistant.toggle
+        action: ${actie}
         data:
           entity_id: ${entity}

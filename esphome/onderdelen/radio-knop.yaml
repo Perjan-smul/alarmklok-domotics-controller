@@ -1,0 +1,19 @@
+# Knop die een radiostream afspeelt op de mediaspeler.
+button:
+  grid_cell_row_pos: 0
+  grid_cell_column_pos: ${kolom}
+  grid_cell_x_align: STRETCH
+  grid_cell_y_align: STRETCH
+  styles: tegel_stijl
+  on_click:
+    - homeassistant.action:
+        action: media_player.play_media
+        data:
+          entity_id: ${mediaspeler}
+          media_content_id: ${url}
+          media_content_type: music
+  widgets:
+    - label:
+        align: CENTER
+        text_font: f_midden
+        text: "${naam}"
