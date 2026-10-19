@@ -1,0 +1,37 @@
+# Dashboardkaart voor de Alarmklok.
+# Dashboard bewerken -> Kaart toevoegen -> "Handmatig" -> plak dit erin.
+type: vertical-stack
+cards:
+  - type: entities
+    title: Alarmklok
+    show_header_toggle: false
+    entities:
+      - entity: sensor.alarmklok_wekker_status
+      - entity: switch.alarmklok_wekker_aan
+      - entity: time.alarmklok_wektijd
+      - entity: select.alarmklok_wekdagen
+      - type: divider
+      - entity: number.alarmklok_wake_up_light_vooraf
+      - entity: number.alarmklok_snooze_duur
+      - entity: select.alarmklok_wekgeluid
+      - entity: number.alarmklok_wekvolume
+  - type: horizontal-stack
+    cards:
+      - type: button
+        entity: button.alarmklok_snooze
+        name: Snooze
+        icon: mdi:alarm-snooze
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.alarmklok_snooze
+      - type: button
+        entity: button.alarmklok_wekker_stoppen
+        name: Stoppen
+        icon: mdi:alarm-off
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.alarmklok_wekker_stoppen

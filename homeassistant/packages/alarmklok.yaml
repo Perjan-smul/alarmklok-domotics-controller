@@ -1,0 +1,171 @@
+# =============================================================================
+#  Home Assistant-pakket voor de Alarmklok
+#
+#  Installatie: zie README.md. Kort:
+#    1. Zet in configuration.yaml:
+#         homeassistant:
+#           packages: !include_dir_named packages
+#    2. Kopieer dit bestand naar /config/packages/alarmklok.yaml
+#    3. Pas de entiteiten in de "variables"-blokken hieronder aan.
+#    4. Herstart Home Assistant.
+#
+#  Vergeet niet in HA bij de ESPHome-integratie van de klok de optie
+#  "Sta het apparaat toe Home Assistant-acties uit te voeren" aan te zetten,
+#  anders komen de events van de knoppen niet binnen.
+# =============================================================================
+
+automation:
+  # ---------------------------------------------------------------------------
+  #  Knoppen op de klok
+  #  Event: esphome.alarmklok_knop  data: knop = 1..4 | draaiknop, druk = kort | lang
+  # ---------------------------------------------------------------------------
+  - id: alarmklok_knoppen
+    alias: "Alarmklok: knoppen"
+    mode: queued
+    max: 10
+    variables:
+      bedlamp: light.slaapkamer
+      alle_lampen: light.alle_lampen
+      rolluik: cover.slaapkamer
+      speaker: media_player.slaapkamer
+    triggers:
+      - trigger: event
+        event_type: esphome.alarmklok_knop
+    actions:
+      - variables:
+          knop: "{{ trigger.event.data.knop }}"
+          druk: "{{ trigger.event.data.druk }}"
+      - choose:
+          # Knop 1 / draaiknop kort: bedlamp aan/uit
+          - conditions: "{{ (knop == '1' or knop == 'draaiknop') and druk == 'kort' }}"
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: "{{ bedlamp }}"
+          # Knop 1 lang: bedlamp op nachtstand (heel zacht, warm)
+          - conditions: "{{ knop == '1' and druk == 'lang' }}"
+            sequence:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ bedlamp }}"
+                data:
+                  brightness_pct: 5
+                  color_temp_kelvin: 2200
+          # Knop 2 kort: welterusten - alle lampen uit
+          - conditions: "{{ knop == '2' and druk == 'kort' }}"
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ alle_lampen }}"
+          # Knop 2 lang: welterusten + rolluik dicht + muziek stop
+          - conditions: "{{ knop == '2' and druk == 'lang' }}"
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ alle_lampen }}"
+              - action: cover.close_cover
+                target:
+                  entity_id: "{{ rolluik }}"
+              - action: media_player.media_stop
+                target:
+                  entity_id: "{{ speaker }}"
+                continue_on_error: true
+          # Knop 3 kort: rolluik open/dicht/stop
+          - conditions: "{{ knop == '3' and druk == 'kort' }}"
+            sequence:
+              - action: cover.toggle
+                target:
+                  entity_id: "{{ rolluik }}"
+          # Knop 4 kort: muziek play/pauze
+          - conditions: "{{ knop == '4' and druk == 'kort' }}"
+            sequence:
+              - action: media_player.media_play_pause
+                target:
+                  entity_id: "{{ speaker }}"
+          # Knop 4 lang: volgend nummer
+          - conditions: "{{ knop == '4' and druk == 'lang' }}"
+            sequence:
+              - action: media_player.media_next_track
+                target:
+                  entity_id: "{{ speaker }}"
+
+  # ---------------------------------------------------------------------------
+  #  Draaiknop: bedlamp dimmen
+  #  Event: esphome.alarmklok_draai  data: richting = rechts | links
+  # ---------------------------------------------------------------------------
+  - id: alarmklok_draaiknop
+    alias: "Alarmklok: draaiknop dimt bedlamp"
+    mode: queued
+    max: 10
+    variables:
+      bedlamp: light.slaapkamer
+      stap_pct: 10
+    triggers:
+      - trigger: event
+        event_type: esphome.alarmklok_draai
+    actions:
+      - if:
+          - condition: template
+            value_template: "{{ trigger.event.data.richting == 'rechts' }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ bedlamp }}"
+            data:
+              brightness_step_pct: "{{ stap_pct }}"
+        else:
+          # Linksom alleen dimmen als de lamp aan staat (anders zou hij aangaan)
+          - condition: template
+            value_template: "{{ is_state(bedlamp, 'on') }}"
+          - action: light.turn_on
+            target:
+              entity_id: "{{ bedlamp }}"
+            data:
+              brightness_step_pct: "{{ -stap_pct }}"
+
+  # ---------------------------------------------------------------------------
+  #  Wake-up light: de klok stuurt dit event "Wake-up light vooraf" minuten
+  #  voor de wektijd. De lamp loopt dan langzaam op als een zonsopgang.
+  # ---------------------------------------------------------------------------
+  - id: alarmklok_wakeup_light
+    alias: "Alarmklok: wake-up light"
+    mode: restart
+    variables:
+      bedlamp: light.slaapkamer
+    triggers:
+      - trigger: event
+        event_type: esphome.alarmklok_wakeup
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ bedlamp }}"
+        data:
+          brightness_pct: 1
+          color_temp_kelvin: 2200
+      - delay: 2
+      - action: light.turn_on
+        target:
+          entity_id: "{{ bedlamp }}"
+        data:
+          brightness_pct: 100
+          color_temp_kelvin: 4000
+          transition: "{{ (trigger.event.data.minuten | int(20)) * 60 }}"
+
+  # ---------------------------------------------------------------------------
+  #  Wekker gaat af / wordt uitgezet
+  #  Event: esphome.alarmklok_wekker  data: status = gaat_af | snooze | gestopt
+  # ---------------------------------------------------------------------------
+  - id: alarmklok_wekker_uit
+    alias: "Alarmklok: goedemorgen na uitzetten wekker"
+    mode: single
+    variables:
+      rolluik: cover.slaapkamer
+    triggers:
+      - trigger: event
+        event_type: esphome.alarmklok_wekker
+        event_data:
+          status: gestopt
+    actions:
+      - action: cover.open_cover
+        target:
+          entity_id: "{{ rolluik }}"
