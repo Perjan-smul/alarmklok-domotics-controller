@@ -1,0 +1,155 @@
+# =============================================================================
+#  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-7B
+#  7" IPS 1024x600 (MIPI-DSI), GT911 touch, ES8311 audio + speakeraansluiting,
+#  ESP32-C6 als wifi-coprocessor (SDIO / esp-hosted).
+#
+#  Pinnen volgens de Waveshare-voorbeelden voor dit bord:
+#    I2C (touch + ES8311)  SDA GPIO7, SCL GPIO8
+#    Backlight             GPIO32 (PWM, geïnverteerd)
+#    LCD reset             GPIO33 (zit in het ESPHome-model)
+#    I2S                   MCLK GPIO13, BCLK GPIO12, LRCK GPIO10, DOUT GPIO9
+#    Speakerversterker     GPIO53 (enable)
+#    ESP32-C6 (SDIO)       standaard esp-hosted pinnen voor de ESP32-P4
+# =============================================================================
+
+esp32:
+  variant: esp32p4
+  # Het bord heeft 32 MB flash, maar OTA met 32 MB is in ESPHome nog
+  # experimenteel. 16 MB is ruim voldoende.
+  flash_size: 16MB
+  # Productiechips zijn rev3. Heb je een vroeg exemplaar (bootlog toont
+  # "chip revision: v1.x")? Zet dit dan op true.
+  engineering_sample: false
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+esp32_hosted:
+  variant: ESP32C6
+  active_high: true
+  clk_pin: GPIO18
+  cmd_pin: GPIO19
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  reset_pin: GPIO54
+  slot: 1
+
+i2c:
+  - id: i2c_bus
+    sda: GPIO7
+    scl: GPIO8
+    frequency: 400kHz
+
+# ---- Scherm ----------------------------------------------------------------
+# Voeding van de MIPI-DSI PHY (2,5 V via interne LDO-kanaal 3)
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+display:
+  - platform: mipi_dsi
+    id: scherm
+    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: gt911
+    id: touch
+    i2c_id: i2c_bus
+    display: scherm
+    on_touch:
+      - script.execute: aangeraakt
+
+output:
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO32
+    inverted: true
+    frequency: 5000Hz
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Schermhelderheid
+    icon: mdi:brightness-6
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 500ms
+
+# ---- Audio -------------------------------------------------------------------
+switch:
+  - platform: gpio
+    id: speaker_versterker
+    pin: GPIO53
+    restore_mode: ALWAYS_ON
+    internal: true
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO10
+    i2s_bclk_pin: GPIO12
+    i2s_mclk_pin: GPIO13
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: i2c_bus
+    address: 0x18
+    use_mclk: true
+    sample_rate: 48000
+
+speaker:
+  - platform: i2s_audio
+    id: hw_speaker
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO9
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: stereo
+    buffer_duration: 100ms
+
+  # Drie geluidsbronnen worden gemengd naar de ene speaker:
+  # muziek/radio, meldingen (TTS) en het wekgeluid.
+  - platform: mixer
+    id: mixer_speaker
+    output_speaker: hw_speaker
+    num_channels: 2
+    source_speakers:
+      - id: mix_media
+      - id: mix_melding
+      - id: mix_wekker
+
+  - platform: resampler
+    id: media_resampler
+    output_speaker: mix_media
+  - platform: resampler
+    id: melding_resampler
+    output_speaker: mix_melding
+  - platform: resampler
+    id: wekker_resampler
+    output_speaker: mix_wekker
+
+media_player:
+  - platform: speaker
+    id: speler
+    name: Speaker
+    media_pipeline:
+      speaker: media_resampler
+      num_channels: 2
+    announcement_pipeline:
+      speaker: melding_resampler
+      num_channels: 1
+
+rtttl:
+  id: zoemer_rtttl
+  speaker: wekker_resampler
+  gain: 0.8

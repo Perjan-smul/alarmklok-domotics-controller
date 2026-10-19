@@ -15,6 +15,11 @@ cards:
       - entity: number.alarmklok_snooze_duur
       - entity: select.alarmklok_wekgeluid
       - entity: number.alarmklok_wekvolume
+      - type: divider
+      - entity: time.alarmklok_nachtstand_vanaf
+      - entity: time.alarmklok_nachtstand_tot
+      - entity: number.alarmklok_helderheid_overdag
+      - entity: number.alarmklok_helderheid_s_nachts
   - type: horizontal-stack
     cards:
       - type: button
@@ -35,3 +40,5 @@ cards:
           perform_action: button.press
           target:
             entity_id: button.alarmklok_wekker_stoppen
+  - type: media-control
+    entity: media_player.alarmklok_speaker

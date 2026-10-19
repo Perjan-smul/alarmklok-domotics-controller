@@ -1,37 +1,63 @@
 # =============================================================================
 #  Alarmklok + domotica-controller voor Home Assistant (ESPHome)
 #
-#  Hardware: ESP32 DevKit, 1.3" SH1106 OLED (I2C), KY-040 draaiknop,
-#            4 drukknoppen, passieve zoemer, LDR voor automatische helderheid.
-#  Zie README.md voor het aansluitschema.
+#  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7" touch, 1024x600, liggend)
+#  Zie README.md voor installatie.
 #
 #  De wekker draait volledig op de klok zelf (tijd via NTP), dus hij gaat ook
-#  af als Home Assistant of de server even plat ligt. Alle knoppen sturen een
-#  event naar Home Assistant; wat er dan gebeurt stel je in HA in
-#  (homeassistant/packages/alarmklok.yaml) - opnieuw flashen is niet nodig.
+#  af als Home Assistant even plat ligt.
+#
+#  Bestanden:
+#    alarmklok.yaml                   <- dit bestand: instellingen + wekker-logica
+#    onderdelen/waveshare-p4-7b.yaml  <- hardware (scherm, touch, audio, wifi)
+#    onderdelen/scherm.yaml           <- de touch-interface (LVGL)
+#    onderdelen/tegel*.yaml           <- één bedieningstegel
 # =============================================================================
 
 substitutions:
   name: alarmklok
   friendly_name: Alarmklok
   tijdzone: Europe/Amsterdam
-  # Sensor uit Home Assistant die rechtsboven op het scherm getoond wordt.
+  # Sensor uit Home Assistant die rechtsboven op het klokscherm staat.
   temperatuur_sensor: sensor.buitentemperatuur
+  # Lamp voor de dimschuif op het bedieningsscherm.
+  dim_lamp: light.slaapkamer
   # Na zoveel minuten stopt een wekker die niet uitgezet wordt vanzelf.
   max_afgaan_minuten: "30"
 
-  # Pinnen (ESP32 DevKit v1)
-  pin_sda: GPIO21
-  pin_scl: GPIO22
-  pin_encoder_a: GPIO32
-  pin_encoder_b: GPIO33
-  pin_encoder_knop: GPIO25
-  pin_knop_1: GPIO26
-  pin_knop_2: GPIO27
-  pin_knop_3: GPIO14
-  pin_knop_4: GPIO13
-  pin_zoemer: GPIO18
-  pin_ldr: GPIO34
+  # ---- Bedieningstegels (2 rijen x 3) ----------------------------------------
+  # Een tik doet "homeassistant.toggle" op de entiteit. Dat werkt voor lampen,
+  # schakelaars, rolluiken, mediaspelers, scripts, automations en input_boolean.
+  # Wil je een scène? Maak dan een script dat de scène aanzet.
+  # Iconen: zie de lijst in README.md.
+  tegel_1_naam: Bedlamp
+  tegel_1_entity: light.slaapkamer
+  tegel_1_icoon: "\U000F095F"   # desk-lamp
+  tegel_2_naam: Plafond
+  tegel_2_entity: light.slaapkamer_plafond
+  tegel_2_icoon: "\U000F0769"   # ceiling-light
+  tegel_3_naam: Rolluik
+  tegel_3_entity: cover.slaapkamer
+  tegel_3_icoon: "\U000F111C"   # window-shutter
+  tegel_4_naam: Muziek
+  tegel_4_entity: media_player.alarmklok_speaker
+  tegel_4_icoon: "\U000F075A"   # music
+  tegel_5_naam: Ventilator
+  tegel_5_entity: fan.slaapkamer
+  tegel_5_icoon: "\U000F0210"   # fan
+  tegel_6_naam: Welterusten
+  tegel_6_entity: script.welterusten
+  tegel_6_icoon: "\U000F0904"   # power-sleep
+
+packages:
+  hardware: !include onderdelen/waveshare-p4-7b.yaml
+  scherm: !include onderdelen/scherm.yaml
+  tegel_1: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 1, entity: "${tegel_1_entity}" } }
+  tegel_2: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 2, entity: "${tegel_2_entity}" } }
+  tegel_3: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 3, entity: "${tegel_3_entity}" } }
+  tegel_4: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 4, entity: "${tegel_4_entity}" } }
+  tegel_5: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 5, entity: "${tegel_5_entity}" } }
+  tegel_6: !include { file: onderdelen/tegel-status.yaml, vars: { nr: 6, entity: "${tegel_6_entity}" } }
 
 esphome:
   name: ${name}
@@ -44,11 +70,9 @@ esphome:
       - text_sensor.template.publish:
           id: wekker_status
           state: Wacht
-
-esp32:
-  board: esp32dev
-  framework:
-    type: esp-idf
+      - lambda: id(ui_klaar) = true;
+      - script.execute: ui_synchroniseren
+      - script.execute: scherm_bijwerken
 
 logger:
 
@@ -58,7 +82,8 @@ api:
 
 ota:
   - platform: esphome
-    password: !secret ota_password
+    # Gebruikt dezelfde sleutel als de api hierboven
+    encryption: {}
 
 wifi:
   ssid: !secret wifi_ssid
@@ -79,13 +104,27 @@ globals:
   - id: snoozet
     type: bool
     initial_value: "false"
-  # 0 = klok, 1 = wektijd instellen
-  - id: modus
-    type: int
+  # Unix-tijd waarop de snooze afloopt (voor op het scherm)
+  - id: snooze_tot
+    type: time_t
     initial_value: "0"
-  - id: laatste_bediening_ms
+  - id: laatste_aanraking_ms
     type: uint32_t
     initial_value: "0"
+  - id: huidige_helderheid
+    type: float
+    initial_value: "-1"
+  - id: nachtstand
+    type: bool
+    initial_value: "false"
+  - id: overlay_zichtbaar
+    type: bool
+    initial_value: "false"
+  # Instellingen worden geladen vóór de LVGL-interface bestaat; pas na het
+  # opstarten mogen ze widgets bijwerken.
+  - id: ui_klaar
+    type: bool
+    initial_value: "false"
 
 # -----------------------------------------------------------------------------
 #  Tijd: NTP, zodat de wekker ook zonder Home Assistant werkt
@@ -98,6 +137,14 @@ time:
       - seconds: 0
         then:
           - script.execute: controleer_wekker
+    on_time_sync:
+      - script.execute: scherm_bijwerken
+
+interval:
+  - interval: 1s
+    then:
+      - script.execute: scherm_bijwerken
+      - script.execute: helderheid_regelen
 
 # -----------------------------------------------------------------------------
 #  Instellingen die in Home Assistant verschijnen
@@ -111,6 +158,32 @@ datetime:
     optimistic: true
     restore_value: true
     initial_value: "07:00:00"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+
+  - platform: template
+    id: nacht_vanaf
+    type: time
+    name: Nachtstand vanaf
+    icon: mdi:weather-night
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "22:30:00"
+
+  - platform: template
+    id: nacht_tot
+    type: time
+    name: Nachtstand tot
+    icon: mdi:weather-sunny
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "07:00:00"
 
 switch:
   - platform: template
@@ -119,6 +192,12 @@ switch:
     icon: mdi:alarm-check
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
     on_turn_off:
       - script.execute: stop_wekker
 
@@ -134,6 +213,12 @@ select:
       - Werkdagen
       - Weekend
     initial_option: Werkdagen
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
 
   - platform: template
     id: wekgeluid
@@ -141,11 +226,21 @@ select:
     icon: mdi:music-note
     optimistic: true
     restore_value: true
+    # "Radio" laat Home Assistant een radiostream op de klok afspelen
+    # (zie homeassistant/packages/alarmklok.yaml). Speelt er na 20 s nog
+    # niets, dan valt de klok terug op het klassieke wekgeluid.
     options:
       - Klassiek
       - Zacht
       - Mario
+      - Radio
     initial_option: Klassiek
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
 
 number:
   - platform: template
@@ -171,6 +266,12 @@ number:
     max_value: 60
     step: 5
     initial_value: 20
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
 
   - platform: template
     id: volume
@@ -185,6 +286,37 @@ number:
     initial_value: 80
     on_value:
       - lambda: id(zoemer_rtttl).set_gain(x / 100.0f);
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+
+  - platform: template
+    id: helderheid_dag
+    name: Helderheid overdag
+    icon: mdi:brightness-7
+    entity_category: config
+    unit_of_measurement: "%"
+    optimistic: true
+    restore_value: true
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 80
+
+  - platform: template
+    id: helderheid_nacht
+    name: Helderheid 's nachts
+    icon: mdi:brightness-3
+    entity_category: config
+    unit_of_measurement: "%"
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 50
+    step: 1
+    initial_value: 3
 
 button:
   - platform: template
@@ -209,6 +341,33 @@ text_sensor:
     id: wekker_status
     name: Wekker status
     icon: mdi:alarm-light
+
+binary_sensor:
+  - platform: status
+    id: api_verbonden
+    name: Status
+
+sensor:
+  - platform: homeassistant
+    id: buitentemperatuur
+    entity_id: ${temperatuur_sensor}
+    internal: true
+
+  # Helderheid (0-255) van de dimlamp; leeg/NaN als de lamp uit staat
+  - platform: homeassistant
+    id: dim_lamp_helderheid
+    entity_id: ${dim_lamp}
+    attribute: brightness
+    internal: true
+    on_value:
+      - lvgl.slider.update:
+          id: sl_dimmer
+          value: !lambda "return std::isnan(x) ? 0 : x;"
+
+  - platform: wifi_signal
+    name: WiFi signaal
+    update_interval: 60s
+    entity_category: diagnostic
 
 # -----------------------------------------------------------------------------
 #  Wekker-logica
@@ -256,16 +415,43 @@ script:
       - lambda: |-
           id(gaat_af) = true;
           id(snoozet) = false;
-          id(modus) = 0;
       - text_sensor.template.publish:
           id: wekker_status
           state: Gaat af
+      - lvgl.widget.hide: navigatie
+      - lvgl.page.show:
+          id: pagina_wekker_gaat_af
+          animation: NONE
+      - script.execute: helderheid_regelen
       - homeassistant.event:
           event: esphome.alarmklok_wekker
           data:
             status: gaat_af
+            geluid: !lambda return id(wekgeluid).current_option().str();
       - script.execute: max_afgaan_timer
-      - script.execute: speel_wekgeluid
+      - if:
+          condition:
+            and:
+              - lambda: return id(wekgeluid).current_option() == "Radio";
+              - api.connected:
+          then:
+            - script.execute: radio_terugval
+          else:
+            - script.execute: speel_wekgeluid
+
+  # Speelt de radio na 20 s nog niet, dan toch het wekgeluid laten klinken
+  - id: radio_terugval
+    mode: restart
+    then:
+      - delay: 20s
+      - if:
+          condition:
+            and:
+              - lambda: return id(gaat_af);
+              - not:
+                  media_player.is_playing: speler
+          then:
+            - script.execute: speel_wekgeluid
 
   - id: speel_wekgeluid
     mode: single
@@ -282,6 +468,16 @@ script:
                     rtttl.is_playing:
             - delay: 1s
 
+  - id: geluid_stoppen
+    then:
+      - script.stop: radio_terugval
+      - rtttl.stop:
+      - if:
+          condition:
+            lambda: return id(wekgeluid).current_option() == "Radio";
+          then:
+            - media_player.stop: speler
+
   - id: snooze_wekker
     then:
       - if:
@@ -291,7 +487,10 @@ script:
             - lambda: |-
                 id(gaat_af) = false;
                 id(snoozet) = true;
-            - rtttl.stop:
+                auto nu = id(klok).now();
+                id(snooze_tot) = nu.is_valid()
+                    ? nu.timestamp + (time_t) id(snooze_minuten).state * 60 : 0;
+            - script.execute: geluid_stoppen
             - script.stop: max_afgaan_timer
             - text_sensor.template.publish:
                 id: wekker_status
@@ -300,6 +499,7 @@ script:
                 event: esphome.alarmklok_wekker
                 data:
                   status: snooze
+            - script.execute: naar_klokscherm
             - script.execute: snooze_timer
 
   - id: snooze_timer
@@ -318,7 +518,7 @@ script:
     then:
       - script.stop: snooze_timer
       - script.stop: max_afgaan_timer
-      - rtttl.stop:
+      - script.execute: geluid_stoppen
       - if:
           condition:
             lambda: return id(gaat_af) || id(snoozet);
@@ -330,298 +530,192 @@ script:
                 event: esphome.alarmklok_wekker
                 data:
                   status: gestopt
+            - script.execute: naar_klokscherm
       - text_sensor.template.publish:
           id: wekker_status
           state: Wacht
 
-  # ---------------------------------------------------------------------------
-  #  Bediening
-  # ---------------------------------------------------------------------------
-  # knop: "1".."4" of "draaiknop"; druk: "kort" of "lang"
-  - id: knop_ingedrukt
-    mode: queued
-    parameters:
-      knop: string
-      druk: string
+  - id: naar_klokscherm
     then:
-      - lambda: id(laatste_bediening_ms) = millis();
+      - lvgl.widget.show: navigatie
+      - lvgl.page.show:
+          id: pagina_klok
+          animation: NONE
+
+  # Aangeroepen bij elke aanraking van het scherm
+  - id: aangeraakt
+    then:
+      - lambda: id(laatste_aanraking_ms) = millis();
+      - script.execute: helderheid_regelen
+
+  # ---------------------------------------------------------------------------
+  #  Scherm
+  # ---------------------------------------------------------------------------
+  - id: scherm_bijwerken
+    then:
+      - lvgl.label.update:
+          id: lbl_tijd
+          text: !lambda |-
+            auto nu = id(klok).now();
+            return nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
+      - lvgl.label.update:
+          id: lbl_tijd_alarm
+          text: !lambda |-
+            auto nu = id(klok).now();
+            return nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
+      - lvgl.label.update:
+          id: lbl_datum
+          text: !lambda |-
+            auto nu = id(klok).now();
+            if (!nu.is_valid())
+              return std::string("Tijd ophalen...");
+            return alarmklok::datum_tekst(nu.day_of_week, nu.day_of_month, nu.month);
+      - lvgl.label.update:
+          id: lbl_temperatuur
+          text: !lambda |-
+            float t = id(buitentemperatuur).state;
+            if (std::isnan(t))
+              return std::string("");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.1f°", t);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_wekker_info
+          text: !lambda |-
+            char buf[64];
+            if (id(snoozet) && id(snooze_tot) > 0) {
+              auto t = ESPTime::from_epoch_local(id(snooze_tot));
+              snprintf(buf, sizeof(buf), "Snooze tot %02d:%02d", t.hour, t.minute);
+            } else if (id(wekker_aan).state) {
+              snprintf(buf, sizeof(buf), "Wekker %02d:%02d  (%s)", id(wektijd).hour,
+                       id(wektijd).minute, id(wekdagen).current_option().c_str());
+            } else {
+              snprintf(buf, sizeof(buf), "Wekker uit");
+            }
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_verbinding
+          text: !lambda |-
+            return std::string(id(api_verbonden).state ? "" : "Geen verbinding met Home Assistant");
+
+  # Wekker-scherm gelijkzetten met de huidige instellingen
+  - id: ui_synchroniseren
+    mode: queued
+    max_runs: 3
+    then:
+      - lvgl.roller.update:
+          id: rl_uur
+          selected_index: !lambda return id(wektijd).hour;
+      - lvgl.roller.update:
+          id: rl_minuut
+          selected_index: !lambda return id(wektijd).minute / 5;
+      - lvgl.widget.update:
+          id: sw_wekker
+          state:
+            checked: !lambda return id(wekker_aan).state;
+      - lvgl.dropdown.update:
+          id: dd_wekdagen
+          selected_index: !lambda return id(wekdagen).active_index().value_or(0);
+      - lvgl.dropdown.update:
+          id: dd_wekgeluid
+          selected_index: !lambda return id(wekgeluid).active_index().value_or(0);
+      - lvgl.slider.update:
+          id: sl_volume
+          value: !lambda return id(volume).state;
+      - lvgl.label.update:
+          id: lbl_volume
+          text:
+            format: "Wekvolume: %.0f%%"
+            args: [id(volume).state]
+      - lvgl.slider.update:
+          id: sl_wakeup
+          value: !lambda return id(wakeup_minuten).state;
+      - lvgl.label.update:
+          id: lbl_wakeup
+          text:
+            format: "Wake-up light: %.0f min vooraf"
+            args: [id(wakeup_minuten).state]
+      - script.execute: scherm_bijwerken
+
+  # Helderheid: overdag/'s nachts, en na aanraken even fel.
+  # In de nachtstand vangt een onzichtbare laag de eerste tik op, zodat je in
+  # het donker niet per ongeluk een lamp aanzet als je het scherm wekt.
+  - id: helderheid_regelen
+    mode: queued
+    max_runs: 2
+    then:
+      - lambda: |-
+          auto nu = id(klok).now();
+          bool nacht = false;
+          if (nu.is_valid()) {
+            nacht = alarmklok::in_venster(nu.hour * 60 + nu.minute,
+                id(nacht_vanaf).hour * 60 + id(nacht_vanaf).minute,
+                id(nacht_tot).hour * 60 + id(nacht_tot).minute);
+          }
+          id(nachtstand) = nacht;
       - if:
-          # Tijdens het afgaan: kort = snooze, lang (of draaiknop) = stoppen
           condition:
-            lambda: return id(gaat_af);
+            lambda: |-
+              bool actief = id(gaat_af) || millis() - id(laatste_aanraking_ms) < 20000;
+              return id(nachtstand) && !actief;
           then:
             - if:
                 condition:
-                  lambda: return druk == "lang" || knop == "draaiknop";
+                  lambda: return !id(overlay_zichtbaar);
                 then:
-                  - script.execute: stop_wekker
-                else:
-                  - script.execute: snooze_wekker
+                  - lambda: id(overlay_zichtbaar) = true;
+                  - lvgl.widget.hide: navigatie
+                  - lvgl.page.show:
+                      id: pagina_klok
+                      animation: NONE
+                  - lvgl.widget.show: wek_laag
+                  - lvgl.label.update:
+                      id: lbl_tijd
+                      text_color: 0x9A2A1A
+                  - lvgl.label.update:
+                      id: lbl_datum
+                      text_color: 0x5A1A10
+                  - lvgl.label.update:
+                      id: lbl_wekker_info
+                      text_color: 0x5A1A10
+                  - lvgl.label.update:
+                      id: lbl_temperatuur
+                      text_color: 0x5A1A10
           else:
             - if:
-                # Tijdens snooze: lang indrukken zet de wekker voor vandaag uit
                 condition:
-                  lambda: return id(snoozet) && druk == "lang";
+                  lambda: return id(overlay_zichtbaar);
                 then:
-                  - script.execute: stop_wekker
-                else:
+                  - lambda: id(overlay_zichtbaar) = false;
+                  - lvgl.widget.hide: wek_laag
+                  - lvgl.label.update:
+                      id: lbl_tijd
+                      text_color: 0xFFFFFF
+                  - lvgl.label.update:
+                      id: lbl_datum
+                      text_color: 0xB0B6C0
+                  - lvgl.label.update:
+                      id: lbl_wekker_info
+                      text_color: 0xF5A623
+                  - lvgl.label.update:
+                      id: lbl_temperatuur
+                      text_color: 0xB0B6C0
                   - if:
                       condition:
-                        lambda: return knop == "draaiknop" && druk == "lang";
+                        lambda: return !id(gaat_af);
                       then:
-                        # Wissel tussen klok en wektijd instellen
-                        - lambda: 'id(modus) = id(modus) == 0 ? 1 : 0;'
-                      else:
-                        - if:
-                            condition:
-                              lambda: return id(modus) == 1 && knop == "draaiknop";
-                            then:
-                              - switch.toggle: wekker_aan
-                            else:
-                              - homeassistant.event:
-                                  event: esphome.alarmklok_knop
-                                  data:
-                                    knop: !lambda return knop;
-                                    druk: !lambda return druk;
-
-  # richting: 1 = rechtsom, -1 = linksom
-  - id: draaiknop_gedraaid
-    mode: queued
-    max_runs: 10
-    parameters:
-      richting: int
-    then:
-      - lambda: id(laatste_bediening_ms) = millis();
-      - if:
-          condition:
-            lambda: return id(modus) == 1;
-          then:
-            # Wektijd in stappen van 5 minuten verzetten
-            - lambda: |-
-                int totaal = id(wektijd).hour * 60 + id(wektijd).minute + richting * 5;
-                totaal = ((totaal % 1440) + 1440) % 1440;
-                auto call = id(wektijd).make_call();
-                call.set_time(totaal / 60, totaal % 60, 0);
-                call.perform();
-          else:
-            - homeassistant.event:
-                event: esphome.alarmklok_draai
-                data:
-                  richting: !lambda 'return richting > 0 ? "rechts" : "links";'
-
-# Terug naar de klok na 10 s zonder bediening in de instelmodus
-interval:
-  - interval: 1s
-    then:
+                        - lvgl.widget.show: navigatie
       - lambda: |-
-          if (id(modus) != 0 && millis() - id(laatste_bediening_ms) > 10000)
-            id(modus) = 0;
-
-# -----------------------------------------------------------------------------
-#  Invoer
-# -----------------------------------------------------------------------------
-binary_sensor:
-  - platform: status
-    id: api_verbonden
-    name: Status
-
-  - platform: gpio
-    id: knop_1
-    name: Knop 1
-    internal: true
-    pin: { number: "${pin_knop_1}", mode: INPUT_PULLUP, inverted: true }
-    filters: [delayed_on: 20ms]
-    on_click:
-      - max_length: 700ms
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "1", druk: kort }
-      - min_length: 1s
-        max_length: 10s
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "1", druk: lang }
-
-  - platform: gpio
-    id: knop_2
-    name: Knop 2
-    internal: true
-    pin: { number: "${pin_knop_2}", mode: INPUT_PULLUP, inverted: true }
-    filters: [delayed_on: 20ms]
-    on_click:
-      - max_length: 700ms
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "2", druk: kort }
-      - min_length: 1s
-        max_length: 10s
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "2", druk: lang }
-
-  - platform: gpio
-    id: knop_3
-    name: Knop 3
-    internal: true
-    pin: { number: "${pin_knop_3}", mode: INPUT_PULLUP, inverted: true }
-    filters: [delayed_on: 20ms]
-    on_click:
-      - max_length: 700ms
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "3", druk: kort }
-      - min_length: 1s
-        max_length: 10s
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "3", druk: lang }
-
-  - platform: gpio
-    id: knop_4
-    name: Knop 4
-    internal: true
-    pin: { number: "${pin_knop_4}", mode: INPUT_PULLUP, inverted: true }
-    filters: [delayed_on: 20ms]
-    on_click:
-      - max_length: 700ms
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "4", druk: kort }
-      - min_length: 1s
-        max_length: 10s
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: "4", druk: lang }
-
-  - platform: gpio
-    id: draaiknop_knop
-    name: Draaiknop
-    internal: true
-    pin: { number: "${pin_encoder_knop}", mode: INPUT_PULLUP, inverted: true }
-    filters: [delayed_on: 20ms]
-    on_click:
-      - max_length: 700ms
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: draaiknop, druk: kort }
-      - min_length: 1s
-        max_length: 10s
-        then:
-          - script.execute: { id: knop_ingedrukt, knop: draaiknop, druk: lang }
-
-sensor:
-  - platform: rotary_encoder
-    id: draaiknop
-    internal: true
-    pin_a: { number: "${pin_encoder_a}", mode: INPUT_PULLUP }
-    pin_b: { number: "${pin_encoder_b}", mode: INPUT_PULLUP }
-    on_clockwise:
-      - script.execute: { id: draaiknop_gedraaid, richting: 1 }
-    on_anticlockwise:
-      - script.execute: { id: draaiknop_gedraaid, richting: -1 }
-
-  # Lichtsensor (LDR + 10k naar GND) regelt de helderheid van het scherm
-  - platform: adc
-    id: omgevingslicht
-    name: Omgevingslicht
-    pin: ${pin_ldr}
-    attenuation: 12db
-    update_interval: 2s
-    unit_of_measurement: "%"
-    accuracy_decimals: 0
-    filters:
-      - lambda: return x / 3.3f * 100.0f;
-      - sliding_window_moving_average:
-          window_size: 5
-          send_every: 5
-    on_value:
-      - lambda: |-
-          // Donker = gedimd (maar nooit helemaal uit), licht = vol contrast
-          float c = 0.02f + (x / 100.0f) * 0.98f;
-          id(oled).set_contrast(c > 1.0f ? 1.0f : c);
-
-  - platform: homeassistant
-    id: buitentemperatuur
-    entity_id: ${temperatuur_sensor}
-    internal: true
-
-  - platform: wifi_signal
-    name: WiFi signaal
-    update_interval: 60s
-    entity_category: diagnostic
-
-# -----------------------------------------------------------------------------
-#  Uitvoer: zoemer en scherm
-# -----------------------------------------------------------------------------
-output:
-  - platform: ledc
-    id: zoemer
-    pin: ${pin_zoemer}
-
-rtttl:
-  id: zoemer_rtttl
-  output: zoemer
-  gain: 0.8
-
-i2c:
-  sda: ${pin_sda}
-  scl: ${pin_scl}
-  frequency: 400kHz
-
-font:
-  - file: "gfonts://Roboto Condensed@700"
-    id: f_groot
-    size: 44
-    glyphs: "0123456789:"
-  - file: "gfonts://Roboto"
-    id: f_klein
-    size: 12
-    glyphs: " !%'()+,-./0123456789:?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz°"
-
-display:
-  - platform: ssd1306_i2c
-    id: oled
-    model: "SH1106 128x64"
-    address: 0x3C
-    update_interval: 500ms
-    lambda: |-
-      auto nu = id(klok).now();
-
-      // ---- Wekker gaat af: knipperend scherm ----
-      if (id(gaat_af)) {
-        bool aan = (millis() / 500) % 2;
-        if (aan) it.fill(COLOR_ON);
-        Color kleur = aan ? COLOR_OFF : COLOR_ON;
-        if (nu.is_valid())
-          it.strftime(64, 26, id(f_groot), kleur, TextAlign::CENTER, "%H:%M", nu);
-        it.print(64, 63, id(f_klein), kleur, TextAlign::BOTTOM_CENTER, "Goedemorgen!");
-        return;
-      }
-
-      // ---- Wektijd instellen ----
-      if (id(modus) == 1) {
-        it.print(64, 0, id(f_klein), TextAlign::TOP_CENTER, "Wektijd instellen");
-        it.printf(64, 34, id(f_groot), TextAlign::CENTER, "%02d:%02d",
-                  id(wektijd).hour, id(wektijd).minute);
-        it.printf(64, 63, id(f_klein), TextAlign::BOTTOM_CENTER, "%s - %s",
-                  id(wekker_aan).state ? "AAN" : "UIT",
-                  id(wekdagen).current_option().c_str());
-        return;
-      }
-
-      // ---- Normale klok ----
-      if (!nu.is_valid()) {
-        it.print(64, 32, id(f_klein), TextAlign::CENTER, "Tijd ophalen...");
-        return;
-      }
-      static const char *dagen[] = {"zo", "ma", "di", "wo", "do", "vr", "za"};
-      static const char *maanden[] = {"jan", "feb", "mrt", "apr", "mei", "jun",
-                                      "jul", "aug", "sep", "okt", "nov", "dec"};
-      it.printf(0, 0, id(f_klein), "%s %d %s", dagen[nu.day_of_week - 1],
-                nu.day_of_month, maanden[nu.month - 1]);
-      if (id(buitentemperatuur).has_state() && !std::isnan(id(buitentemperatuur).state))
-        it.printf(127, 0, id(f_klein), TextAlign::TOP_RIGHT, "%.1f°",
-                  id(buitentemperatuur).state);
-
-      it.strftime(64, 36, id(f_groot), TextAlign::CENTER, "%H:%M", nu);
-
-      if (id(snoozet))
-        it.print(0, 63, id(f_klein), TextAlign::BOTTOM_LEFT, "Snooze...");
-      else if (id(wekker_aan).state)
-        it.printf(0, 63, id(f_klein), TextAlign::BOTTOM_LEFT, "Wekker %02d:%02d",
-                  id(wektijd).hour, id(wektijd).minute);
-      else
-        it.print(0, 63, id(f_klein), TextAlign::BOTTOM_LEFT, "Wekker uit");
-      if (!id(api_verbonden).state)
-        it.print(127, 63, id(f_klein), TextAlign::BOTTOM_RIGHT, "geen HA");
+          float doel;
+          if (id(gaat_af))
+            doel = 1.0f;
+          else if (id(overlay_zichtbaar))
+            doel = id(helderheid_nacht).state / 100.0f;
+          else
+            doel = id(helderheid_dag).state / 100.0f;
+          if (std::fabs(doel - id(huidige_helderheid)) > 0.005f) {
+            id(huidige_helderheid) = doel;
+            auto call = id(backlight).turn_on();
+            call.set_brightness(doel);
+            call.perform();
+          }

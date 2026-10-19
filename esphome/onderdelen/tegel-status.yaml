@@ -1,0 +1,13 @@
+# Haalt de status van de entiteit achter tegel ${nr} uit Home Assistant
+# en kleurt de tegel als die "aan" is.
+text_sensor:
+  - platform: homeassistant
+    id: tegel_${nr}_status
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - lvgl.widget.update:
+          id: tegel_${nr}
+          state:
+            checked: !lambda |-
+              return x == "on" || x == "open" || x == "opening" || x == "playing";

@@ -1,0 +1,26 @@
+# Eén bedieningstegel op het bedieningsscherm. Een tik schakelt de entiteit.
+button:
+  id: tegel_${nr}
+  grid_cell_row_pos: ${rij}
+  grid_cell_column_pos: ${kolom}
+  grid_cell_x_align: STRETCH
+  grid_cell_y_align: STRETCH
+  styles: tegel_stijl
+  layout:
+    type: FLEX
+    flex_flow: COLUMN
+    flex_align_main: CENTER
+    flex_align_cross: CENTER
+    flex_align_track: CENTER
+  widgets:
+    - label:
+        text: "${icoon}"
+        text_font: f_icoon
+    - label:
+        text: "${naam}"
+        text_font: f_midden
+  on_click:
+    - homeassistant.action:
+        action: homeassistant.toggle
+        data:
+          entity_id: ${entity}

@@ -1,5 +1,6 @@
 #pragma once
-// Hulpfuncties voor de alarmklok (gebruikt vanuit de lambda's in alarmklok.yaml).
+// Hulpfuncties voor de alarmklok (gebruikt vanuit de lambda's in de YAML).
+#include <cstdio>
 #include <string>
 
 namespace alarmklok {
@@ -11,6 +12,29 @@ inline bool wekdag_actief(const std::string &modus, int day_of_week) {
   if (modus == "Weekend")
     return day_of_week == 1 || day_of_week == 7;
   return true;  // "Elke dag"
+}
+
+// Valt minuut-van-de-dag `nu` binnen het venster [van, tot)? Werkt ook over middernacht.
+inline bool in_venster(int nu, int van, int tot) {
+  if (van == tot)
+    return false;
+  if (van < tot)
+    return nu >= van && nu < tot;
+  return nu >= van || nu < tot;
+}
+
+inline std::string datum_tekst(int day_of_week, int day_of_month, int month) {
+  static const char *const DAGEN[] = {"zondag", "maandag", "dinsdag", "woensdag",
+                                      "donderdag", "vrijdag", "zaterdag"};
+  static const char *const MAANDEN[] = {"januari", "februari", "maart", "april",
+                                        "mei", "juni", "juli", "augustus",
+                                        "september", "oktober", "november", "december"};
+  if (day_of_week < 1 || day_of_week > 7 || month < 1 || month > 12)
+    return "";
+  char buf[48];
+  snprintf(buf, sizeof(buf), "%s %d %s", DAGEN[day_of_week - 1], day_of_month,
+           MAANDEN[month - 1]);
+  return buf;
 }
 
 inline const char *melodie(const std::string &naam) {
