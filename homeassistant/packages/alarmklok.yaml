@@ -55,7 +55,7 @@ script:
 automation:
   # ---------------------------------------------------------------------------
   #  Wake-up light: de klok stuurt dit event "Wake-up light vooraf" minuten
-  #  voor de wektijd. De lamp loopt dan langzaam op als een zonsopgang.
+  #  voor de wektijd (van welke wekker dan ook). De lamp loopt dan langzaam op als een zonsopgang.
   # ---------------------------------------------------------------------------
   - id: alarmklok_wakeup_light
     alias: "Alarmklok: wake-up light"
@@ -84,6 +84,8 @@ automation:
   # ---------------------------------------------------------------------------
   #  Wekken met de radio (als "Wekgeluid" op "Radio" staat).
   #  Speelt er na 20 s niets, dan laat de klok zelf het wekgeluid horen.
+  #  Het volume regelt de klok zelf: "Wekvolume", en met "Wekgeluid oplopen"
+  #  begint de radio zacht en wordt hij langzaam luider.
   # ---------------------------------------------------------------------------
   - id: alarmklok_radio
     alias: "Alarmklok: wekken met radio"
@@ -92,7 +94,6 @@ automation:
       speaker: media_player.alarmklok_speaker
       # NPO Radio 2 (MP3-stream); vervang door je eigen favoriet
       stream: https://icecast.omroep.nl/radio2-bb-mp3
-      volume: 0.4
     triggers:
       - trigger: event
         event_type: esphome.alarmklok_wekker
@@ -100,11 +101,6 @@ automation:
           status: gaat_af
           geluid: Radio
     actions:
-      - action: media_player.volume_set
-        target:
-          entity_id: "{{ speaker }}"
-        data:
-          volume_level: "{{ volume }}"
       - action: media_player.play_media
         target:
           entity_id: "{{ speaker }}"

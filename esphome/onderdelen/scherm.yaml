@@ -119,6 +119,10 @@ lvgl:
       radius: 18
       border_width: 0
       shadow_width: 0
+      # Tegels die "aan" zijn en de gekozen wekker (1/2/3) worden oranje
+      checked:
+        bg_color: 0xF5A623
+        text_color: 0x16181D
     slider:
       bg_color: 0x3A3F48
       indicator:
@@ -520,12 +524,12 @@ lvgl:
                         pad_row: 18
                         pad_column: 18
                       widgets:
-                        - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle, naam: "${licht_1_naam}", icoon: "${licht_1_icoon}", entity: "${licht_1_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle, naam: "${licht_2_naam}", icoon: "${licht_2_icoon}", entity: "${licht_2_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 0, kolom: 2, actie: homeassistant.toggle, naam: "${licht_3_naam}", icoon: "${licht_3_icoon}", entity: "${licht_3_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 0, actie: homeassistant.toggle, naam: "${licht_4_naam}", icoon: "${licht_4_icoon}", entity: "${licht_4_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 1, kolom: 1, actie: homeassistant.toggle, naam: "${licht_5_naam}", icoon: "${licht_5_icoon}", entity: "${licht_5_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 1, kolom: 2, actie: homeassistant.toggle, naam: "${licht_6_naam}", icoon: "${licht_6_icoon}", entity: "${licht_6_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 0, kolom: 2, actie: homeassistant.toggle } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 0, actie: homeassistant.toggle } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 1, kolom: 1, actie: homeassistant.toggle } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 1, kolom: 2, actie: homeassistant.toggle } }
                         - slider:
                             id: sl_dimmer
                             grid_cell_row_pos: 2
@@ -827,12 +831,12 @@ lvgl:
                         pad_row: 18
                         pad_column: 18
                       widgets:
-                        - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on, naam: "${scene_1_naam}", icoon: "${scene_1_icoon}", entity: "${scene_1_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on, naam: "${scene_2_naam}", icoon: "${scene_2_icoon}", entity: "${scene_2_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 0, kolom: 2, actie: homeassistant.turn_on, naam: "${scene_3_naam}", icoon: "${scene_3_icoon}", entity: "${scene_3_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 0, actie: homeassistant.turn_on, naam: "${scene_4_naam}", icoon: "${scene_4_icoon}", entity: "${scene_4_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 1, kolom: 1, actie: homeassistant.turn_on, naam: "${scene_5_naam}", icoon: "${scene_5_icoon}", entity: "${scene_5_entity}" } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 1, kolom: 2, actie: homeassistant.turn_on, naam: "${scene_6_naam}", icoon: "${scene_6_icoon}", entity: "${scene_6_entity}" } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 0, kolom: 2, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 0, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 1, kolom: 1, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 1, kolom: 2, actie: homeassistant.turn_on } }
 
               # ===============================================================
               #  Wekker instellen
@@ -842,8 +846,41 @@ lvgl:
                 column: 5
                 dir: HOR
                 widgets:
-                  # ---- Links: wektijd met twee rollers ----
-                  - label: { text: "Wektijd", x: 36, y: 22, styles: titel }
+                  # ---- Links: kies de wekker (1/2/3) en zet de tijd met twee rollers ----
+                  - label: { text: "Wekker", x: 36, y: 22, styles: titel }
+                  - button:
+                      id: knop_wekker_1
+                      x: 180
+                      y: 10
+                      width: 72
+                      height: 52
+                      on_click:
+                        - lambda: id(bewerk_wekker) = 1;
+                        - script.execute: ui_synchroniseren
+                      widgets:
+                        - label: { text: "1", align: CENTER, text_font: f_midden }
+                  - button:
+                      id: knop_wekker_2
+                      x: 264
+                      y: 10
+                      width: 72
+                      height: 52
+                      on_click:
+                        - lambda: id(bewerk_wekker) = 2;
+                        - script.execute: ui_synchroniseren
+                      widgets:
+                        - label: { text: "2", align: CENTER, text_font: f_midden }
+                  - button:
+                      id: knop_wekker_3
+                      x: 348
+                      y: 10
+                      width: 72
+                      height: 52
+                      on_click:
+                        - lambda: id(bewerk_wekker) = 3;
+                        - script.execute: ui_synchroniseren
+                      widgets:
+                        - label: { text: "3", align: CENTER, text_font: f_midden }
                   - roller:
                       id: rl_uur
                       x: 40
@@ -857,8 +894,9 @@ lvgl:
                                 "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
                       on_change:
                         - lambda: |-
-                            auto call = id(wektijd).make_call();
-                            call.set_time((uint8_t) x, id(wektijd).minute, 0);
+                            auto *tijd = id(wekker_tijd_lijst)[id(bewerk_wekker) - 1];
+                            auto call = tijd->make_call();
+                            call.set_time((uint8_t) x, tijd->minute, 0);
                             call.perform();
                   - label:
                       x: 222
@@ -877,8 +915,9 @@ lvgl:
                       options: ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
                       on_change:
                         - lambda: |-
-                            auto call = id(wektijd).make_call();
-                            call.set_time(id(wektijd).hour, (uint8_t) (x * 5), 0);
+                            auto *tijd = id(wekker_tijd_lijst)[id(bewerk_wekker) - 1];
+                            auto call = tijd->make_call();
+                            call.set_time(tijd->hour, (uint8_t) (x * 5), 0);
                             call.perform();
 
                   # ---- Rechts: overige instellingen ----
@@ -895,8 +934,9 @@ lvgl:
                       height: 52
                       on_change:
                         - lambda: |-
-                            if (x) id(wekker_aan).turn_on();
-                            else id(wekker_aan).turn_off();
+                            auto *aan = id(wekker_aan_lijst)[id(bewerk_wekker) - 1];
+                            if (x) aan->turn_on();
+                            else aan->turn_off();
 
                   - label:
                       x: 480
@@ -909,7 +949,8 @@ lvgl:
                       y: 98
                       width: 330
                       text_font: f_midden
-                      options: ["Elke dag", "Werkdagen", "Weekend"]
+                      options: ["Elke dag", "Werkdagen", "Weekend", "Eenmalig", "Maandag", "Dinsdag",
+                                "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
                       dropdown_list:
                         bg_color: 0x23262D
                         text_color: 0xE8EAED
@@ -918,9 +959,10 @@ lvgl:
                           checked:
                             bg_color: 0xF5A623
                       on_change:
-                        - select.set_index:
-                            id: wekdagen
-                            index: !lambda return x;
+                        - lambda: |-
+                            auto call = id(wekker_dagen_lijst)[id(bewerk_wekker) - 1]->make_call();
+                            call.set_index(x);
+                            call.perform();
 
                   - label:
                       x: 480
@@ -987,12 +1029,33 @@ lvgl:
                   - button:
                       x: 480
                       y: 448
-                      width: 230
+                      width: 200
                       height: 56
                       on_click:
-                        - script.execute: start_wekker
+                        - script.execute: test_wekker
                       widgets:
                         - label: { text: "Test wekker", align: CENTER }
+
+                  # Langzaam luider: aan = "Wekgeluid oplopen" op 60 s (of wat
+                  # in HA is ingesteld), uit = meteen vol volume
+                  - label:
+                      x: 706
+                      y: 462
+                      text: "Langzaam luider"
+                      text_color: 0xB0B6C0
+                  - switch:
+                      id: sw_oplopen
+                      x: 880
+                      y: 452
+                      width: 90
+                      height: 46
+                      on_change:
+                        - number.set:
+                            id: oplopen_seconden
+                            value: !lambda |-
+                              if (!x)
+                                return 0.0f;
+                              return id(oplopen_seconden).state > 0 ? id(oplopen_seconden).state : 60.0f;
 
     # =========================================================================
     #  Wekker gaat af

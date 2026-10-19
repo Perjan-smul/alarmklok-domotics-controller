@@ -31,11 +31,13 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 | ![Muziek](docs/screenshots/07-muziek.png) | ![Scènes](docs/screenshots/08-scenes.png) |
 | **Muziek:** wat er speelt, bediening, volume en 3 radiozenders | **Scènes:** 6 knoppen voor scènes en scripts |
 | ![Wekker](docs/screenshots/09-wekker.png) | ![Wekker gaat af](docs/screenshots/10-wekker-gaat-af.png) |
-| **Wekker:** tijd, aan/uit, dagen, geluid, volume, wake-up light | **Wekker gaat af:** grote Snooze-knop; Stop moet je lang indrukken |
+| **Wekker:** drie wekkers (1/2/3) met elk een eigen tijd, aan/uit en dagen; geluid, volume, langzaam luider, wake-up light | **Wekker gaat af:** grote Snooze-knop; Stop moet je lang indrukken |
 
 > De screenshots zijn **ontwerpweergaven**, nagebouwd met dezelfde maten,
 > lettertypen, iconen en kleuren als de LVGL-configuratie, met voorbeelddata.
-> Het echte scherm kan op kleine details afwijken.
+> Het echte scherm kan op kleine details afwijken. De wekkerpagina heeft
+> inmiddels bovenaan de knoppen 1/2/3 en onderaan de schakelaar "Langzaam
+> luider"; die staan nog niet op de screenshot.
 
 Verder:
 
@@ -43,6 +45,14 @@ Verder:
   tussen twee instelbare tijden wordt het scherm gedimd en worden alle cijfers
   donkerrood. De eerste tik wekt alleen het scherm, zodat je in het donker niet
   per ongeluk een lamp aanzet.
+- **Drie wekkers:** elk met een eigen tijd, aan/uit en dagen: elke dag,
+  werkdagen, weekend, één vaste dag (bijvoorbeeld alleen dinsdag) of
+  **eenmalig** (gaat één keer af en zet zichzelf daarna uit). Kies op de
+  wekkerpagina met 1/2/3 welke je instelt. De klokschermen tonen de
+  eerstvolgende, bijvoorbeeld "Wekker morgen 07:00" of "Wekker ma 07:15".
+- **Langzaam luider:** het wekgeluid (melodie of radio) begint op 10% en loopt
+  in 60 seconden op tot het wekvolume. De duur stel je in met *Wekgeluid
+  oplopen* in Home Assistant (0 = meteen vol).
 - **Wake-up light:** een instelbaar aantal minuten voor de wektijd laat Home
   Assistant de bedlamp langzaam opkomen, als een zonsopgang.
 - **Wekgeluid:** drie ingebouwde melodieën, of **Radio**: dan speelt Home
@@ -66,20 +76,22 @@ Verder:
 
 ```
 esphome/
-  alarmklok.yaml                 Instellingen, tegels en wekker-logica (hier pas je dingen aan)
-  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, melodieën)
+  alarmklok.yaml                 Instellingen, standaardwaarden en wekker-logica
+  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen)
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   onderdelen/
     waveshare-p4-7b.yaml         Hardware: scherm, touch, backlight, audio, wifi
     scherm.yaml                  De touch-interface (swipe-pagina's, klokontwerpen)
     ha-bediening.yaml            Haalt thermostaat, rolluik en muziek uit HA
-    tegel.yaml                   Eén bedieningstegel
-    tegel-status.yaml            Haalt de status van een tegel uit HA
+    wekker.yaml                  Eén wekker: tijd, aan/uit en dagen
+    tegel.yaml                   Eén bedieningstegel op het scherm
+    tegel-instellingen.yaml      Naam, entiteit en icoon van een tegel (in te stellen vanuit HA)
     radio-knop.yaml              Eén radiozender-knop
 docs/screenshots/                Ontwerpweergaven van alle schermen
 homeassistant/
   packages/alarmklok.yaml        Automations: wake-up light, radio, goedemorgen
   dashboard-kaart.yaml           Kaart voor je HA-dashboard
+espcontrol-port/                 Patch om dit scherm aan EspControl toe te voegen
 ```
 
 ## Installatie
@@ -134,11 +146,12 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 
 | Entiteit | Wat |
 |---|---|
-| `time.alarmklok_wektijd` | Wektijd |
-| `switch.alarmklok_wekker_aan` | Wekker aan/uit |
-| `select.alarmklok_wekdagen` | Elke dag / Werkdagen / Weekend |
-| `select.alarmklok_wekgeluid` | Klassiek / Zacht / Mario / Radio |
+| `time.alarmklok_wekker_1_tijd` (ook `_2_`, `_3_`) | Tijd van wekker 1, 2 en 3 |
+| `switch.alarmklok_wekker_1_aan` (ook `_2_`, `_3_`) | Wekker aan/uit |
+| `select.alarmklok_wekker_1_dagen` (ook `_2_`, `_3_`) | Elke dag / Werkdagen / Weekend / Eenmalig / Maandag … Zondag |
+| `select.alarmklok_wekgeluid` | Klassiek / Zacht / Mario / Radio (voor alle wekkers) |
 | `number.alarmklok_wekvolume` | Volume van het wekgeluid |
+| `number.alarmklok_wekgeluid_oplopen` | In zoveel seconden van zacht naar het wekvolume (0 = uit) |
 | `number.alarmklok_snooze_duur` | Snooze in minuten |
 | `number.alarmklok_wake_up_light_vooraf` | Minuten voor de wektijd dat het licht begint (0 = uit) |
 | `time.alarmklok_nachtstand_vanaf` / `_tot` | Venster voor de nachtstand |
@@ -147,6 +160,7 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 | `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
+| `text.alarmklok_tegel_verlichting_1_naam`, `…_entiteit`, `select.…_icoon` (1–6, en `tegel_scene_1` t/m `6`) | Tegels instellen, zie hieronder |
 | `media_player.alarmklok_speaker` | Speaker voor muziek, radio en TTS |
 
 ### Events voor eigen automations
@@ -158,13 +172,36 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 
 ## Pagina's aanpassen
 
-Alles staat bovenin `esphome/alarmklok.yaml`:
+### Tegels: vanuit Home Assistant, zonder flashen
+
+De 6 tegels op *Verlichting* en de 6 knoppen op *Scènes* stel je in Home
+Assistant in: *Instellingen → Apparaten & diensten → ESPHome → Alarmklok*,
+kopje **Configuratie**. Per tegel zijn er drie instellingen:
+
+| Instelling | Wat | Wanneer zichtbaar |
+|---|---|---|
+| *Tegel verlichting 1 naam* | Tekst onder het icoon | Meteen |
+| *Tegel verlichting 1 icoon* | Kies uit de lijst hieronder | Meteen |
+| *Tegel verlichting 1 entiteit* | Bijvoorbeeld `light.bedlamp`; leeg = tegel verbergen | Na ~10 s: de klok herstart even om de nieuwe entiteit te volgen |
+
+De herstart wacht als er een wekker afgaat of snoozet. Je instellingen blijven
+bewaard, ook na een nieuwe firmware.
+
+Tegels op de pagina Verlichting doen een `toggle` (werkt met `light`,
+`switch`, `fan`, `cover`, `input_boolean` en dergelijke). Scèneknoppen doen
+`turn_on` (werkt met `scene`, `script` en `automation`).
+
+### Overige pagina's en standaardwaarden
+
+De rest staat bovenin `esphome/alarmklok.yaml`. Daar staan ook de
+**standaardwaarden** van de tegels, die gelden totdat je ze in Home Assistant
+verandert:
 
 ```yaml
-  # Verlichting: een tik doet homeassistant.toggle
+  # Verlichting (standaard; daarna aanpassen in HA)
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
-  licht_1_icoon: "\U000F095F"   # desk-lamp
+  licht_1_icoon: desk-lamp
   dim_lamp: light.slaapkamer     # voor de dimschuif
 
   # Klimaat & rolluik
@@ -175,42 +212,23 @@ Alles staat bovenin `esphome/alarmklok.yaml`:
   mediaspeler: media_player.alarmklok_speaker
   radio_1_naam: NPO Radio 2
   radio_1_url: https://icecast.omroep.nl/radio2-bb-mp3
-
-  # Scènes: een tik doet homeassistant.turn_on
-  scene_1_naam: Welterusten
-  scene_1_entity: script.welterusten
-  scene_1_icoon: "\U000F0904"   # power-sleep
 ```
 
-Tegels op de pagina Verlichting werken met `light`, `switch`, `fan`, `cover`,
-`input_boolean` en dergelijke. Scèneknoppen werken met `scene`, `script` en
-`automation`. Heb je een entiteit niet? Laat de tegel dan wijzen naar iets dat
-je wel hebt; een tegel naar een onbekende entiteit doet niets.
-
-Na een wijziging moet je de klok opnieuw flashen. Dat gaat draadloos.
+Na een wijziging in dit bestand moet je de klok opnieuw flashen. Dat gaat
+draadloos.
 
 ### Beschikbare iconen
 
-| Code | Icoon | Code | Icoon |
-|---|---|---|---|
-| `\U000F0335` | lightbulb | `\U000F075A` | music |
-| `\U000F1253` | lightbulb-group | `\U000F0439` | radio |
-| `\U000F0769` | ceiling-light | `\U000F04C3` | speaker |
-| `\U000F08DD` | floor-lamp | `\U000F0502` | television |
-| `\U000F095F` | desk-lamp | `\U000F0210` | fan |
-| `\U000F06B5` | lamp | `\U000F0438` | radiator |
-| `\U000F00AC` | blinds | `\U000F0393` | thermostat |
-| `\U000F111C` | window-shutter | `\U000F0904` | power-sleep |
-| `\U000F1A6B` | roller-shade | `\U000F0594` | weather-night |
-| `\U000F1846` | curtains | `\U000F059C` | weather-sunset-up |
-| `\U000F02DC` | home | `\U000F140B` | lightning-bolt |
-| `\U000F06E8` | lightbulb-on | `\U000F0FCE` | movie-open |
-| `\U000F04B9` | sofa | `\U000F0A70` | silverware-fork-knife |
-| `\U000F02E3` | bed | `\U000F043B` | radio-tower |
+`lightbulb`, `lightbulb-on`, `lightbulb-group`, `ceiling-light`, `floor-lamp`,
+`desk-lamp`, `lamp`, `blinds`, `window-shutter`, `roller-shade`, `curtains`,
+`music`, `radio`, `radio-tower`, `speaker`, `television`, `movie-open`, `fan`,
+`radiator`, `thermostat`, `power-sleep`, `weather-night`, `weather-sunset-up`,
+`home`, `sofa`, `bed`, `silverware-fork-knife`, `lightning-bolt`.
 
-Wil je een ander icoon van [Material Design Icons](https://pictogrammers.com/library/mdi/)?
-Voeg de code dan ook toe aan de lijst `glyphs:` van het font `f_icoon` in
-`onderdelen/scherm.yaml`.
+Ze zien eruit zoals op [Material Design Icons](https://pictogrammers.com/library/mdi/).
+Wil je een ander icoon? Dan moet het op drie plekken bij: de lijst `glyphs:` van
+het font `f_icoon` in `onderdelen/scherm.yaml`, de functie `icoon()` in
+`alarmklok.h` en de `options:` in `onderdelen/tegel-instellingen.yaml`.
 
 ## Bekende aandachtspunten
 

@@ -1,0 +1,119 @@
+# Naam, entiteit en icoon van tegel ${nr}. De waarden uit alarmklok.yaml zijn
+# alleen de standaard; daarna pas je ze aan in Home Assistant (Instellingen ->
+# Apparaten -> Alarmklok -> Configuratie), zonder opnieuw te flashen.
+#  - Naam en icoon veranderen meteen op het scherm.
+#  - Een andere entiteit laat de klok na 5 s even herstarten, zodat hij de
+#    status (aan/uit) van de nieuwe entiteit volgt.
+#  - Een lege entiteit verbergt de tegel.
+text:
+  - platform: template
+    id: tegel_${nr}_naam
+    name: ${titel} naam
+    icon: mdi:form-textbox
+    entity_category: config
+    mode: text
+    max_length: 24
+    optimistic: true
+    restore_value: true
+    initial_value: "${naam}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegel_${nr}_tonen
+
+  - platform: template
+    id: tegel_${nr}_entiteit
+    name: ${titel} entiteit
+    icon: mdi:link-variant
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${entity}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegel_${nr}_tonen
+            - script.execute: tegels_herladen
+
+select:
+  - platform: template
+    id: tegel_${nr}_icoon
+    name: ${titel} icoon
+    icon: mdi:emoticon-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    # Namen zoals op pictogrammers.com/library/mdi; de codes staan in
+    # alarmklok::icoon() in alarmklok.h en in het font f_icoon.
+    options:
+      - lightbulb
+      - lightbulb-on
+      - lightbulb-group
+      - ceiling-light
+      - floor-lamp
+      - desk-lamp
+      - lamp
+      - blinds
+      - window-shutter
+      - roller-shade
+      - curtains
+      - music
+      - radio
+      - radio-tower
+      - speaker
+      - television
+      - movie-open
+      - fan
+      - radiator
+      - thermostat
+      - power-sleep
+      - weather-night
+      - weather-sunset-up
+      - home
+      - sofa
+      - bed
+      - silverware-fork-knife
+      - lightning-bolt
+    initial_option: ${icoon}
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegel_${nr}_tonen
+
+script:
+  - id: tegel_${nr}_tonen
+    then:
+      - lambda: |-
+          lv_label_set_text(id(tegel_${nr}_icoon_tekst),
+                            alarmklok::icoon(id(tegel_${nr}_icoon).current_option().str()));
+          lv_label_set_text(id(tegel_${nr}_naam_tekst), id(tegel_${nr}_naam).state.c_str());
+          if (id(tegel_${nr}_entiteit).state.empty())
+            lv_obj_add_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_clear_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
+
+  # Volgt de status van de entiteit in Home Assistant en kleurt de tegel als
+  # die "aan" is. Draait bij het opstarten (zie on_boot in alarmklok.yaml).
+  - id: tegel_${nr}_volgen
+    then:
+      - lambda: |-
+          const std::string entiteit = id(tegel_${nr}_entiteit).state;
+          if (entiteit.empty())
+            return;
+          api::global_api_server->subscribe_home_assistant_state(
+              entiteit, optional<std::string>(),
+              std::function<void(StringRef)>([](StringRef status) {
+                const std::string x = status.str();
+                if (x == "on" || x == "open" || x == "opening" || x == "playing")
+                  lv_obj_add_state(id(tegel_${nr}), LV_STATE_CHECKED);
+                else
+                  lv_obj_clear_state(id(tegel_${nr}), LV_STATE_CHECKED);
+              }));

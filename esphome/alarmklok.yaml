@@ -4,7 +4,7 @@
 #  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-7B (7" touch, 1024x600, liggend)
 #  Zie README.md voor installatie.
 #
-#  De wekker draait volledig op de klok zelf (tijd via NTP), dus hij gaat ook
+#  De wekkers draaien volledig op de klok zelf (tijd via NTP), dus ze gaan ook
 #  af als Home Assistant even plat ligt.
 #
 #  Bestanden:
@@ -12,7 +12,9 @@
 #    onderdelen/waveshare-p4-7b.yaml  <- hardware (scherm, touch, audio, wifi)
 #    onderdelen/scherm.yaml           <- de touch-interface (LVGL)
 #    onderdelen/ha-bediening.yaml     <- statussen uit HA voor de bedieningspagina's
-#    onderdelen/tegel*.yaml           <- één bedieningstegel
+#    onderdelen/wekker.yaml           <- één wekker (tijd, aan/uit, dagen)
+#    onderdelen/tegel.yaml            <- één bedieningstegel op het scherm
+#    onderdelen/tegel-instellingen.yaml <- naam, entiteit en icoon van een tegel
 # =============================================================================
 
 substitutions:
@@ -26,6 +28,10 @@ substitutions:
 
   # ===========================================================================
   #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)
+  #
+  #  Naam, entiteit en icoon van de tegels zijn hieronder alleen de
+  #  STANDAARDWAARDEN. Daarna pas je ze aan in Home Assistant, zonder opnieuw te
+  #  flashen: Instellingen -> Apparaten -> Alarmklok -> Configuratie.
   #  Iconen: zie de lijst in README.md.
   # ===========================================================================
 
@@ -34,22 +40,22 @@ substitutions:
   dim_lamp: light.slaapkamer
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
-  licht_1_icoon: "\U000F095F"   # desk-lamp
+  licht_1_icoon: desk-lamp
   licht_2_naam: Plafond
   licht_2_entity: light.slaapkamer_plafond
-  licht_2_icoon: "\U000F0769"   # ceiling-light
+  licht_2_icoon: ceiling-light
   licht_3_naam: Leeslamp
   licht_3_entity: light.leeslamp
-  licht_3_icoon: "\U000F08DD"   # floor-lamp
+  licht_3_icoon: floor-lamp
   licht_4_naam: Gang
   licht_4_entity: light.gang
-  licht_4_icoon: "\U000F0335"   # lightbulb
+  licht_4_icoon: lightbulb
   licht_5_naam: Ventilator
   licht_5_entity: fan.slaapkamer
-  licht_5_icoon: "\U000F0210"   # fan
+  licht_5_icoon: fan
   licht_6_naam: Alle lampen
   licht_6_entity: light.alle_lampen
-  licht_6_icoon: "\U000F1253"   # lightbulb-group
+  licht_6_icoon: lightbulb-group
 
   # ---- Pagina "Klimaat & rolluik" -------------------------------------------
   thermostaat: climate.slaapkamer
@@ -68,33 +74,42 @@ substitutions:
   # Een tik doet "homeassistant.turn_on" (scene, script, automation, ...).
   scene_1_naam: Welterusten
   scene_1_entity: script.welterusten
-  scene_1_icoon: "\U000F0904"   # power-sleep
+  scene_1_icoon: power-sleep
   scene_2_naam: Opstaan
   scene_2_entity: scene.opstaan
-  scene_2_icoon: "\U000F059C"   # weather-sunset-up
+  scene_2_icoon: weather-sunset-up
   scene_3_naam: Lezen
   scene_3_entity: scene.lezen
-  scene_3_icoon: "\U000F06B5"   # lamp
+  scene_3_icoon: lamp
   scene_4_naam: Film
   scene_4_entity: scene.film
-  scene_4_icoon: "\U000F0FCE"   # movie-open
+  scene_4_icoon: movie-open
   scene_5_naam: Etenstijd
   scene_5_entity: scene.eten
-  scene_5_icoon: "\U000F0A70"   # silverware-fork-knife
+  scene_5_icoon: silverware-fork-knife
   scene_6_naam: Alles uit
   scene_6_entity: script.alles_uit
-  scene_6_icoon: "\U000F140B"   # lightning-bolt
+  scene_6_icoon: lightning-bolt
 
 packages:
   hardware: !include onderdelen/waveshare-p4-7b.yaml
   scherm: !include onderdelen/scherm.yaml
   ha_bediening: !include onderdelen/ha-bediening.yaml
-  licht_1: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_1, entity: "${licht_1_entity}" } }
-  licht_2: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_2, entity: "${licht_2_entity}" } }
-  licht_3: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_3, entity: "${licht_3_entity}" } }
-  licht_4: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_4, entity: "${licht_4_entity}" } }
-  licht_5: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_5, entity: "${licht_5_entity}" } }
-  licht_6: !include { file: onderdelen/tegel-status.yaml, vars: { nr: licht_6, entity: "${licht_6_entity}" } }
+  wekker_1: !include { file: onderdelen/wekker.yaml, vars: { nr: 1, tijd: "07:00:00", aan: RESTORE_DEFAULT_ON, dagen: Werkdagen } }
+  wekker_2: !include { file: onderdelen/wekker.yaml, vars: { nr: 2, tijd: "08:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Weekend } }
+  wekker_3: !include { file: onderdelen/wekker.yaml, vars: { nr: 3, tijd: "06:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Eenmalig } }
+  tegel_licht_1: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_1, titel: "Tegel verlichting 1", naam: "${licht_1_naam}", entity: "${licht_1_entity}", icoon: "${licht_1_icoon}" } }
+  tegel_licht_2: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_2, titel: "Tegel verlichting 2", naam: "${licht_2_naam}", entity: "${licht_2_entity}", icoon: "${licht_2_icoon}" } }
+  tegel_licht_3: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_3, titel: "Tegel verlichting 3", naam: "${licht_3_naam}", entity: "${licht_3_entity}", icoon: "${licht_3_icoon}" } }
+  tegel_licht_4: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_4, titel: "Tegel verlichting 4", naam: "${licht_4_naam}", entity: "${licht_4_entity}", icoon: "${licht_4_icoon}" } }
+  tegel_licht_5: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_5, titel: "Tegel verlichting 5", naam: "${licht_5_naam}", entity: "${licht_5_entity}", icoon: "${licht_5_icoon}" } }
+  tegel_licht_6: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: licht_6, titel: "Tegel verlichting 6", naam: "${licht_6_naam}", entity: "${licht_6_entity}", icoon: "${licht_6_icoon}" } }
+  tegel_scene_1: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_1, titel: "Tegel scène 1", naam: "${scene_1_naam}", entity: "${scene_1_entity}", icoon: "${scene_1_icoon}" } }
+  tegel_scene_2: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_2, titel: "Tegel scène 2", naam: "${scene_2_naam}", entity: "${scene_2_entity}", icoon: "${scene_2_icoon}" } }
+  tegel_scene_3: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_3, titel: "Tegel scène 3", naam: "${scene_3_naam}", entity: "${scene_3_entity}", icoon: "${scene_3_icoon}" } }
+  tegel_scene_4: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_4, titel: "Tegel scène 4", naam: "${scene_4_naam}", entity: "${scene_4_entity}", icoon: "${scene_4_icoon}" } }
+  tegel_scene_5: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_5, titel: "Tegel scène 5", naam: "${scene_5_naam}", entity: "${scene_5_entity}", icoon: "${scene_5_icoon}" } }
+  tegel_scene_6: !include { file: onderdelen/tegel-instellingen.yaml, vars: { nr: scene_6, titel: "Tegel scène 6", naam: "${scene_6_naam}", entity: "${scene_6_entity}", icoon: "${scene_6_icoon}" } }
 
 esphome:
   name: ${name}
@@ -102,14 +117,20 @@ esphome:
   includes:
     - alarmklok.h
   on_boot:
-    priority: -100
-    then:
-      - text_sensor.template.publish:
-          id: wekker_status
-          state: Wacht
-      - lambda: id(ui_klaar) = true;
-      - script.execute: ui_synchroniseren
-      - script.execute: scherm_bijwerken
+    # Vóór de verbinding met Home Assistant: zeg welke entiteiten de tegels
+    # volgen. HA vraagt die lijst alleen op bij het verbinden.
+    - priority: 600
+      then:
+        - script.execute: tegels_volgen
+    - priority: -100
+      then:
+        - text_sensor.template.publish:
+            id: wekker_status
+            state: Wacht
+        - lambda: id(ui_klaar) = true;
+        - script.execute: tegels_tonen
+        - script.execute: ui_synchroniseren
+        - script.execute: scherm_bijwerken
 
 logger:
 
@@ -162,6 +183,27 @@ globals:
   - id: ui_klaar
     type: bool
     initial_value: "false"
+  # Welke wekker gaat af of snoozet (1-3), 0 = geen of een testwekker
+  - id: actieve_wekker
+    type: int
+    initial_value: "0"
+  # Welke wekker op de pagina Wekker wordt ingesteld (1-3)
+  - id: bewerk_wekker
+    type: int
+    initial_value: "1"
+  - id: oploop_start_ms
+    type: uint32_t
+    initial_value: "0"
+  # De drie wekkers (onderdelen/wekker.yaml) als lijsten, voor de lambda's
+  - id: wekker_aan_lijst
+    type: std::array<switch_::Switch *, 3>
+    initial_value: "{wekker_1_aan, wekker_2_aan, wekker_3_aan}"
+  - id: wekker_tijd_lijst
+    type: std::array<datetime::TimeEntity *, 3>
+    initial_value: "{wekker_1_tijd, wekker_2_tijd, wekker_3_tijd}"
+  - id: wekker_dagen_lijst
+    type: std::array<select::Select *, 3>
+    initial_value: "{wekker_1_dagen, wekker_2_dagen, wekker_3_dagen}"
 
 # -----------------------------------------------------------------------------
 #  Tijd: NTP, zodat de wekker ook zonder Home Assistant werkt
@@ -188,21 +230,6 @@ interval:
 # -----------------------------------------------------------------------------
 datetime:
   - platform: template
-    id: wektijd
-    type: time
-    name: Wektijd
-    icon: mdi:alarm
-    optimistic: true
-    restore_value: true
-    initial_value: "07:00:00"
-    on_value:
-      - if:
-          condition:
-            lambda: return id(ui_klaar);
-          then:
-            - script.execute: ui_synchroniseren
-
-  - platform: template
     id: nacht_vanaf
     type: time
     name: Nachtstand vanaf
@@ -222,41 +249,7 @@ datetime:
     restore_value: true
     initial_value: "07:00:00"
 
-switch:
-  - platform: template
-    id: wekker_aan
-    name: Wekker aan
-    icon: mdi:alarm-check
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-    on_state:
-      - if:
-          condition:
-            lambda: return id(ui_klaar);
-          then:
-            - script.execute: ui_synchroniseren
-    on_turn_off:
-      - script.execute: stop_wekker
-
 select:
-  - platform: template
-    id: wekdagen
-    name: Wekdagen
-    icon: mdi:calendar-week
-    optimistic: true
-    restore_value: true
-    options:
-      - Elke dag
-      - Werkdagen
-      - Weekend
-    initial_option: Werkdagen
-    on_value:
-      - if:
-          condition:
-            lambda: return id(ui_klaar);
-          then:
-            - script.execute: ui_synchroniseren
-
   - platform: template
     id: wekgeluid
     name: Wekgeluid
@@ -349,6 +342,26 @@ number:
           then:
             - script.execute: ui_synchroniseren
 
+  # Het wekgeluid begint zacht (10%) en wordt in zoveel seconden luider tot
+  # het wekvolume. 0 = meteen op vol volume.
+  - platform: template
+    id: oplopen_seconden
+    name: Wekgeluid oplopen
+    icon: mdi:volume-plus
+    unit_of_measurement: s
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 180
+    step: 10
+    initial_value: 60
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+
   - platform: template
     id: helderheid_dag
     name: Helderheid overdag
@@ -391,7 +404,7 @@ button:
     icon: mdi:alarm-bell
     entity_category: diagnostic
     on_press:
-      - script.execute: start_wekker
+      - script.execute: test_wekker
 
 text_sensor:
   - platform: template
@@ -419,29 +432,45 @@ sensor:
 #  Wekker-logica
 # -----------------------------------------------------------------------------
 script:
-  # Elke minuut: is het tijd voor het wake-up light of voor de wekker?
+  # Elke minuut: is het tijd voor het wake-up light of voor een van de wekkers?
   - id: controleer_wekker
     then:
       - lambda: |-
           auto nu = id(klok).now();
-          if (!nu.is_valid() || !id(wekker_aan).state)
+          if (!nu.is_valid())
             return;
-          const std::string dagen = id(wekdagen).current_option().str();
-          const int wek = id(wektijd).hour * 60 + id(wektijd).minute;
-
-          if (nu.hour * 60 + nu.minute == wek && !id(gaat_af) &&
-              alarmklok::wekdag_actief(dagen, nu.day_of_week)) {
-            id(start_wekker).execute();
-          }
-
+          const int nu_minuut = nu.hour * 60 + nu.minute;
           const int vooraf = (int) id(wakeup_minuten).state;
-          if (vooraf > 0) {
-            auto straks = ESPTime::from_epoch_local(nu.timestamp + vooraf * 60);
-            if (straks.hour * 60 + straks.minute == wek &&
-                alarmklok::wekdag_actief(dagen, straks.day_of_week)) {
-              id(start_wakeup_light).execute(vooraf);
+          bool wakeup_gestart = false;
+          for (int i = 0; i < 3; i++) {
+            if (!id(wekker_aan_lijst)[i]->state)
+              continue;
+            const std::string dagen = id(wekker_dagen_lijst)[i]->current_option().str();
+            const auto *tijd = id(wekker_tijd_lijst)[i];
+            const int wek = tijd->hour * 60 + tijd->minute;
+
+            if (nu_minuut == wek && !id(gaat_af) &&
+                alarmklok::wekdag_actief(dagen, nu.day_of_week)) {
+              id(actieve_wekker) = i + 1;
+              id(start_wekker).execute();
+            }
+
+            if (vooraf > 0 && !wakeup_gestart) {
+              auto straks = ESPTime::from_epoch_local(nu.timestamp + vooraf * 60);
+              if (straks.hour * 60 + straks.minute == wek &&
+                  alarmklok::wekdag_actief(dagen, straks.day_of_week)) {
+                wakeup_gestart = true;
+                id(start_wakeup_light).execute(vooraf);
+              }
             }
           }
+
+  # Testen (knop op het scherm of in HA): gaat af zonder een wekker te zijn,
+  # dus een eenmalige wekker blijft gewoon aan.
+  - id: test_wekker
+    then:
+      - lambda: id(actieve_wekker) = 0;
+      - script.execute: start_wekker
 
   - id: start_wakeup_light
     parameters:
@@ -475,6 +504,7 @@ script:
             status: gaat_af
             geluid: !lambda return id(wekgeluid).current_option().str();
       - script.execute: max_afgaan_timer
+      - script.execute: volume_oplopen
       - if:
           condition:
             and:
@@ -513,6 +543,39 @@ script:
                   not:
                     rtttl.is_playing:
             - delay: 1s
+
+  # Wekgeluid langzaam luider: van 10% naar het wekvolume in "Wekgeluid
+  # oplopen" seconden. Geldt voor de melodie én voor de radio.
+  - id: volume_oplopen
+    mode: restart
+    then:
+      - lambda: id(oploop_start_ms) = millis();
+      - while:
+          condition:
+            lambda: |-
+              return id(gaat_af) &&
+                     millis() - id(oploop_start_ms) < id(oplopen_seconden).state * 1000.0f;
+          then:
+            - script.execute:
+                id: wekvolume_zetten
+                deel: !lambda |-
+                  return 0.1f + 0.9f * (millis() - id(oploop_start_ms)) /
+                                       (id(oplopen_seconden).state * 1000.0f);
+            - delay: 1s
+      - script.execute:
+          id: wekvolume_zetten
+          deel: 1.0
+
+  # Zet het wekgeluid op `deel` (0-1) van het ingestelde wekvolume
+  - id: wekvolume_zetten
+    parameters:
+      deel: float
+    then:
+      - lambda: |-
+          const float niveau = id(volume).state / 100.0f * std::min(1.0f, deel);
+          id(zoemer_rtttl).set_gain(niveau);
+          if (id(wekgeluid).current_option() == "Radio")
+            id(speler).make_call().set_volume(niveau).perform();
 
   - id: geluid_stoppen
     then:
@@ -572,6 +635,12 @@ script:
             - lambda: |-
                 id(gaat_af) = false;
                 id(snoozet) = false;
+                // Eerst actieve_wekker wissen: dan stopt het uitzetten van
+                // een eenmalige wekker hieronder niet opnieuw dit script.
+                const int nr = id(actieve_wekker);
+                id(actieve_wekker) = 0;
+                if (nr > 0 && id(wekker_dagen_lijst)[nr - 1]->current_option() == "Eenmalig")
+                  id(wekker_aan_lijst)[nr - 1]->turn_off();
             - homeassistant.event:
                 event: esphome.alarmklok_wekker
                 data:
@@ -592,6 +661,55 @@ script:
           column: 0
           animated: true
       - script.execute: pagina_indicator_bijwerken
+
+  # ---------------------------------------------------------------------------
+  #  Tegels: naam, entiteit en icoon komen uit Home Assistant
+  #  (onderdelen/tegel-instellingen.yaml)
+  # ---------------------------------------------------------------------------
+  - id: tegels_volgen
+    then:
+      - script.execute: tegel_licht_1_volgen
+      - script.execute: tegel_licht_2_volgen
+      - script.execute: tegel_licht_3_volgen
+      - script.execute: tegel_licht_4_volgen
+      - script.execute: tegel_licht_5_volgen
+      - script.execute: tegel_licht_6_volgen
+      - script.execute: tegel_scene_1_volgen
+      - script.execute: tegel_scene_2_volgen
+      - script.execute: tegel_scene_3_volgen
+      - script.execute: tegel_scene_4_volgen
+      - script.execute: tegel_scene_5_volgen
+      - script.execute: tegel_scene_6_volgen
+
+  - id: tegels_tonen
+    then:
+      - script.execute: tegel_licht_1_tonen
+      - script.execute: tegel_licht_2_tonen
+      - script.execute: tegel_licht_3_tonen
+      - script.execute: tegel_licht_4_tonen
+      - script.execute: tegel_licht_5_tonen
+      - script.execute: tegel_licht_6_tonen
+      - script.execute: tegel_scene_1_tonen
+      - script.execute: tegel_scene_2_tonen
+      - script.execute: tegel_scene_3_tonen
+      - script.execute: tegel_scene_4_tonen
+      - script.execute: tegel_scene_5_tonen
+      - script.execute: tegel_scene_6_tonen
+
+  # Een nieuwe entiteit achter een tegel wordt pas gevolgd na een herstart:
+  # Home Assistant vraagt de gevolgde entiteiten alleen op bij het verbinden.
+  # Even wachten (meerdere wijzigingen tegelijk) en niet als er een wekker afgaat.
+  - id: tegels_herladen
+    mode: restart
+    then:
+      - delay: 5s
+      - wait_until:
+          condition:
+            lambda: return !id(gaat_af) && !id(snoozet);
+      - logger.log: "Tegel-entiteit gewijzigd: herstarten om de nieuwe status te volgen"
+      - lambda: |-
+          global_preferences->sync();
+          App.safe_reboot();
 
   # Aangeroepen bij elke aanraking van het scherm
   - id: aangeraakt
@@ -656,15 +774,40 @@ script:
           if (!std::isnan(id(buitentemperatuur).state))
             snprintf(temp, sizeof(temp), "%.1f°", id(buitentemperatuur).state);
 
+          // Eerstvolgende wekker van de drie
           char wekker[64];
+          int eerst = -1, eerst_minuten = -1;
+          const int nu_minuut = nu.is_valid() ? nu.hour * 60 + nu.minute : 0;
+          for (int i = 0; i < 3; i++) {
+            if (!id(wekker_aan_lijst)[i]->state)
+              continue;
+            const auto *t = id(wekker_tijd_lijst)[i];
+            int over = 0;  // zonder geldige tijd: de eerste wekker die aan staat
+            if (nu.is_valid()) {
+              over = alarmklok::minuten_tot_wekker(
+                  id(wekker_dagen_lijst)[i]->current_option().str(), t->hour * 60 + t->minute,
+                  nu.day_of_week, nu_minuut);
+              if (over < 0)
+                continue;
+            }
+            if (eerst < 0 || over < eerst_minuten) {
+              eerst = i;
+              eerst_minuten = over;
+            }
+          }
           if (id(snoozet) && id(snooze_tot) > 0) {
             auto t = ESPTime::from_epoch_local(id(snooze_tot));
             snprintf(wekker, sizeof(wekker), "Snooze tot %02d:%02d", t.hour, t.minute);
-          } else if (id(wekker_aan).state) {
-            snprintf(wekker, sizeof(wekker), "Wekker %02d:%02d  (%s)", id(wektijd).hour,
-                     id(wektijd).minute, id(wekdagen).current_option().c_str());
-          } else {
+          } else if (eerst < 0) {
             snprintf(wekker, sizeof(wekker), "Wekker uit");
+          } else {
+            const auto *t = id(wekker_tijd_lijst)[eerst];
+            if (nu.is_valid())
+              snprintf(wekker, sizeof(wekker), "%s",
+                       alarmklok::volgende_wekker_tekst(eerst_minuten, nu.day_of_week, nu_minuut,
+                                                        t->hour, t->minute).c_str());
+            else
+              snprintf(wekker, sizeof(wekker), "Wekker %02d:%02d", t->hour, t->minute);
           }
 
           // Digitaal
@@ -718,19 +861,37 @@ script:
     mode: queued
     max_runs: 3
     then:
+      # Pagina Wekker toont de wekker die je aan het instellen bent
+      - lvgl.widget.update:
+          id: knop_wekker_1
+          state:
+            checked: !lambda return id(bewerk_wekker) == 1;
+      - lvgl.widget.update:
+          id: knop_wekker_2
+          state:
+            checked: !lambda return id(bewerk_wekker) == 2;
+      - lvgl.widget.update:
+          id: knop_wekker_3
+          state:
+            checked: !lambda return id(bewerk_wekker) == 3;
       - lvgl.roller.update:
           id: rl_uur
-          selected_index: !lambda return id(wektijd).hour;
+          selected_index: !lambda return id(wekker_tijd_lijst)[id(bewerk_wekker) - 1]->hour;
       - lvgl.roller.update:
           id: rl_minuut
-          selected_index: !lambda return id(wektijd).minute / 5;
+          selected_index: !lambda return id(wekker_tijd_lijst)[id(bewerk_wekker) - 1]->minute / 5;
       - lvgl.widget.update:
           id: sw_wekker
           state:
-            checked: !lambda return id(wekker_aan).state;
+            checked: !lambda return id(wekker_aan_lijst)[id(bewerk_wekker) - 1]->state;
       - lvgl.dropdown.update:
           id: dd_wekdagen
-          selected_index: !lambda return id(wekdagen).active_index().value_or(0);
+          selected_index: !lambda |-
+            return id(wekker_dagen_lijst)[id(bewerk_wekker) - 1]->active_index().value_or(0);
+      - lvgl.widget.update:
+          id: sw_oplopen
+          state:
+            checked: !lambda return id(oplopen_seconden).state > 0;
       - lvgl.dropdown.update:
           id: dd_wekgeluid
           selected_index: !lambda return id(wekgeluid).active_index().value_or(0);

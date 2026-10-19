@@ -1,5 +1,6 @@
-# Eén bedieningstegel. Een tik voert ${actie} uit op de entiteit
-# (homeassistant.toggle voor lampen e.d., homeassistant.turn_on voor scènes).
+# Eén bedieningstegel. Een tik voert ${actie} uit op de entiteit uit Home
+# Assistant (homeassistant.toggle voor lampen e.d., homeassistant.turn_on voor
+# scènes). Naam, icoon en entiteit: zie tegel-instellingen.yaml.
 button:
   id: tegel_${nr}
   grid_cell_row_pos: ${rij}
@@ -15,13 +16,15 @@ button:
     flex_align_track: CENTER
   widgets:
     - label:
-        text: "${icoon}"
+        id: tegel_${nr}_icoon_tekst
+        text: ""
         text_font: f_icoon
     - label:
-        text: "${naam}"
+        id: tegel_${nr}_naam_tekst
+        text: ""
         text_font: f_midden
   on_click:
     - homeassistant.action:
         action: ${actie}
         data:
-          entity_id: ${entity}
+          entity_id: !lambda return id(tegel_${nr}_entiteit).state;

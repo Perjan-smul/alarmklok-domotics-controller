@@ -7,14 +7,27 @@ cards:
     show_header_toggle: false
     entities:
       - entity: sensor.alarmklok_wekker_status
-      - entity: switch.alarmklok_wekker_aan
-      - entity: time.alarmklok_wektijd
-      - entity: select.alarmklok_wekdagen
+      - type: section
+        label: Wekker 1
+      - entity: switch.alarmklok_wekker_1_aan
+      - entity: time.alarmklok_wekker_1_tijd
+      - entity: select.alarmklok_wekker_1_dagen
+      - type: section
+        label: Wekker 2
+      - entity: switch.alarmklok_wekker_2_aan
+      - entity: time.alarmklok_wekker_2_tijd
+      - entity: select.alarmklok_wekker_2_dagen
+      - type: section
+        label: Wekker 3
+      - entity: switch.alarmklok_wekker_3_aan
+      - entity: time.alarmklok_wekker_3_tijd
+      - entity: select.alarmklok_wekker_3_dagen
       - type: divider
       - entity: number.alarmklok_wake_up_light_vooraf
       - entity: number.alarmklok_snooze_duur
       - entity: select.alarmklok_wekgeluid
       - entity: number.alarmklok_wekvolume
+      - entity: number.alarmklok_wekgeluid_oplopen
       - type: divider
       - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf
