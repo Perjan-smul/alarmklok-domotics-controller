@@ -162,3 +162,21 @@ automation:
         target:
           entity_id: "{{ rolluik }}"
         continue_on_error: true
+
+  # ---------------------------------------------------------------------------
+  #  Voorbeeld: melding op de klok als de wasmachine klaar is. Haal de #'s weg
+  #  en vul je eigen sensor in. Overdag verschijnt de melding meteen, 's nachts
+  #  pas als je het scherm aanraakt. Voor de 4"-klok: esphome.alarmklok_4inch_melding.
+  # ---------------------------------------------------------------------------
+  # - id: alarmklok_melding_wasmachine
+  #   alias: "Alarmklok: melding wasmachine klaar"
+  #   triggers:
+  #     - trigger: state
+  #       entity_id: sensor.wasmachine_status
+  #       to: klaar
+  #   actions:
+  #     - action: esphome.alarmklok_melding
+  #       data:
+  #         titel: Wasmachine klaar
+  #         tekst: De was kan eruit.
+  #         icoon: washing-machine

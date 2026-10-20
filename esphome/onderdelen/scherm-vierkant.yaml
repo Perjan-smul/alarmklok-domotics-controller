@@ -85,6 +85,11 @@ font:
       - "\U000F005D"  # arrow-up
       - "\U000F0045"  # arrow-down
       - "\U000F04DB"  # stop
+      - "\U000F009A"  # bell (meldingen)
+      - "\U000F02FC"  # information
+      - "\U000F0026"  # alert
+      - "\U000F081C"  # door-open
+      - "\U000F072A"  # washing-machine
   - file: *mdi
     id: f_stip
     size: '${(14 * (k | float)) | int}'
@@ -191,6 +196,38 @@ lvgl:
           text_color: 0x6C727C
           text_letter_space: '${(8 * (k | float)) | int}'
           text: ""
+      # Melding uit Home Assistant: tik ergens om te sluiten
+      - obj:
+          id: melding_vlak
+          x: 0
+          y: 0
+          width: 100%
+          height: 100%
+          bg_color: 0x000000
+          bg_opa: 70%
+          border_width: 0
+          radius: 0
+          hidden: true
+          clickable: true
+          on_click:
+            - script.execute: melding_sluiten
+          widgets:
+            - obj:
+                align: CENTER
+                width: '${(448 * (k | float)) | int}'
+                height: '${(330 * (k | float)) | int}'
+                bg_color: 0x23262D
+                border_color: 0xF5A623
+                border_width: '${(2 * (k | float)) | int}'
+                radius: '${(18 * (k | float)) | int}'
+                pad_all: '${(18 * (k | float)) | int}'
+                clickable: false
+                scrollable: false
+                widgets:
+                  - label: { id: melding_icoon, text: "", text_font: f_icoon, text_color: 0xF5A623 }
+                  - label: { id: melding_titel, x: '${(64 * (k | float)) | int}', y: '${(2 * (k | float)) | int}', width: '${(340 * (k | float)) | int}', long_mode: DOT, text_font: f_groot, text: "" }
+                  - label: { id: melding_tekst, y: '${(70 * (k | float)) | int}', width: 100%, long_mode: WRAP, text_font: f_midden, text: "" }
+                  - label: { align: BOTTOM_MID, text: "Tik om te sluiten", text_color: 0x6C727C }
       # Vangt in de nachtstand de eerste tik op (alleen scherm wekken)
       - obj:
           id: wek_laag

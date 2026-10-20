@@ -54,6 +54,21 @@ logger:
 api:
   encryption:
     key: !secret api_encryption_key
+  # Melding op het scherm vanuit HA: actie "esphome.<naam>_melding", bijvoorbeeld
+  # esphome.alarmklok_melding. Icoon: een naam uit de lijst in README.md
+  # (leeg = bel).
+  actions:
+    - action: melding
+      variables:
+        titel: string
+        tekst: string
+        icoon: string
+      then:
+        - script.execute:
+            id: melding_tonen
+            titel: !lambda return titel;
+            tekst: !lambda return tekst;
+            icoon: !lambda return icoon;
 
 ota:
   - platform: esphome
@@ -111,6 +126,11 @@ globals:
   - id: oploop_start_ms
     type: uint32_t
     initial_value: "0"
+  # Er is een melding die nog niet getoond kon worden ('s nachts of tijdens
+  # het afgaan van de wekker)
+  - id: melding_wacht
+    type: bool
+    initial_value: "false"
   # De drie wekkers (onderdelen/wekker.yaml) als lijsten, voor de lambda's
   - id: wekker_aan_lijst
     type: std::array<switch_::Switch *, 3>
@@ -150,6 +170,7 @@ interval:
     then:
       - script.execute: scherm_bijwerken
       - script.execute: helderheid_regelen
+      - script.execute: melding_bekijken
 
 # -----------------------------------------------------------------------------
 #  Instellingen die in Home Assistant verschijnen
@@ -497,7 +518,11 @@ script:
       - text_sensor.template.publish:
           id: wekker_status
           state: Gaat af
-      - lvgl.widget.hide: pagina_indicator
+      # Een open melding komt terug nadat de wekker gestopt is
+      - lambda: |-
+          if (!lv_obj_has_flag(id(melding_vlak), LV_OBJ_FLAG_HIDDEN))
+            id(melding_wacht) = true;
+      - lvgl.widget.hide: [pagina_indicator, melding_vlak]
       - lvgl.page.show:
           id: pagina_wekker_gaat_af
           animation: NONE
@@ -695,6 +720,40 @@ script:
       - lambda: |-
           global_preferences->sync();
           App.safe_reboot();
+
+  # ---------------------------------------------------------------------------
+  #  Meldingen vanuit Home Assistant (actie "melding" hierboven)
+  # ---------------------------------------------------------------------------
+  - id: melding_tonen
+    parameters:
+      titel: string
+      tekst: string
+      icoon: string
+    then:
+      - lambda: |-
+          lv_label_set_text(id(melding_titel), titel.c_str());
+          lv_label_set_text(id(melding_tekst), tekst.c_str());
+          lv_label_set_text(id(melding_icoon),
+                            alarmklok::icoon(icoon.empty() ? "bell" : icoon, "\U000F009A"));
+          id(melding_wacht) = true;
+      - script.execute: melding_bekijken
+
+  # Toont een wachtende melding. 's Nachts pas als je het scherm aanraakt, en
+  # niet over het scherm van een afgaande wekker heen.
+  - id: melding_bekijken
+    then:
+      - if:
+          condition:
+            lambda: return id(melding_wacht) && !id(overlay_zichtbaar) && !id(gaat_af);
+          then:
+            - lambda: |-
+                id(melding_wacht) = false;
+                id(laatste_aanraking_ms) = millis();
+            - lvgl.widget.show: melding_vlak
+
+  - id: melding_sluiten
+    then:
+      - lvgl.widget.hide: melding_vlak
 
   # Aangeroepen bij elke aanraking van het scherm
   - id: aangeraakt

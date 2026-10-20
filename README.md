@@ -76,6 +76,12 @@ Verder:
 - **Wekgeluid:** drie ingebouwde melodieën, of **Radio**: dan speelt Home
   Assistant een radiostream af via de speaker van de klok. Speelt er na 20 s
   nog niets, dan valt de klok terug op het gewone wekgeluid.
+- **Meldingen:** Home Assistant kan een melding op het scherm zetten met de
+  actie `esphome.alarmklok_melding` (4": `esphome.alarmklok_4inch_melding`),
+  met `titel`, `tekst` en `icoon`. Overdag verschijnt hij meteen, 's nachts en
+  tijdens het afgaan van de wekker pas daarna. Tik om te sluiten. Iconen: de
+  lijst hieronder, plus `bell`, `information`, `alert`, `door-open` en
+  `washing-machine`; leeg = bel. Een voorbeeld staat onderaan het HA-pakket.
 - **Speaker in Home Assistant:** de klok verschijnt als mediaspeler, dus je kunt
   er ook muziek, radio of TTS-meldingen naartoe sturen.
 - **Werkt zonder Home Assistant:** de tijd komt via NTP en de wekker draait op

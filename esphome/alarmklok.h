@@ -143,9 +143,10 @@ inline std::string stippen(int actief, int aantal, const char *scheiding) {
   return tekst;
 }
 
-// Iconen voor de tegels: de naam uit Home Assistant ("Tegel ... icoon") en de
-// bijbehorende code in het lettertype f_icoon (onderdelen/scherm.yaml).
-inline const char *icoon(const std::string &naam) {
+// Iconen voor de tegels en meldingen: de naam uit Home Assistant (zoals op
+// pictogrammers.com/library/mdi) en de code in het lettertype f_icoon
+// (scherm.yaml en scherm-vierkant.yaml). Onbekend: `standaard`.
+inline const char *icoon(const std::string &naam, const char *standaard = "\U000F0335") {
   static const char *const ICONEN[][2] = {
       {"lightbulb", "\U000F0335"},        {"lightbulb-on", "\U000F06E8"},
       {"lightbulb-group", "\U000F1253"},  {"ceiling-light", "\U000F0769"},
@@ -161,12 +162,16 @@ inline const char *icoon(const std::string &naam) {
       {"weather-sunset-up", "\U000F059C"}, {"home", "\U000F02DC"},
       {"sofa", "\U000F04B9"},             {"bed", "\U000F02E3"},
       {"silverware-fork-knife", "\U000F0A70"}, {"lightning-bolt", "\U000F140B"},
+      // Vooral voor meldingen
+      {"bell", "\U000F009A"},             {"information", "\U000F02FC"},
+      {"alert", "\U000F0026"},            {"door-open", "\U000F081C"},
+      {"washing-machine", "\U000F072A"},
   };
   for (const auto &paar : ICONEN) {
     if (naam == paar[0])
       return paar[1];
   }
-  return "\U000F0335";  // lightbulb
+  return standaard;
 }
 
 inline const char *melodie(const std::string &naam) {

@@ -89,6 +89,8 @@ int main() {
   // iconen en melodieën
   CONTROLEER(std::strcmp(icoon("fan"), "\U000F0210") == 0);
   CONTROLEER(std::strcmp(icoon("bestaat-niet"), "\U000F0335") == 0);
+  CONTROLEER(std::strcmp(icoon("bell"), "\U000F009A") == 0);
+  CONTROLEER(std::strcmp(icoon("bestaat-niet", "\U000F009A"), "\U000F009A") == 0);
   CONTROLEER(std::strncmp(melodie("Mario"), "mario:", 6) == 0);
   CONTROLEER(std::strncmp(melodie("iets anders"), "klassiek:", 9) == 0);
 
