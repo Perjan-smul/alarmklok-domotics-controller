@@ -79,7 +79,12 @@ Verder:
 - **Speaker in Home Assistant:** de klok verschijnt als mediaspeler, dus je kunt
   er ook muziek, radio of TTS-meldingen naartoe sturen.
 - **Werkt zonder Home Assistant:** de tijd komt via NTP en de wekker draait op
-  de klok zelf. Als HA plat ligt, gaat de wekker gewoon af.
+  de klok zelf. Als HA plat ligt, gaat de wekker gewoon af. Lukt NTP niet, dan
+  haalt de klok de tijd bij Home Assistant.
+- **Tijd onbekend?** Zonder geldige tijd kan geen wekker afgaan (bijvoorbeeld
+  op de 7" na een stroomuitval zonder wifi). De klokschermen zeggen dan
+  *"Tijd onbekend: wekker gaat niet af"* en `binary_sensor.alarmklok_tijd_bekend`
+  staat uit. De 4" heeft een klokchip en houdt de tijd vast.
 
 ## Benodigdheden
 

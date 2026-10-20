@@ -136,6 +136,14 @@ time:
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
+  # Tweede bron: de tijd van Home Assistant, voor als internettijd (NTP) niet
+  # lukt maar HA wel bereikbaar is. Beide zetten dezelfde systeemklok.
+  - platform: homeassistant
+    id: ha_tijd
+    timezone: ${tijdzone}
+    on_time_sync:
+      - script.execute: scherm_bijwerken
+      - script.execute: hw_tijd_gesynchroniseerd
 
 interval:
   - interval: 1s
@@ -371,6 +379,15 @@ binary_sensor:
   - platform: status
     id: api_verbonden
     name: Status
+
+  # Zonder geldige tijd gaat geen enkele wekker af (bijvoorbeeld na een
+  # stroomuitval zonder wifi, op een klok zonder klokchip)
+  - platform: template
+    id: tijd_bekend
+    name: Tijd bekend
+    icon: mdi:clock-check
+    entity_category: diagnostic
+    lambda: return id(klok).now().is_valid();
 
   # Workday-integratie van HA: aan = werkdag. Bestaat hij niet of is er geen
   # verbinding, dan gaan de wekkers gewoon af.
@@ -757,7 +774,7 @@ script:
                 ? alarmklok::wekker_na_overslaan(w, 3, nu.day_of_week, nu_minuut, eerst_minuten)
                 : alarmklok::eerstvolgende_wekker(w, 3, nu.day_of_week, nu_minuut, eerst_minuten);
           } else {
-            // Zonder geldige tijd: de eerste wekker die aan staat
+            // Zonder geldige tijd: staat er wel een wekker aan? (voor de waarschuwing)
             for (int i = 0; i < 3 && eerst < 0; i++)
               if (w[i].aan)
                 eerst = i;
@@ -771,19 +788,19 @@ script:
           }
           if (!id(volgende_wekker).has_state() || id(volgende_wekker).state != volgende)
             id(volgende_wekker).publish_state(volgende);
-          if (id(snoozet) && id(snooze_tot) > 0) {
+          if (!nu.is_valid() && eerst >= 0) {
+            // Belangrijker dan de wektijd: zonder tijd gaat de wekker niet af
+            snprintf(wekker, sizeof(wekker), "Tijd onbekend: wekker gaat niet af");
+          } else if (id(snoozet) && id(snooze_tot) > 0) {
             auto t = ESPTime::from_epoch_local(id(snooze_tot));
             snprintf(wekker, sizeof(wekker), "Snooze tot %02d:%02d", t.hour, t.minute);
           } else if (eerst < 0) {
             snprintf(wekker, sizeof(wekker), "Wekker uit");
           } else {
             const auto *t = id(wekker_tijd_lijst)[eerst];
-            if (nu.is_valid())
-              snprintf(wekker, sizeof(wekker), "%s",
-                       alarmklok::volgende_wekker_tekst(eerst_minuten, nu.day_of_week, nu_minuut,
-                                                        t->hour, t->minute).c_str());
-            else
-              snprintf(wekker, sizeof(wekker), "Wekker %02d:%02d", t->hour, t->minute);
+            snprintf(wekker, sizeof(wekker), "%s",
+                     alarmklok::volgende_wekker_tekst(eerst_minuten, nu.day_of_week, nu_minuut,
+                                                      t->hour, t->minute).c_str());
           }
 
           // Digitaal
