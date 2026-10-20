@@ -279,6 +279,20 @@ Wil je een ander icoon? Dan moet het op drie plekken bij: de lijst `glyphs:` van
 het font `f_icoon` in `onderdelen/scherm.yaml`, de functie `icoon()` in
 `alarmklok.h` en de `options:` in `onderdelen/tegel-instellingen.yaml`.
 
+## Automatische controle
+
+Bij elke push draait GitHub Actions (`.github/workflows/esphome.yml`):
+
+- de test van de rekenlogica in `alarmklok.h` (`tests/test_alarmklok.cpp`:
+  wekdagen, volgende wekker, nachtstand, iconen);
+- `esphome config` en `esphome compile` voor de 7"- en de 4"-klok, en een
+  controle van de vierkante indeling op 720×720 (`k = 1.5`).
+
+Zelf de test draaien:
+`g++ -std=c++17 -Wall -o /tmp/test tests/test_alarmklok.cpp && /tmp/test`.
+Een geslaagde controle betekent dat alles compileert, niet dat het op het
+scherm goed werkt.
+
 ## Bekende aandachtspunten
 
 - Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.9.1),
