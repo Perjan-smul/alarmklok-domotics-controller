@@ -137,7 +137,9 @@ esphome/
     kern.yaml                    Wekkers, instellingen en logica (gedeeld door alle klokken)
     waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, wifi
     waveshare-p4-4b.yaml         Hardware 4B: scherm, touch, backlight, wifi, relais
-    audio-p4.yaml                Speaker en microfoons van de 7" en de 4B
+    audio-p4.yaml                Speaker, mixer, mediaspeler en wekgeluid van de 7" en de 4B
+    audio-p4-i2s.yaml            Audiotransport zonder echo-onderdrukking (7")
+    audio-p4-aec.yaml            Audiotransport met echo-onderdrukking (4B, experimenteel)
     spraak.yaml                  Spraakassistent: wekwoord, Assist, balk op het scherm
     waveshare-s3-4.yaml/.h       Hardware 4": scherm, touch, hulpchip, zoemer, klokchip
     scherm.yaml                  De touch-interface voor 7" (swipe-pagina's, klokontwerpen)
@@ -231,7 +233,8 @@ zachter (ook bij meldingen uit HA).
 | *Microfoon dempen* | Even niet luisteren; op het scherm staat dan rechtsonder een doorgestreepte microfoon |
 | *Wekwoord gevoeligheid* | Laag (minder vaak per ongeluk), Normaal of Hoog |
 | *Spraak stil 's nachts* | In de nachtstand niet luisteren (staat standaard aan) |
-| *Luisteren tijdens muziek* | Uit (standaard): het wekwoord pauzeert terwijl de klok muziek of radio speelt, zodat die het niet per ongeluk activeert |
+| *Luisteren tijdens muziek* | 7": standaard uit, het wekwoord pauzeert terwijl de klok muziek of radio speelt. 4B: standaard aan, dankzij de echo-onderdrukking |
+| *Echo-onderdrukking* (alleen 4B) | Haalt het eigen geluid van de klok uit de microfoon, zodat "Hey Jarvis" ook tijdens muziek werkt (staat standaard aan) |
 
 Het wekwoord luistert niet als de wekker afgaat, als er geen verbinding met HA
 is, en nooit terwijl de klok zelf iets uitspreekt. De versterker staat alleen
@@ -350,6 +353,7 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
 | Geen herstart als Home Assistant weg is (`api: reboot_timeout: 0s`) | ESPHome herstart standaard na 15 min zonder HA. De wekker werkt zonder HA, en een herstart rond het wekken wil je niet. | [EspControl](https://github.com/jtenniswood/espcontrol) |
 | Wifi zonder stroombesparing, herstart pas na 30 min zonder wifi | Stroombesparing maakt wifi op deze borden onbetrouwbaar | [ESPHome #13636](https://github.com/esphome/esphome/issues/13636), [HA-forum](https://community.home-assistant.io/t/guition-esp32-p4-jc1060p470/959144?page=3), EspControl |
 | 7" en 4B: `fast_connect`, en geheugeninstellingen voor de wifi-chip | Wifi via de ESP32-C6 viel weg of liep vast | #13636, EspControl |
+| 4B: touch-reset GPIO23, backlight aan via GPIO33 | Volgens het schema; zonder BL_EN mogelijk een zwart scherm | Waveshare-schema, [Tessera](https://github.com/MaxGramser/homeassistant_espscreen) |
 | 7" en 4B: update **Wifi-chip (C6)** in HA | Een oude C6-firmware gaf wegvallende wifi of herstarts elke ~10 minuten. Installeren doe je zelf, met de knop in HA. | #13636, [ESPHome #14313](https://github.com/esphome/esphome/issues/14313) |
 | 4" (Bosun-bord): beeldinstellingen voor het RGB-scherm, wifi eerst starten | Verschoven of flikkerend beeld en wifi-geheugentekort op hetzelfde type paneel | EspControl (4848S040) |
 | Diagnose-entiteiten: *Vrij geheugen*, *Grootste vrije blok*, *Minst vrije geheugen*, *Vrij PSRAM*, *Uptime*, *Laatste herstart oorzaak* | Herstart de klok onverwacht, of daalt het vrije geheugen over dagen? Dan zie je dat hier. | [ESPHome debug](https://esphome.io/components/debug/) |
@@ -424,6 +428,19 @@ scherm goed werkt.
   bij EspControl). Toont het bootlog `chip revision: v3.x`, zet het dan in
   `onderdelen/waveshare-p4-4b.yaml` op `false`.
 - **Relais:** *Relais 1* en *Relais 2* verschijnen als schakelaars in HA.
+- **Touch en backlight:** volgens het schema van Waveshare is de touch-reset
+  **GPIO23** en zet **GPIO33** de backlight aan (BL_EN). Dat stond eerst anders
+  (GPIO28 en geen BL_EN); [Tessera](https://github.com/MaxGramser/homeassistant_espscreen)
+  gebruikt het ook zo. De touch wordt elke 20 ms uitgelezen, omdat de
+  interrupt-lijn niet is aangesloten.
+- **Echo-onderdrukking (experimenteel):** de 4B gebruikt het externe component
+  [esphome-audio-stack](https://github.com/n-IA-hane/esphome-audio-stack)
+  (MIT, release 2026.10.2, dezelfde versie als Tessera). Speaker en microfoon
+  lopen dan tegelijk, en het wekwoord werkt ook tijdens muziek. Problemen met
+  geluid of wekwoord? Neem dan in `alarmklok-4b.yaml` bij `audio_transport`
+  het bestand `onderdelen/audio-p4-i2s.yaml`: dan werkt de 4B net als de 7".
+  Van Tessera zijn alleen hardwaregegevens gebruikt, geen code (Tessera valt
+  onder de AGPL-licentie).
 
 ### Spraakassistent
 

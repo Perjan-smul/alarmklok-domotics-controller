@@ -126,7 +126,8 @@ switch:
     icon: mdi:music-note
     entity_category: config
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    # Standaard aan met echo-onderdrukking (4B), anders uit (audio-p4-*.yaml)
+    restore_mode: ${muziek_luisteren_standaard}
   - platform: template
     id: stil_s_nachts
     name: Spraak stil 's nachts
