@@ -920,6 +920,18 @@ lvgl:
                             call.set_time(tijd->hour, (uint8_t) (x * 5), 0);
                             call.perform();
 
+                  # Eén keer overslaan (oranje = aan)
+                  - button:
+                      id: knop_overslaan
+                      x: 40
+                      y: 500
+                      width: 380
+                      height: 56
+                      on_click:
+                        - switch.toggle: overslaan
+                      widgets:
+                        - label: { text: "Volgende wekker overslaan", align: CENTER }
+
                   # ---- Rechts: overige instellingen ----
                   - label:
                       x: 480

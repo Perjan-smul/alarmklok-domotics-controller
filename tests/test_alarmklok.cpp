@@ -43,6 +43,43 @@ int main() {
   CONTROLEER(volgende_wekker_tekst(23 * 60, MA, 8 * 60, 7, 0) == "Wekker morgen 07:00");
   CONTROLEER(volgende_wekker_tekst(3 * 1440 - 60, VR, 8 * 60, 7, 0) == "Wekker ma 07:00");
 
+  // eerstvolgende_wekker en wekker_na_overslaan over drie wekkers
+  {
+    const WekkerInfo w[3] = {
+        {true, "Werkdagen", 7 * 60},     // 1: werkdagen 07:00
+        {true, "Weekend", 9 * 60},       // 2: weekend 09:00
+        {false, "Elke dag", 6 * 60},     // 3: uit
+    };
+    int m = 0;
+    // Maandag 06:00: wekker 1 over een uur
+    CONTROLEER(eerstvolgende_wekker(w, 3, MA, 6 * 60, m) == 0 && m == 60);
+    // Overslaan: daarna dinsdag 07:00
+    CONTROLEER(wekker_na_overslaan(w, 3, MA, 6 * 60, m) == 0 && m == 60 + 1440);
+    // Vrijdag 08:00: volgende is zaterdag 09:00 (wekker 2)
+    CONTROLEER(eerstvolgende_wekker(w, 3, VR, 8 * 60, m) == 1 && m == 1440 + 60);
+    // ...overslaan: zondag 09:00, ook wekker 2
+    CONTROLEER(wekker_na_overslaan(w, 3, VR, 8 * 60, m) == 1 && m == 2 * 1440 + 60);
+    // Zondag 10:00: overslaan van ma 07:00 geeft di 07:00
+    CONTROLEER(wekker_na_overslaan(w, 3, ZO, 10 * 60, m) == 0 && m == 21 * 60 + 1440);
+    // Alles uit: geen wekker
+    const WekkerInfo uit[1] = {{false, "Elke dag", 7 * 60}};
+    CONTROLEER(eerstvolgende_wekker(uit, 1, MA, 0, m) == -1 && m == -1);
+    CONTROLEER(wekker_na_overslaan(uit, 1, MA, 0, m) == -1 && m == -1);
+    // Eenmalige wekker overslaan: daarna is hij op, dus komt de andere wekker
+    const WekkerInfo een[2] = {{true, "Eenmalig", 7 * 60}, {true, "Elke dag", 8 * 60}};
+    CONTROLEER(wekker_na_overslaan(een, 2, MA, 6 * 60, m) == 1 && m == 2 * 60);
+    const WekkerInfo alleen_een[1] = {{true, "Eenmalig", 7 * 60}};
+    CONTROLEER(wekker_na_overslaan(alleen_een, 1, MA, 6 * 60, m) == -1 && m == -1);
+  }
+
+  // feestdag_overslaan: alleen werkdagen-wekkers, alleen als HA "geen werkdag" zegt
+  CONTROLEER(feestdag_overslaan(true, "Werkdagen", 0));
+  CONTROLEER(!feestdag_overslaan(true, "Werkdagen", 1));
+  CONTROLEER(!feestdag_overslaan(true, "Werkdagen", -1));  // geen HA: gewoon afgaan
+  CONTROLEER(!feestdag_overslaan(false, "Werkdagen", 0));
+  CONTROLEER(!feestdag_overslaan(true, "Elke dag", 0));
+  CONTROLEER(!feestdag_overslaan(true, "Maandag", 0));
+
   // in_venster (nachtstand), ook over middernacht
   CONTROLEER(in_venster(23 * 60, 22 * 60 + 30, 7 * 60));
   CONTROLEER(in_venster(3 * 60, 22 * 60 + 30, 7 * 60));

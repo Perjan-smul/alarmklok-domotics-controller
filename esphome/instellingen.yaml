@@ -12,6 +12,9 @@ substitutions:
   temperatuur_sensor: sensor.buitentemperatuur
   # Na zoveel minuten stopt een wekker die niet uitgezet wordt vanzelf.
   max_afgaan_minuten: "30"
+  # Workday-sensor uit HA voor "Niet op feestdagen" (aan = werkdag). Maak hem
+  # aan via Instellingen -> Apparaten & diensten -> Integratie toevoegen -> Workday.
+  werkdag_sensor: binary_sensor.workday_sensor
 
   # ===========================================================================
   #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)

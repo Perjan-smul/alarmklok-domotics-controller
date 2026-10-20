@@ -326,16 +326,58 @@ button:
     on_press:
       - script.execute: test_wekker
 
+switch:
+  # Slaat precies één keer over: de eerstvolgende wekker (en zijn wake-up
+  # light) gaat niet af, daarna zet deze schakelaar zichzelf weer uit.
+  - platform: template
+    id: overslaan
+    name: Volgende wekker overslaan
+    icon: mdi:alarm-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_state:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+
+  # Werkdagen-wekkers gaan niet af als Home Assistant zegt dat het vandaag
+  # geen werkdag is (feestdag). Zie "werkdag_sensor" in instellingen.yaml.
+  - platform: template
+    id: niet_op_feestdagen
+    name: Niet op feestdagen
+    icon: mdi:calendar-star
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
 text_sensor:
   - platform: template
     id: wekker_status
     name: Wekker status
     icon: mdi:alarm-light
 
+  # Wanneer de eerstvolgende wekker afgaat (rekening houdend met "overslaan"),
+  # voor automations in HA: bijvoorbeeld de verwarming vooraf aanzetten.
+  # Feestdagen zitten er niet in. Leeg = geen wekker.
+  - platform: template
+    id: volgende_wekker
+    name: Volgende wekker
+    icon: mdi:alarm
+    device_class: timestamp
+
 binary_sensor:
   - platform: status
     id: api_verbonden
     name: Status
+
+  # Workday-integratie van HA: aan = werkdag. Bestaat hij niet of is er geen
+  # verbinding, dan gaan de wekkers gewoon af.
+  - platform: homeassistant
+    id: werkdag
+    entity_id: ${werkdag_sensor}
+    internal: true
 
 sensor:
   - platform: homeassistant
@@ -360,25 +402,49 @@ script:
           if (!nu.is_valid())
             return;
           const int nu_minuut = nu.hour * 60 + nu.minute;
+          alarmklok::WekkerInfo w[3];
+          for (int i = 0; i < 3; i++) {
+            const auto *tijd = id(wekker_tijd_lijst)[i];
+            w[i] = {id(wekker_aan_lijst)[i]->state,
+                    id(wekker_dagen_lijst)[i]->current_option().str(),
+                    tijd->hour * 60 + tijd->minute};
+          }
+          const int vandaag_werkdag = id(werkdag).has_state() ? (id(werkdag).state ? 1 : 0) : -1;
           const int vooraf = (int) id(wakeup_minuten).state;
+          // Welke wekker is de eerstvolgende? Bij "overslaan" geldt dat ook
+          // voor het wake-up light.
+          int eerst_minuten;
+          const int eerst = alarmklok::eerstvolgende_wekker(w, 3, nu.day_of_week, nu_minuut,
+                                                            eerst_minuten);
           bool wakeup_gestart = false;
           for (int i = 0; i < 3; i++) {
-            if (!id(wekker_aan_lijst)[i]->state)
+            if (!w[i].aan)
               continue;
-            const std::string dagen = id(wekker_dagen_lijst)[i]->current_option().str();
-            const auto *tijd = id(wekker_tijd_lijst)[i];
-            const int wek = tijd->hour * 60 + tijd->minute;
+            const bool feestdag =
+                alarmklok::feestdag_overslaan(id(niet_op_feestdagen).state, w[i].dagen,
+                                              vandaag_werkdag);
 
-            if (nu_minuut == wek && !id(gaat_af) &&
-                alarmklok::wekdag_actief(dagen, nu.day_of_week)) {
-              id(actieve_wekker) = i + 1;
-              id(start_wekker).execute();
+            if (nu_minuut == w[i].minuut && !id(gaat_af) &&
+                alarmklok::wekdag_actief(w[i].dagen, nu.day_of_week)) {
+              if (feestdag) {
+                ESP_LOGI("alarmklok", "Wekker %d: geen werkdag, overgeslagen", i + 1);
+              } else if (id(overslaan).state) {
+                ESP_LOGI("alarmklok", "Wekker %d: overgeslagen", i + 1);
+                id(overslaan).turn_off();
+                if (w[i].dagen == "Eenmalig")
+                  id(wekker_aan_lijst)[i]->turn_off();
+              } else {
+                id(actieve_wekker) = i + 1;
+                id(start_wekker).execute();
+              }
             }
 
             if (vooraf > 0 && !wakeup_gestart) {
               auto straks = ESPTime::from_epoch_local(nu.timestamp + vooraf * 60);
-              if (straks.hour * 60 + straks.minute == wek &&
-                  alarmklok::wekdag_actief(dagen, straks.day_of_week)) {
+              const bool overgeslagen =
+                  feestdag || (id(overslaan).state && i == eerst && eerst_minuten == vooraf);
+              if (straks.hour * 60 + straks.minute == w[i].minuut && !overgeslagen &&
+                  alarmklok::wekdag_actief(w[i].dagen, straks.day_of_week)) {
                 wakeup_gestart = true;
                 id(start_wakeup_light).execute(vooraf);
               }
@@ -676,27 +742,35 @@ script:
           if (!std::isnan(id(buitentemperatuur).state))
             snprintf(temp, sizeof(temp), "%.1f°", id(buitentemperatuur).state);
 
-          // Eerstvolgende wekker van de drie
+          // Eerstvolgende wekker van de drie (na "overslaan" de wekker daarna)
           char wekker[64];
-          int eerst = -1, eerst_minuten = -1;
           const int nu_minuut = nu.is_valid() ? nu.hour * 60 + nu.minute : 0;
+          alarmklok::WekkerInfo w[3];
           for (int i = 0; i < 3; i++) {
-            if (!id(wekker_aan_lijst)[i]->state)
-              continue;
             const auto *t = id(wekker_tijd_lijst)[i];
-            int over = 0;  // zonder geldige tijd: de eerste wekker die aan staat
-            if (nu.is_valid()) {
-              over = alarmklok::minuten_tot_wekker(
-                  id(wekker_dagen_lijst)[i]->current_option().str(), t->hour * 60 + t->minute,
-                  nu.day_of_week, nu_minuut);
-              if (over < 0)
-                continue;
-            }
-            if (eerst < 0 || over < eerst_minuten) {
-              eerst = i;
-              eerst_minuten = over;
-            }
+            w[i] = {id(wekker_aan_lijst)[i]->state,
+                    id(wekker_dagen_lijst)[i]->current_option().str(), t->hour * 60 + t->minute};
           }
+          int eerst = -1, eerst_minuten = -1;
+          if (nu.is_valid()) {
+            eerst = id(overslaan).state
+                ? alarmklok::wekker_na_overslaan(w, 3, nu.day_of_week, nu_minuut, eerst_minuten)
+                : alarmklok::eerstvolgende_wekker(w, 3, nu.day_of_week, nu_minuut, eerst_minuten);
+          } else {
+            // Zonder geldige tijd: de eerste wekker die aan staat
+            for (int i = 0; i < 3 && eerst < 0; i++)
+              if (w[i].aan)
+                eerst = i;
+          }
+
+          // Voor HA: tijdstip van de volgende wekker (alleen bij een wijziging)
+          std::string volgende;
+          if (nu.is_valid() && eerst >= 0) {
+            const time_t wanneer = nu.timestamp - nu.second + (time_t) eerst_minuten * 60;
+            volgende = ESPTime::from_epoch_utc(wanneer).strftime("%Y-%m-%dT%H:%M:%S+00:00");
+          }
+          if (!id(volgende_wekker).has_state() || id(volgende_wekker).state != volgende)
+            id(volgende_wekker).publish_state(volgende);
           if (id(snoozet) && id(snooze_tot) > 0) {
             auto t = ESPTime::from_epoch_local(id(snooze_tot));
             snprintf(wekker, sizeof(wekker), "Snooze tot %02d:%02d", t.hour, t.minute);
@@ -763,6 +837,10 @@ script:
     mode: queued
     max_runs: 3
     then:
+      - lvgl.widget.update:
+          id: knop_overslaan
+          state:
+            checked: !lambda return id(overslaan).state;
       # Pagina Wekker toont de wekker die je aan het instellen bent
       - lvgl.widget.update:
           id: knop_wekker_1

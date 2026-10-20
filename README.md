@@ -60,6 +60,14 @@ Verder:
   **eenmalig** (gaat één keer af en zet zichzelf daarna uit). Kies op de
   wekkerpagina met 1/2/3 welke je instelt. De klokschermen tonen de
   eerstvolgende, bijvoorbeeld "Wekker morgen 07:00" of "Wekker ma 07:15".
+- **Volgende wekker overslaan:** één tik op de wekkerpagina (of de schakelaar
+  in HA) en de eerstvolgende wekker gaat niet af, inclusief zijn wake-up light.
+  Daarna zet de schakelaar zichzelf weer uit. De klokschermen tonen dan al de
+  wekker daarna.
+- **Niet op feestdagen:** met de [Workday-integratie](https://www.home-assistant.io/integrations/workday/)
+  van HA slaan werkdagen-wekkers feestdagen over. Is er geen verbinding met HA,
+  dan gaan ze gewoon af. Zet de schakelaar *Niet op feestdagen* aan en controleer
+  `werkdag_sensor` in `instellingen.yaml`.
 - **Langzaam luider:** het wekgeluid (melodie of radio) begint op 10% en loopt
   in 60 seconden op tot het wekvolume. De duur stel je in met *Wekgeluid
   oplopen* in Home Assistant (0 = meteen vol).
@@ -191,6 +199,9 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 | `select.alarmklok_wekgeluid` | Klassiek / Zacht / Mario / Radio (voor alle wekkers) |
 | `number.alarmklok_wekvolume` | Volume van het wekgeluid |
 | `number.alarmklok_wekgeluid_oplopen` | In zoveel seconden van zacht naar het wekvolume (0 = uit) |
+| `switch.alarmklok_volgende_wekker_overslaan` | Eerstvolgende wekker één keer overslaan |
+| `switch.alarmklok_niet_op_feestdagen` | Werkdagen-wekkers niet op feestdagen (via Workday) |
+| `sensor.alarmklok_volgende_wekker` | Tijdstip van de eerstvolgende wekker, voor automations (feestdagen niet meegerekend) |
 | `number.alarmklok_snooze_duur` | Snooze in minuten |
 | `number.alarmklok_wake_up_light_vooraf` | Minuten voor de wektijd dat het licht begint (0 = uit) |
 | `time.alarmklok_nachtstand_vanaf` / `_tot` | Venster voor de nachtstand |

@@ -7,6 +7,8 @@ cards:
     show_header_toggle: false
     entities:
       - entity: sensor.alarmklok_wekker_status
+      - entity: sensor.alarmklok_volgende_wekker
+      - entity: switch.alarmklok_volgende_wekker_overslaan
       - type: section
         label: Wekker 1
       - entity: switch.alarmklok_wekker_1_aan
@@ -28,6 +30,7 @@ cards:
       - entity: select.alarmklok_wekgeluid
       - entity: number.alarmklok_wekvolume
       - entity: number.alarmklok_wekgeluid_oplopen
+      - entity: switch.alarmklok_niet_op_feestdagen
       - type: divider
       - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf

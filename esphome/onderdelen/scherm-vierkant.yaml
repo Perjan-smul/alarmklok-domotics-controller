@@ -995,17 +995,29 @@ lvgl:
                                   id: wekgeluid
                                   index: !lambda return x;
 
+                        # Eén keer overslaan (oranje = aan)
+                        - button:
+                            id: knop_overslaan
+                            x: '${(16 * (k | float)) | int}'
+                            y: '${(460 * (k | float)) | int}'
+                            width: '${(448 * (k | float)) | int}'
+                            height: '${(52 * (k | float)) | int}'
+                            on_click:
+                              - switch.toggle: overslaan
+                            widgets:
+                              - label: { text: "Volgende wekker overslaan", align: CENTER }
+
                         # ---- Na omhoog vegen: volume, wake-up light, testen ----
                         - label:
                             id: lbl_volume
                             x: '${(16 * (k | float)) | int}'
-                            y: '${(478 * (k | float)) | int}'
+                            y: '${(548 * (k | float)) | int}'
                             text: "Wekvolume"
                             text_color: 0xB0B6C0
                         - slider:
                             id: sl_volume
                             x: '${(24 * (k | float)) | int}'
-                            y: '${(512 * (k | float)) | int}'
+                            y: '${(582 * (k | float)) | int}'
                             width: '${(432 * (k | float)) | int}'
                             height: '${(24 * (k | float)) | int}'
                             min_value: 10
@@ -1017,13 +1029,13 @@ lvgl:
                         - label:
                             id: lbl_wakeup
                             x: '${(16 * (k | float)) | int}'
-                            y: '${(562 * (k | float)) | int}'
+                            y: '${(632 * (k | float)) | int}'
                             text: "Wake-up light"
                             text_color: 0xB0B6C0
                         - slider:
                             id: sl_wakeup
                             x: '${(24 * (k | float)) | int}'
-                            y: '${(596 * (k | float)) | int}'
+                            y: '${(666 * (k | float)) | int}'
                             width: '${(432 * (k | float)) | int}'
                             height: '${(24 * (k | float)) | int}'
                             min_value: 0
@@ -1034,7 +1046,7 @@ lvgl:
                                   value: !lambda return roundf(x / 5.0f) * 5.0f;
                         - button:
                             x: '${(16 * (k | float)) | int}'
-                            y: '${(650 * (k | float)) | int}'
+                            y: '${(720 * (k | float)) | int}'
                             width: '${(180 * (k | float)) | int}'
                             height: '${(56 * (k | float)) | int}'
                             on_click:
@@ -1043,13 +1055,13 @@ lvgl:
                               - label: { text: "Test wekker", align: CENTER }
                         - label:
                             x: '${(212 * (k | float)) | int}'
-                            y: '${(668 * (k | float)) | int}'
+                            y: '${(738 * (k | float)) | int}'
                             text: "Langzaam luider"
                             text_color: 0xB0B6C0
                         - switch:
                             id: sw_oplopen
                             x: '${(380 * (k | float)) | int}'
-                            y: '${(658 * (k | float)) | int}'
+                            y: '${(728 * (k | float)) | int}'
                             width: '${(80 * (k | float)) | int}'
                             height: '${(40 * (k | float)) | int}'
                             on_change:
@@ -1062,7 +1074,7 @@ lvgl:
                         # Ruimte onder de laatste regel, boven de paginastippen
                         - obj:
                             x: 0
-                            y: '${(706 * (k | float)) | int}'
+                            y: '${(776 * (k | float)) | int}'
                             width: '${(10 * (k | float)) | int}'
                             height: '${(50 * (k | float)) | int}'
                             styles: leeg

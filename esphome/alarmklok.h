@@ -35,6 +35,63 @@ inline int minuten_tot_wekker(const std::string &modus, int wek_minuut, int nu_d
   return -1;
 }
 
+// Eén wekker als gewone gegevens, zodat de berekening los te testen is.
+struct WekkerInfo {
+  bool aan;
+  std::string dagen;
+  int minuut;  // wektijd als minuut van de dag
+};
+
+// Index van de eerstvolgende wekker, of -1. `minuten` krijgt de minuten tot dan.
+// Bij gelijke tijd wint de laagste index.
+inline int eerstvolgende_wekker(const WekkerInfo *wekkers, int aantal, int nu_dag, int nu_minuut,
+                                int &minuten) {
+  int beste = -1;
+  minuten = -1;
+  for (int i = 0; i < aantal; i++) {
+    if (!wekkers[i].aan)
+      continue;
+    const int over = minuten_tot_wekker(wekkers[i].dagen, wekkers[i].minuut, nu_dag, nu_minuut);
+    if (over >= 0 && (beste < 0 || over < minuten)) {
+      beste = i;
+      minuten = over;
+    }
+  }
+  return beste;
+}
+
+// Als eerstvolgende_wekker, maar slaat de eerste over ("Volgende wekker
+// overslaan"). Dat kan dezelfde wekker op een latere dag opleveren, behalve
+// een eenmalige: die is met overslaan gebruikt en gaat daarna uit.
+inline int wekker_na_overslaan(const WekkerInfo *wekkers, int aantal, int nu_dag, int nu_minuut,
+                               int &minuten) {
+  int eerste_minuten;
+  const int eerste = eerstvolgende_wekker(wekkers, aantal, nu_dag, nu_minuut, eerste_minuten);
+  minuten = -1;
+  if (eerste < 0 || aantal > 8)
+    return -1;
+  WekkerInfo rest[8];
+  for (int i = 0; i < aantal; i++)
+    rest[i] = wekkers[i];
+  if (rest[eerste].dagen == "Eenmalig")
+    rest[eerste].aan = false;
+  // Rekenen vanaf het moment dat de overgeslagen wekker af zou gaan
+  const int totaal = nu_minuut + eerste_minuten;
+  const int dag = (nu_dag - 1 + totaal / 1440) % 7 + 1;
+  int verder;
+  const int i = eerstvolgende_wekker(rest, aantal, dag, totaal % 1440, verder);
+  if (i >= 0)
+    minuten = eerste_minuten + verder;
+  return i;
+}
+
+// Feestdagen: een werkdagen-wekker gaat niet af als Home Assistant zegt dat
+// het vandaag geen werkdag is. Onbekend (geen HA) = gewoon afgaan.
+// werkdag: 1 = werkdag, 0 = geen werkdag, -1 = onbekend.
+inline bool feestdag_overslaan(bool niet_op_feestdagen, const std::string &dagen, int werkdag) {
+  return niet_op_feestdagen && dagen == "Werkdagen" && werkdag == 0;
+}
+
 // "Wekker 07:00", "Wekker morgen 07:00" of "Wekker do 07:00".
 inline std::string volgende_wekker_tekst(int minuten_tot, int nu_dag, int nu_minuut, int uur,
                                          int minuut) {
