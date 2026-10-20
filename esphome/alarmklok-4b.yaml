@@ -1,0 +1,23 @@
+# =============================================================================
+#  Alarmklok + domotica-controller voor Home Assistant (ESPHome)
+#  4B-versie: 4" met speaker en microfoons
+#
+#  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-4B (4" touch, 720x720), ook
+#  verkocht als ESP32-P4-86-Panel-ETH-2RO. Zie README.md voor installatie.
+#
+#  Zelfde wekkers, pagina's en geluid als de 7"-klok (dezelfde audiochips), met
+#  de vierkante schermindeling op 720x720, de spraakassistent en twee relais.
+#
+#  Tegels, pagina's en andere instellingen: zie instellingen.yaml.
+# =============================================================================
+
+substitutions:
+  name: alarmklok-4b
+  friendly_name: Alarmklok 4B
+
+packages:
+  instellingen: !include instellingen.yaml
+  kern: !include onderdelen/kern.yaml
+  hardware: !include onderdelen/waveshare-p4-4b.yaml
+  audio: !include onderdelen/audio-p4.yaml
+  scherm: !include onderdelen/scherm-vierkant.yaml

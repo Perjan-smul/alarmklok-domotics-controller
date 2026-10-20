@@ -1,0 +1,132 @@
+# =============================================================================
+#  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-4B
+#  (ook verkocht als ESP32-P4-86-Panel-ETH-2RO)
+#  4" IPS 720x720 (MIPI-DSI), GT911 touch, ESP32-C6 als wifi-coprocessor, twee
+#  relais. Audio (ES8311 + ES7210) staat in audio-p4.yaml: zelfde pinnen als de 7".
+#
+#  Pinnen volgens Waveshare en de werkende configuratie van EspControl voor dit
+#  paneel (devices/esp32-p4-86):
+#    I2C (touch + audio)   SDA GPIO7, SCL GPIO8
+#    Backlight             GPIO26 (PWM, geïnverteerd, max. 80%)
+#    LCD reset             GPIO27 (zit in het ESPHome-model)
+#    Touch reset           GPIO28
+#    Relais                GPIO32 en GPIO46
+#    ESP32-C6 (SDIO)       zelfde pinnen als de 7"
+#
+#  Netwerkpoort, RS485 en SD-kaart worden niet gebruikt. Er is een aansluiting
+#  voor een RTC-batterij, maar welke klokchip erop zit is niet bekend; de tijd
+#  komt via internet of Home Assistant.
+# =============================================================================
+
+substitutions:
+  # Schermindeling (scherm-vierkant.yaml): 1.5 = 720x720
+  k: "1.5"
+  draaiing: "0"
+  lvgl_buffer: 100%
+
+esp32:
+  variant: esp32p4
+  # Het bord heeft 32 MB flash, maar OTA met 32 MB is in ESPHome nog
+  # experimenteel. 16 MB is ruim voldoende.
+  flash_size: 16MB
+  # De panelen die EspControl test hebben een vroege chip (rev 1.x). Toont het
+  # bootlog "chip revision: v3.x"? Zet dit dan op false.
+  engineering_sample: true
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # Taken van de wifi-coprocessor in PSRAM: meer intern geheugen over voor
+      # scherm en audio
+      CONFIG_ESP_HOSTED_DFLT_TASK_FROM_SPIRAM: "y"
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+esp32_hosted:
+  variant: ESP32C6
+  active_high: true
+  clk_pin: GPIO18
+  cmd_pin: GPIO19
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  reset_pin: GPIO54
+  use_psram: true
+  sdio_frequency: 20MHz
+
+i2c:
+  - id: i2c_bus
+    sda: GPIO7
+    scl: GPIO8
+    frequency: 400kHz
+    # Het bord heeft eigen pull-ups
+    sda_pullup_enabled: false
+    scl_pullup_enabled: false
+
+# ---- Scherm ----------------------------------------------------------------
+# Voeding van de MIPI-DSI PHY (2,5 V via interne LDO-kanaal 3)
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+display:
+  - platform: mipi_dsi
+    id: scherm
+    model: WAVESHARE-P4-86-PANEL
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: gt911
+    id: touch
+    i2c_id: i2c_bus
+    display: scherm
+    reset_pin: GPIO28
+    on_touch:
+      - script.execute: aangeraakt
+
+output:
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO26
+    inverted: true
+    frequency: 1000Hz
+    # Boven 80% wordt de backlight alleen warmer, niet feller
+    min_power: 0.0
+    max_power: 0.8
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Schermhelderheid
+    icon: mdi:brightness-6
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 500ms
+
+# ---- Relais ------------------------------------------------------------------
+switch:
+  - platform: gpio
+    id: relais_1
+    name: Relais 1
+    icon: mdi:electric-switch
+    pin: GPIO32
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relais_2
+    name: Relais 2
+    icon: mdi:electric-switch
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+script:
+  # Klokchip onbekend: niets te doen als de tijd binnenkomt
+  - id: hw_tijd_gesynchroniseerd
+    then:
+      - logger.log:
+          level: DEBUG
+          format: "Tijd gesynchroniseerd"
