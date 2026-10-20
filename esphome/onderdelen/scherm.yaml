@@ -91,6 +91,9 @@ font:
       - "\U000F0026"  # alert
       - "\U000F081C"  # door-open
       - "\U000F072A"  # washing-machine
+      - "\U000F036C"  # microphone (spraakassistent)
+      - "\U000F036D"  # microphone-off
+      - "\U000F01D8"  # dots-horizontal
   # Paginastippen
   - file: *mdi
     id: f_stip
@@ -98,6 +101,7 @@ font:
     glyphs:
       - "\U000F0765"  # circle
       - "\U000F0766"  # circle-outline
+      - "\U000F036D"  # microphone-off (gedempt)
 
 lvgl:
   displays: scherm
@@ -229,6 +233,33 @@ lvgl:
                   - label: { id: melding_titel, x: 90, y: 6, width: 620, long_mode: DOT, text_font: f_groot, text: "" }
                   - label: { id: melding_tekst, y: 100, width: 100%, long_mode: WRAP, text_font: f_midden, text: "" }
                   - label: { align: BOTTOM_MID, text: "Tik om te sluiten", text_color: 0x6C727C }
+      # Spraakassistent: wat hij hoort en antwoordt (spraak.yaml)
+      - obj:
+          id: spraak_vlak
+          align: BOTTOM_MID
+          y: -40
+          width: 900
+          height: SIZE_CONTENT
+          bg_color: 0x23262D
+          border_color: 0xF5A623
+          border_width: 2
+          radius: 22
+          pad_all: 14
+          hidden: true
+          scrollable: false
+          widgets:
+            - label: { id: spraak_icoon, align: LEFT_MID, text: "", text_font: f_icoon, text_color: 0xF5A623 }
+            - label: { id: spraak_tekst, align: LEFT_MID, x: 84, width: 780, long_mode: WRAP, text_font: f_midden, text: "" }
+      # Microfoon gedempt
+      - label:
+          id: spraak_gedempt
+          align: BOTTOM_RIGHT
+          x: -14
+          y: -8
+          text_font: f_stip
+          text_color: 0x6C727C
+          text: "\U000F036D"
+          hidden: true
       # Vangt in de nachtstand de eerste tik op (alleen scherm wekken)
       - obj:
           id: wek_laag

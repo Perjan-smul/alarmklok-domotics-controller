@@ -21,3 +21,4 @@ packages:
   hardware: !include onderdelen/waveshare-p4-4b.yaml
   audio: !include onderdelen/audio-p4.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
+  spraak: !include onderdelen/spraak.yaml

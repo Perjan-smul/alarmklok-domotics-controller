@@ -1,18 +1,20 @@
 # Alarmklok + domotica-controller
 
 Een wekker voor op het nachtkastje die tegelijk je Home Assistant bedient.
-Gebouwd met [ESPHome](https://esphome.io) en LVGL. Er zijn twee versies:
+Gebouwd met [ESPHome](https://esphome.io) en LVGL. Er zijn drie versies:
 
-| | 7" | 4" |
-|---|---|---|
-| Bord | Waveshare **ESP32-P4-WIFI6-Touch-LCD-7B** | Waveshare **ESP32-S3-Touch-LCD-4** (hetzelfde als in de Bosun-bootmonitor) |
-| Scherm | 1024×600, liggend | 480×480, vierkant |
-| Geluid | Speaker: melodieën, radio, TTS, langzaam luider | Zoemer: piepjes in een ritme; radio via een speaker in Home Assistant |
-| Tijd zonder wifi | Na een herstart pas weer met wifi | Klokchip (RTC) houdt de tijd vast |
-| Configuratie | `esphome/alarmklok.yaml` | `esphome/alarmklok-4inch.yaml` |
+| | 7" | 4B | 4" (Bosun-bord) |
+|---|---|---|---|
+| Bord | Waveshare **ESP32-P4-WIFI6-Touch-LCD-7B** | Waveshare **ESP32-P4-WIFI6-Touch-LCD-4B** (ook: ESP32-P4-86-Panel-ETH-2RO) | Waveshare **ESP32-S3-Touch-LCD-4** (zoals in de Bosun-bootmonitor) |
+| Scherm | 1024×600, liggend | 720×720, vierkant | 480×480, vierkant |
+| Geluid | Speaker: melodieën, radio, TTS, langzaam luider | Speaker, zoals de 7" | Zoemer; radio via een speaker in HA |
+| Spraakassistent | ✅ microfoons | ✅ microfoons | ❌ geen microfoon |
+| Tijd zonder wifi | Pas weer met wifi of HA | Pas weer met wifi of HA | Klokchip (RTC) houdt de tijd vast |
+| Extra | | Twee relais | |
+| Configuratie | `esphome/alarmklok.yaml` | `esphome/alarmklok-4b.yaml` | `esphome/alarmklok-4inch.yaml` |
 
-Beide versies hebben dezelfde pagina's, wekkers en instellingen. De 4"-versie
-is **nog niet op het echte bord getest**; zie [Bekende aandachtspunten](#bekende-aandachtspunten).
+Alle versies hebben dezelfde pagina's, wekkers en instellingen. Ze compileren,
+maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](#bekende-aandachtspunten).
 
 ![Navigatie](docs/screenshots/00-navigatie-overzicht.png)
 
@@ -113,10 +115,13 @@ Verder:
 | Oplaadbare RTC-cel ML2032 of ML2020 met JST-SH-stekker | Aangeraden: houdt de tijd vast zonder stroom. Nooit een gewone CR2032 |
 | USB-C-voeding (5 V, 2 A) of 12 V op de schroefklem | |
 
-> **Later een 4" mét speaker?** De Waveshare **ESP32-P4-WIFI6-Touch-LCD-4B**
-> (720×720, ook verkocht als ESP32-P4-86-Panel-ETH-2RO) heeft een speaker-
-> aansluiting en dezelfde audiochip als de 7". De vierkante schermindeling
-> schaalt al mee (`k: "1.5"`); er is dan alleen nog een hardwarebestand nodig.
+**4B:**
+
+| Onderdeel | Opmerking |
+|---|---|
+| Waveshare ESP32-P4-WIFI6-Touch-LCD-4B | Ook verkocht als ESP32-P4-86-Panel-ETH-2RO |
+| Speaker 8 Ω, 2 W met MX1.25-stekker | Op de speakeraansluiting |
+| Voeding 6–30 V of USB-C | |
 
 ## Mappen
 
@@ -127,9 +132,13 @@ esphome/
   instellingen.yaml              Standaardwaarden voor tegels en pagina's (hier pas je dingen aan)
   alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen)
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
+  alarmklok-4b.yaml              De 4B-klok (dit flash je)
   onderdelen/
-    kern.yaml                    Wekkers, instellingen en logica (gedeeld door beide klokken)
-    waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, audio, wifi
+    kern.yaml                    Wekkers, instellingen en logica (gedeeld door alle klokken)
+    waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, wifi
+    waveshare-p4-4b.yaml         Hardware 4B: scherm, touch, backlight, wifi, relais
+    audio-p4.yaml                Speaker en microfoons van de 7" en de 4B
+    spraak.yaml                  Spraakassistent: wekwoord, Assist, balk op het scherm
     waveshare-s3-4.yaml/.h       Hardware 4": scherm, touch, hulpchip, zoemer, klokchip
     scherm.yaml                  De touch-interface voor 7" (swipe-pagina's, klokontwerpen)
     scherm-vierkant.yaml         De touch-interface voor vierkante schermen (schaalt met k)
@@ -163,7 +172,8 @@ espcontrol-port/                 Patch om dit scherm aan EspControl toe te voege
    temperatuursensor. Dit geldt voor beide klokken; iets alleen voor één klok
    zet je in de `substitutions:` van `alarmklok.yaml` of `alarmklok-4inch.yaml`.
 5. De eerste keer flash je via USB-C:
-   `esphome run alarmklok.yaml` (7") of `esphome run alarmklok-4inch.yaml` (4"),
+   `esphome run alarmklok.yaml` (7"), `esphome run alarmklok-4b.yaml` (4B) of
+   `esphome run alarmklok-4inch.yaml` (4", Bosun-bord),
    of in de add-on via *Install → Plug into this computer*. Daarna gaat het
    draadloos (OTA).
 
@@ -199,6 +209,31 @@ espcontrol-port/                 Patch om dit scherm aan EspControl toe te voege
 
 Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 `homeassistant/dashboard-kaart.yaml`.
+
+## Spraakassistent (7" en 4B)
+
+Zeg **"Hey Jarvis"** en stel je vraag, bijvoorbeeld *"doe de bedlamp uit"*. Het
+wekwoord wordt op de klok zelf herkend; pas daarna gaat het geluid naar Home
+Assistant (Assist). Het antwoord klinkt uit de speaker (de muziek wordt even
+zachter) en staat in een balk onderaan het scherm.
+
+1. Stel in Home Assistant een spraakassistent in met Nederlandse
+   spraakherkenning en -uitvoer: *Instellingen → Spraakassistenten*, met Home
+   Assistant Cloud of lokaal met Whisper en Piper.
+2. Kies bij het apparaat van de klok onder *Configuratie* welke
+   spraakassistent hij gebruikt.
+
+| Instelling | Wat |
+|---|---|
+| *Spraakassistent* | Aan/uit |
+| *Microfoon dempen* | Even niet luisteren; op het scherm staat dan rechtsonder een doorgestreepte microfoon |
+| *Wekwoord* | Hey Jarvis, Okay Nabu of Hey Mycroft |
+| *Wekwoord gevoeligheid* | Laag (minder vaak per ongeluk), Normaal of Hoog |
+| *Spraak stil 's nachts* | In de nachtstand niet luisteren (staat standaard aan) |
+
+Het wekwoord luistert niet als de wekker afgaat of als er geen verbinding met
+HA is. Werkt het wekwoord niet, kijk dan in het log of de microfoonchip (ES7210)
+gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 
 ## Entiteiten in Home Assistant
 
@@ -343,3 +378,25 @@ scherm goed werkt.
   lange pauzes tussen de piepjes.
 - **Pagina Wekker:** past niet op één scherm. Veeg omhoog voor volume,
   wake-up light, *Test wekker* en *Langzaam luider*.
+
+### 4B (Waveshare ESP32-P4-WIFI6-Touch-LCD-4B)
+
+- Compileert met ESPHome 2026.9.1, **niet op het bord getest**. Scherm, touch,
+  backlight en wifi volgen de werkende instellingen van
+  [EspControl](https://github.com/jtenniswood/espcontrol) voor dit paneel; de
+  microfoon volgt [esphome-p4-86-panel-eth-2ro-lvgl](https://github.com/chrisdunnname/esphome-p4-86-panel-eth-2ro-lvgl),
+  dat met dezelfde ESPHome-versie werkt.
+- **Chiprevisie:** de 4B staat op `engineering_sample: true` (vroege chips, zoals
+  bij EspControl). Toont het bootlog `chip revision: v3.x`, zet het dan in
+  `onderdelen/waveshare-p4-4b.yaml` op `false`.
+- **Relais:** *Relais 1* en *Relais 2* verschijnen als schakelaars in HA.
+
+### Spraakassistent
+
+- Speaker (48 kHz) en microfoons (16 kHz) delen de klokpinnen van de audiochips.
+  ESPHome en de P4-86-configuratie hierboven doen dat ook zo, maar op de 7" is
+  het nog niet geprobeerd. Klinkt de speaker vreemd of reageert het wekwoord
+  niet, meld het dan: de speaker kan dan ook op 16 kHz.
+- Valse meldingen van het wekwoord? Zet *Wekwoord gevoeligheid* op *Laag*.
+- De wekwoordmodellen worden bij het compileren rechtstreeks van
+  `raw.githubusercontent.com` gehaald.

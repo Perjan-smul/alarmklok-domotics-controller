@@ -58,6 +58,9 @@ microphone:
     adc_type: external
     sample_rate: 16000
     bits_per_sample: 16bit
+    # De ES7210 geeft twee microfoons op links/rechts; spraak.yaml gebruikt
+    # kanaal 0 (zoals in de werkende P4-86-configuratie van chrisdunnname)
+    channel: stereo
 
 speaker:
   - platform: i2s_audio

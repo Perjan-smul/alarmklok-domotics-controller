@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        klok: [alarmklok, alarmklok-4inch]
+        klok: [alarmklok, alarmklok-4inch, alarmklok-4b]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,10 +58,6 @@ jobs:
       - name: Configuratie controleren
         working-directory: esphome
         run: esphome config ${{ matrix.klok }}.yaml > /dev/null
-      - name: Vierkante indeling op 720x720 (k = 1.5)
-        if: matrix.klok == 'alarmklok-4inch'
-        working-directory: esphome
-        run: esphome -s k 1.5 config ${{ matrix.klok }}.yaml > /dev/null
       - name: Compileren
         working-directory: esphome
         run: esphome compile ${{ matrix.klok }}.yaml

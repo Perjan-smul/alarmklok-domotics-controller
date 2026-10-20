@@ -32,6 +32,14 @@ cards:
       - entity: number.alarmklok_wekgeluid_oplopen
       - entity: switch.alarmklok_niet_op_feestdagen
       - type: divider
+      - type: section
+        label: Spraakassistent
+      - entity: switch.alarmklok_spraakassistent
+      - entity: switch.alarmklok_microfoon_dempen
+      - entity: select.alarmklok_wekwoord
+      - entity: select.alarmklok_wekwoord_gevoeligheid
+      - entity: switch.alarmklok_spraak_stil_s_nachts
+      - type: divider
       - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf
       - entity: time.alarmklok_nachtstand_tot
