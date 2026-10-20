@@ -4,12 +4,14 @@
 #  4" IPS 720x720 (MIPI-DSI), GT911 touch, ESP32-C6 als wifi-coprocessor, twee
 #  relais. Audio (ES8311 + ES7210) staat in audio-p4.yaml: zelfde pinnen als de 7".
 #
-#  Pinnen volgens Waveshare en de werkende configuratie van EspControl voor dit
-#  paneel (devices/esp32-p4-86):
+#  Pinnen volgens het schema van Waveshare (ESP32-P4-WIFI6-Touch-LCD-4B.pdf,
+#  pagina 1), EspControl (devices/esp32-p4-86) en Tessera (wavesharep4):
 #    I2C (touch + audio)   SDA GPIO7, SCL GPIO8
 #    Backlight             GPIO26 (PWM, geïnverteerd, max. 80%)
+#    Backlight aan (BL_EN) GPIO33
 #    LCD reset             GPIO27 (zit in het ESPHome-model)
-#    Touch reset           GPIO28
+#    Touch reset (TP_RST)  GPIO23; de touch-interrupt gaat naar een testpunt,
+#                          dus de touch wordt elke 20 ms uitgelezen
 #    Relais                GPIO32 en GPIO46
 #    ESP32-C6 (SDIO)       zelfde pinnen als de 7"
 #
@@ -88,6 +90,8 @@ display:
   - platform: mipi_dsi
     id: scherm
     model: WAVESHARE-P4-86-PANEL
+    # BL_EN: zonder dit blijft de backlight uit (schema: GPIO33 -> R32 -> BL_EN)
+    enable_pin: GPIO33
     update_interval: never
     auto_clear_enabled: false
 
@@ -96,7 +100,9 @@ touchscreen:
     id: touch
     i2c_id: i2c_bus
     display: scherm
-    reset_pin: GPIO28
+    # Schema: GPIO23 -> R37 -> TP_RST
+    reset_pin: GPIO23
+    update_interval: 20ms
     on_touch:
       - script.execute: aangeraakt
 
