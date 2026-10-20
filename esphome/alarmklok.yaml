@@ -10,10 +10,14 @@
 #
 #  Bestanden:
 #    alarmklok.yaml                   <- dit bestand: de 7"-klok
-#    alarmklok-4inch.yaml             <- de 4"-klok
+#    alarmklok-4inch.yaml             <- de 4"-klok (Bosun-bord, zoemer)
+#    alarmklok-4b.yaml                <- de 4"-klok met speaker en microfoons (4B)
 #    instellingen.yaml                <- tegels, pagina's enz.: hier pas je dingen aan
 #    onderdelen/kern.yaml             <- wekkers, instellingen en logica (gedeeld)
-#    onderdelen/waveshare-p4-7b.yaml  <- hardware 7" (scherm, touch, audio, wifi)
+#    onderdelen/waveshare-p4-7b.yaml  <- hardware 7" (scherm, touch, wifi)
+#    onderdelen/waveshare-p4-4b.yaml  <- hardware 4B (scherm, touch, wifi, relais)
+#    onderdelen/audio-p4.yaml         <- speaker en microfoons van 7" en 4B
+#    onderdelen/spraak.yaml           <- spraakassistent (7" en 4B)
 #    onderdelen/waveshare-s3-4.yaml   <- hardware 4" (scherm, touch, zoemer, RTC)
 #    onderdelen/scherm.yaml           <- de touch-interface voor 1024x600
 #    onderdelen/scherm-vierkant.yaml  <- de touch-interface voor vierkante schermen
@@ -31,4 +35,5 @@ packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
   hardware: !include onderdelen/waveshare-p4-7b.yaml
+  audio: !include onderdelen/audio-p4.yaml
   scherm: !include onderdelen/scherm.yaml

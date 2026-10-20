@@ -1,0 +1,153 @@
+# =============================================================================
+#  Audio van de Waveshare ESP32-P4-borden met speaker en microfoons:
+#  ESP32-P4-WIFI6-Touch-LCD-7B (7") en ESP32-P4-WIFI6-Touch-LCD-4B (4", ook
+#  verkocht als ESP32-P4-86-Panel-ETH-2RO). Beide gebruiken dezelfde pinnen.
+#
+#    ES8311 (speaker)      I2C 0x18, versterker NS4150B aan via GPIO53
+#    ES7210 (microfoons)   I2C ${es7210_adres}
+#    I2S                   MCLK GPIO13, BCLK GPIO12, LRCK GPIO10,
+#                          DOUT GPIO9 (speaker), DIN GPIO11 (microfoon)
+#
+#  Verwacht een I2C-bus met id "i2c_bus" uit het hardwarebestand.
+#  Levert wat de kern verwacht: radio_speelt, speel_wekgeluid,
+#  hw_geluid_stoppen en hw_volume (zie kern.yaml).
+# =============================================================================
+
+substitutions:
+  # Speelt de radio na zoveel tijd nog niet, dan klinkt het eigen wekgeluid
+  radio_terugval: 20s
+  # I2C-adres van de microfoonchip. Meestal 0x40; staat er bij het opstarten
+  # een fout over de ES7210 in het log, probeer dan 0x41, 0x42 of 0x43.
+  es7210_adres: "0x40"
+
+switch:
+  - platform: gpio
+    id: speaker_versterker
+    pin: GPIO53
+    restore_mode: ALWAYS_ON
+    internal: true
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO10
+    i2s_bclk_pin: GPIO12
+    i2s_mclk_pin: GPIO13
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: i2c_bus
+    address: 0x18
+    use_mclk: true
+    sample_rate: 48000
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: i2c_bus
+    address: ${es7210_adres}
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+# Voor de spraakassistent (spraak.yaml). Het wekwoord heeft 16 kHz nodig.
+microphone:
+  - platform: i2s_audio
+    id: microfoon
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO11
+    adc_type: external
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+speaker:
+  - platform: i2s_audio
+    id: hw_speaker
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO9
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: stereo
+    buffer_duration: 100ms
+
+  # Drie geluidsbronnen worden gemengd naar de ene speaker:
+  # muziek/radio, meldingen (TTS en antwoorden van de spraakassistent) en het
+  # wekgeluid.
+  - platform: mixer
+    id: audio_mixer
+    output_speaker: hw_speaker
+    num_channels: 2
+    source_speakers:
+      - id: mix_media
+      - id: mix_melding
+      - id: mix_wekker
+
+  - platform: resampler
+    id: media_resampler
+    output_speaker: mix_media
+  - platform: resampler
+    id: melding_resampler
+    output_speaker: mix_melding
+  - platform: resampler
+    id: wekker_resampler
+    output_speaker: mix_wekker
+
+media_player:
+  - platform: speaker
+    id: speler
+    name: Speaker
+    media_pipeline:
+      speaker: media_resampler
+      num_channels: 2
+    announcement_pipeline:
+      speaker: melding_resampler
+      num_channels: 1
+
+rtttl:
+  id: zoemer_rtttl
+  speaker: wekker_resampler
+  gain: 0.8
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+binary_sensor:
+  - platform: template
+    id: radio_speelt
+    internal: true
+    lambda: return id(speler).state == media_player::MEDIA_PLAYER_STATE_PLAYING;
+
+script:
+  # Speelt de gekozen melodie (Klassiek, Zacht, Mario) zolang de wekker afgaat
+  - id: speel_wekgeluid
+    mode: single
+    then:
+      - while:
+          condition:
+            lambda: return id(gaat_af);
+          then:
+            - rtttl.play:
+                rtttl: !lambda return alarmklok::melodie(id(wekgeluid).current_option().str());
+            - wait_until:
+                condition:
+                  not:
+                    rtttl.is_playing:
+            - delay: 1s
+
+  - id: hw_geluid_stoppen
+    then:
+      - rtttl.stop:
+      - if:
+          condition:
+            lambda: return id(wekgeluid).current_option() == "Radio";
+          then:
+            - media_player.stop: speler
+
+  # Volume van het wekgeluid, 0-1 (ook voor de radio)
+  - id: hw_volume
+    parameters:
+      niveau: float
+    then:
+      - lambda: |-
+          id(zoemer_rtttl).set_gain(niveau);
+          if (id(wekgeluid).current_option() == "Radio")
+            id(speler).make_call().set_volume(niveau).perform();
