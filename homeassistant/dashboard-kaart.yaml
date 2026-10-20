@@ -36,7 +36,6 @@ cards:
         label: Spraakassistent
       - entity: switch.alarmklok_spraakassistent
       - entity: switch.alarmklok_microfoon_dempen
-      - entity: select.alarmklok_wekwoord
       - entity: select.alarmklok_wekwoord_gevoeligheid
       - entity: switch.alarmklok_spraak_stil_s_nachts
       - type: divider

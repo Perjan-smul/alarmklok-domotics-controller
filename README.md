@@ -221,13 +221,13 @@ zachter) en staat in een balk onderaan het scherm.
    spraakherkenning en -uitvoer: *Instellingen → Spraakassistenten*, met Home
    Assistant Cloud of lokaal met Whisper en Piper.
 2. Kies bij het apparaat van de klok onder *Configuratie* welke
-   spraakassistent hij gebruikt.
+   spraakassistent hij gebruikt, en welk **wekwoord**: Hey Jarvis (standaard),
+   Okay Nabu of Hey Mycroft. De klok volgt die keuze en onthoudt hem.
 
 | Instelling | Wat |
 |---|---|
 | *Spraakassistent* | Aan/uit |
 | *Microfoon dempen* | Even niet luisteren; op het scherm staat dan rechtsonder een doorgestreepte microfoon |
-| *Wekwoord* | Hey Jarvis, Okay Nabu of Hey Mycroft |
 | *Wekwoord gevoeligheid* | Laag (minder vaak per ongeluk), Normaal of Hoog |
 | *Spraak stil 's nachts* | In de nachtstand niet luisteren (staat standaard aan) |
 

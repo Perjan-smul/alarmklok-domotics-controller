@@ -4,6 +4,8 @@
 #  Het wekwoord wordt op de klok zelf herkend (micro_wake_word). Pas daarna
 #  gaat het geluid naar Home Assistant (Assist); het antwoord klinkt via de
 #  speaker. Alleen voor klokken met microfoons (7" en 4B, zie audio-p4.yaml).
+#  Welk wekwoord (Hey Jarvis, Okay Nabu of Hey Mycroft) kies je in Home
+#  Assistant; de klok volgt die keuze.
 #
 #  Het wekwoord luistert alleen als:
 #    - "Spraakassistent" aan staat en "Microfoon dempen" uit,
@@ -108,22 +110,10 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
 
+# Welk wekwoord actief is kies je in Home Assistant: bij het apparaat onder
+# Configuratie (de instellingen van de Assist-satelliet). De klok meldt de drie
+# modellen hieronder aan HA, zet het gekozen model aan en onthoudt dat.
 select:
-  - platform: template
-    id: wekwoord
-    name: Wekwoord
-    icon: mdi:account-voice
-    entity_category: config
-    optimistic: true
-    restore_value: true
-    options:
-      - Hey Jarvis
-      - Okay Nabu
-      - Hey Mycroft
-    initial_option: Hey Jarvis
-    on_value:
-      - script.execute: wekwoord_instellen
-
   # Laag = minder vaak per ongeluk, maar je moet duidelijker praten
   - platform: template
     id: wekwoord_gevoeligheid
@@ -144,6 +134,11 @@ globals:
   # Standaarddrempels van de modellen (0-255), bij het opstarten bewaard
   - id: wekwoord_drempels
     type: std::array<uint8_t, 3>
+  # Eerste keer opgestart: alleen Hey Jarvis aan (daarna beslist HA)
+  - id: wekwoord_standaard_gezet
+    type: bool
+    restore_value: true
+    initial_value: "false"
 
 esphome:
   on_boot:
@@ -153,6 +148,12 @@ esphome:
             id(wekwoord_drempels) = {id(model_hey_jarvis)->get_probability_cutoff(),
                                      id(model_okay_nabu)->get_probability_cutoff(),
                                      id(model_hey_mycroft)->get_probability_cutoff()};
+            if (!id(wekwoord_standaard_gezet)) {
+              id(model_okay_nabu)->disable();
+              id(model_hey_mycroft)->disable();
+              id(model_hey_jarvis)->enable();
+              id(wekwoord_standaard_gezet) = true;
+            }
         - script.execute: wekwoord_instellen
 
 interval:
@@ -161,13 +162,12 @@ interval:
       - script.execute: spraak_bijwerken
 
 script:
-  # Alleen het gekozen wekwoord aan, met de gekozen gevoeligheid
+  # Gevoeligheid voor alle modellen (welk model aan staat beslist HA)
   - id: wekwoord_instellen
     then:
       - lambda: |-
           micro_wake_word::WakeWordModel *modellen[] = {id(model_hey_jarvis), id(model_okay_nabu),
                                                        id(model_hey_mycroft)};
-          const int gekozen = id(wekwoord).active_index().value_or(0);
           const int stand = id(wekwoord_gevoeligheid).active_index().value_or(1);
           for (int i = 0; i < 3; i++) {
             const int basis = id(wekwoord_drempels)[i];
@@ -179,10 +179,6 @@ script:
             else if (stand == 2)
               drempel = std::max(basis - 25, 128);   // hoog: soepeler
             modellen[i]->set_probability_cutoff((uint8_t) drempel);
-            if (i == gekozen)
-              modellen[i]->enable();
-            else
-              modellen[i]->disable();
           }
 
   # Elke seconde: moet het wekwoord luisteren of niet?
