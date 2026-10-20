@@ -259,6 +259,8 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
+| `update.alarmklok_wifi_chip_c6` | Firmware van de wifi-chip (7" en 4B), zie [Stabiliteit](#stabiliteit) |
+| `sensor.alarmklok_vrij_geheugen`, `…_uptime`, `…_laatste_herstart_oorzaak` e.a. | Diagnose |
 | `text.alarmklok_tegel_verlichting_1_naam`, `…_entiteit`, `select.…_icoon` (1–6, en `tegel_scene_1` t/m `6`) | Tegels instellen, zie hieronder |
 | `media_player.alarmklok_speaker` | Speaker voor muziek, radio en TTS |
 
@@ -338,6 +340,31 @@ Ze zien eruit zoals op [Material Design Icons](https://pictogrammers.com/library
 Wil je een ander icoon? Dan moet het op drie plekken bij: de lijst `glyphs:` van
 het font `f_icoon` in `onderdelen/scherm.yaml`, de functie `icoon()` in
 `alarmklok.h` en de `options:` in `onderdelen/tegel-instellingen.yaml`.
+
+## Stabiliteit
+
+Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
+
+| Wat | Waarom | Bron |
+|---|---|---|
+| Geen herstart als Home Assistant weg is (`api: reboot_timeout: 0s`) | ESPHome herstart standaard na 15 min zonder HA. De wekker werkt zonder HA, en een herstart rond het wekken wil je niet. | [EspControl](https://github.com/jtenniswood/espcontrol) |
+| Wifi zonder stroombesparing, herstart pas na 30 min zonder wifi | Stroombesparing maakt wifi op deze borden onbetrouwbaar | [ESPHome #13636](https://github.com/esphome/esphome/issues/13636), [HA-forum](https://community.home-assistant.io/t/guition-esp32-p4-jc1060p470/959144?page=3), EspControl |
+| 7" en 4B: `fast_connect`, en geheugeninstellingen voor de wifi-chip | Wifi via de ESP32-C6 viel weg of liep vast | #13636, EspControl |
+| 7" en 4B: update **Wifi-chip (C6)** in HA | Een oude C6-firmware gaf wegvallende wifi of herstarts elke ~10 minuten. Installeren doe je zelf, met de knop in HA. | #13636, [ESPHome #14313](https://github.com/esphome/esphome/issues/14313) |
+| 4" (Bosun-bord): beeldinstellingen voor het RGB-scherm, wifi eerst starten | Verschoven of flikkerend beeld en wifi-geheugentekort op hetzelfde type paneel | EspControl (4848S040) |
+| Diagnose-entiteiten: *Vrij geheugen*, *Grootste vrije blok*, *Minst vrije geheugen*, *Vrij PSRAM*, *Uptime*, *Laatste herstart oorzaak* | Herstart de klok onverwacht, of daalt het vrije geheugen over dagen? Dan zie je dat hier. | [ESPHome debug](https://esphome.io/components/debug/) |
+
+**Als het toch misgaat:**
+
+- **Wifi valt weg (7"/4B):** kijk of er een update is voor *Wifi-chip (C6)* en
+  installeer die. Helpt dat niet, dan meldde één 4B-gebruiker dat
+  `voltage: 2.7V` bij `esp_ldo` in `onderdelen/waveshare-p4-4b.yaml` hielp (#13636).
+- **"Illegal instruction" of een herstartlus bij het opstarten (P4):** zet
+  `engineering_sample` op de andere waarde; dat hangt af van de chiprevisie.
+- **Flikkerend of verschoven beeld (4" Bosun-bord):** zet bij `display:` in
+  `onderdelen/waveshare-s3-4.yaml` `pclk_frequency: 10MHz`.
+- **Gebruik ESPHome 2026.9.1:** met 2026.5.3 werkte wifi op het P4-86-paneel niet
+  meer (HA-forum), en `micro_wake_word` heeft minstens 2026.7 nodig.
 
 ## Automatische controle
 

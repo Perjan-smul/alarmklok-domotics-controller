@@ -36,5 +36,6 @@ packages:
   kern: !include onderdelen/kern.yaml
   hardware: !include onderdelen/waveshare-p4-7b.yaml
   audio: !include onderdelen/audio-p4.yaml
+  c6_update: !include onderdelen/c6-update.yaml
   spraak: !include onderdelen/spraak.yaml
   scherm: !include onderdelen/scherm.yaml
