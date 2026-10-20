@@ -1,0 +1,79 @@
+# =============================================================================
+#  Instellingen van de alarmklok: geldt voor alle klokken (7" en 4")
+#
+#  Hier pas je dingen aan. Zet je iets alleen voor één klok anders, schrijf het
+#  dan in de substitutions van die klok (alarmklok.yaml of alarmklok-4inch.yaml):
+#  die gaan voor.
+# =============================================================================
+
+substitutions:
+  tijdzone: Europe/Amsterdam
+  # Sensor uit Home Assistant die op de klokschermen staat.
+  temperatuur_sensor: sensor.buitentemperatuur
+  # Na zoveel minuten stopt een wekker die niet uitgezet wordt vanzelf.
+  max_afgaan_minuten: "30"
+
+  # ===========================================================================
+  #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)
+  #
+  #  Naam, entiteit en icoon van de tegels zijn hieronder alleen de
+  #  STANDAARDWAARDEN. Daarna pas je ze aan in Home Assistant, zonder opnieuw te
+  #  flashen: Instellingen -> Apparaten -> Alarmklok -> Configuratie.
+  #  Iconen: zie de lijst in README.md.
+  # ===========================================================================
+
+  # ---- Pagina "Verlichting": 6 tegels + dimschuif ---------------------------
+  # Een tik doet "homeassistant.toggle" (lamp, schakelaar, ventilator, ...).
+  dim_lamp: light.slaapkamer
+  licht_1_naam: Bedlamp
+  licht_1_entity: light.slaapkamer
+  licht_1_icoon: desk-lamp
+  licht_2_naam: Plafond
+  licht_2_entity: light.slaapkamer_plafond
+  licht_2_icoon: ceiling-light
+  licht_3_naam: Leeslamp
+  licht_3_entity: light.leeslamp
+  licht_3_icoon: floor-lamp
+  licht_4_naam: Gang
+  licht_4_entity: light.gang
+  licht_4_icoon: lightbulb
+  licht_5_naam: Ventilator
+  licht_5_entity: fan.slaapkamer
+  licht_5_icoon: fan
+  licht_6_naam: Alle lampen
+  licht_6_entity: light.alle_lampen
+  licht_6_icoon: lightbulb-group
+
+  # ---- Pagina "Klimaat & rolluik" -------------------------------------------
+  thermostaat: climate.slaapkamer
+  rolluik: cover.slaapkamer
+
+  # ---- Pagina "Muziek" --------------------------------------------------------
+  mediaspeler: media_player.alarmklok_speaker
+  radio_1_naam: NPO Radio 2
+  radio_1_url: https://icecast.omroep.nl/radio2-bb-mp3
+  radio_2_naam: NPO 3FM
+  radio_2_url: https://icecast.omroep.nl/3fm-bb-mp3
+  radio_3_naam: Radio 538
+  radio_3_url: https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3
+
+  # ---- Pagina "Scènes": 6 knoppen ---------------------------------------------
+  # Een tik doet "homeassistant.turn_on" (scene, script, automation, ...).
+  scene_1_naam: Welterusten
+  scene_1_entity: script.welterusten
+  scene_1_icoon: power-sleep
+  scene_2_naam: Opstaan
+  scene_2_entity: scene.opstaan
+  scene_2_icoon: weather-sunset-up
+  scene_3_naam: Lezen
+  scene_3_entity: scene.lezen
+  scene_3_icoon: lamp
+  scene_4_naam: Film
+  scene_4_entity: scene.film
+  scene_4_icoon: movie-open
+  scene_5_naam: Etenstijd
+  scene_5_entity: scene.eten
+  scene_5_icoon: silverware-fork-knife
+  scene_6_naam: Alles uit
+  scene_6_entity: script.alles_uit
+  scene_6_icoon: lightning-bolt

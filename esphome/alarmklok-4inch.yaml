@@ -1,0 +1,28 @@
+# =============================================================================
+#  Alarmklok + domotica-controller voor Home Assistant (ESPHome)
+#  4"-versie
+#
+#  Hardware: Waveshare ESP32-S3-Touch-LCD-4 (4" touch, 480x480), hetzelfde bord
+#  als in de Bosun-bootmonitor. Zie README.md voor installatie.
+#
+#  Verschillen met de 7"-klok:
+#   - geen speaker: de wekker piept met de zoemer op het board;
+#   - bij "Radio" speelt Home Assistant de radio op een andere speaker
+#     (zie homeassistant/packages/alarmklok.yaml);
+#   - een klokchip (RTC): de tijd loopt door zonder stroom of wifi.
+#
+#  Tegels, pagina's en andere instellingen: zie instellingen.yaml.
+# =============================================================================
+
+substitutions:
+  name: alarmklok-4inch
+  friendly_name: Alarmklok 4 inch
+  # Deze klok heeft zelf geen speaker: kies voor de pagina Muziek en de
+  # radioknoppen een mediaspeler uit Home Assistant.
+  mediaspeler: media_player.slaapkamer
+
+packages:
+  instellingen: !include instellingen.yaml
+  kern: !include onderdelen/kern.yaml
+  hardware: !include onderdelen/waveshare-s3-4.yaml
+  scherm: !include onderdelen/scherm-vierkant.yaml

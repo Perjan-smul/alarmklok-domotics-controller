@@ -12,6 +12,10 @@
 #    ESP32-C6 (SDIO)       standaard esp-hosted pinnen voor de ESP32-P4
 # =============================================================================
 
+substitutions:
+  # Speelt de radio na zoveel tijd nog niet, dan klinkt het eigen wekgeluid
+  radio_terugval: 20s
+
 esp32:
   variant: esp32p4
   # Het bord heeft 32 MB flash, maar OTA met 32 MB is in ESPHome nog
@@ -153,3 +157,53 @@ rtttl:
   id: zoemer_rtttl
   speaker: wekker_resampler
   gain: 0.8
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+binary_sensor:
+  - platform: template
+    id: radio_speelt
+    internal: true
+    lambda: return id(speler).state == media_player::MEDIA_PLAYER_STATE_PLAYING;
+
+script:
+  # Speelt de gekozen melodie (Klassiek, Zacht, Mario) zolang de wekker afgaat
+  - id: speel_wekgeluid
+    mode: single
+    then:
+      - while:
+          condition:
+            lambda: return id(gaat_af);
+          then:
+            - rtttl.play:
+                rtttl: !lambda return alarmklok::melodie(id(wekgeluid).current_option().str());
+            - wait_until:
+                condition:
+                  not:
+                    rtttl.is_playing:
+            - delay: 1s
+
+  - id: hw_geluid_stoppen
+    then:
+      - rtttl.stop:
+      - if:
+          condition:
+            lambda: return id(wekgeluid).current_option() == "Radio";
+          then:
+            - media_player.stop: speler
+
+  # Volume van het wekgeluid, 0-1 (ook voor de radio)
+  - id: hw_volume
+    parameters:
+      niveau: float
+    then:
+      - lambda: |-
+          id(zoemer_rtttl).set_gain(niveau);
+          if (id(wekgeluid).current_option() == "Radio")
+            id(speler).make_call().set_volume(niveau).perform();
+
+  # Geen klokchip op dit bord: niets te doen als de tijd via internet binnenkomt
+  - id: hw_tijd_gesynchroniseerd
+    then:
+      - logger.log:
+          level: DEBUG
+          format: "Tijd gesynchroniseerd"

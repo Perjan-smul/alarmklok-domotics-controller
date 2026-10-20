@@ -1,0 +1,176 @@
+# =============================================================================
+#  Hardware: Waveshare ESP32-S3-Touch-LCD-4 (4" touch, 480x480)
+#  Hetzelfde bord als in de Bosun-bootmonitor. Werkt met board V3 en V4.
+#
+#    Scherm         ST7701 (RGB), init via 3-draads SPI (CLK GPIO2, MOSI GPIO1, CS GPIO42)
+#    I2C            SDA GPIO15, SCL GPIO7: hulpchip, GT911-touch, PCF85063-klok
+#    Hulpchip       V4: CH32V003 (0x24), V3: TCA9554 (0x20). Regelt voeding,
+#                   resets van scherm en touch, backlight en de zoemer
+#                   (zie waveshare-s3-4.h)
+#    Klokchip       PCF85063 (0x51): de tijd loopt door zonder stroom of wifi,
+#                   met een oplaadbare RTC-cel (ML2032/ML2020) op het board
+#
+#  Geen speaker: de wekker piept met de zoemer, in een ritme per wekgeluid.
+#  "Wekvolume" doet hier niets; "Wekgeluid oplopen" begint met lange pauzes
+#  tussen de piepjes. Bij "Radio" speelt Home Assistant de radio af op een
+#  speaker naar keuze (zie homeassistant/packages/alarmklok.yaml).
+# =============================================================================
+
+substitutions:
+  # De klok kan niet horen of de radio speelt: na zoveel tijd piept hij ook
+  # nog, als vangnet. Stop of snooze zet de radio in HA weer uit.
+  radio_terugval: 60s
+  # Draai het beeld (0, 90, 180 of 270), bijvoorbeeld 180 in de Bosun-behuizing
+  draaiing: "0"
+  # Schermindeling (scherm-vierkant.yaml): 1.0 = 480x480
+  k: "1.0"
+  lvgl_buffer: 25%
+
+esphome:
+  includes:
+    - onderdelen/waveshare-s3-4.h
+  on_boot:
+    # Na de I2C-bus (1000), vóór scherm en touch (600): voeding aan, resets los
+    - priority: 950
+      then:
+        - lambda: ws_s3_4::begin(id(i2c_bus));
+    # Na de klokchip (600): de opgeslagen tijd inlezen, zodat de wekker ook
+    # zonder wifi meteen de juiste tijd heeft
+    - priority: 550
+      then:
+        - pcf85063.read_time: rtc_klok
+
+esp32:
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    advanced:
+      # Het RGB-scherm leest continu uit PSRAM; zo blijft het beeld rustig als
+      # er naar het flashgeheugen wordt geschreven (OTA, instellingen)
+      execute_from_psram: true
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  - id: i2c_bus
+    sda: GPIO15
+    scl: GPIO7
+    frequency: 400kHz
+
+spi:
+  - id: lcd_spi
+    clk_pin: GPIO2
+    mosi_pin: GPIO1
+
+# ---- Scherm ----------------------------------------------------------------
+display:
+  - platform: mipi_rgb
+    id: scherm
+    model: WAVESHARE-4-480X480
+    spi_id: lcd_spi
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: gt911
+    id: touch
+    i2c_id: i2c_bus
+    display: scherm
+    on_touch:
+      - script.execute: aangeraakt
+
+output:
+  - platform: template
+    id: backlight_uitgang
+    type: float
+    write_action:
+      - lambda: ws_s3_4::backlight(id(i2c_bus), state);
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Schermhelderheid
+    icon: mdi:brightness-6
+    output: backlight_uitgang
+    restore_mode: ALWAYS_ON
+    default_transition_length: 500ms
+
+# ---- Klokchip ------------------------------------------------------------------
+time:
+  - platform: pcf85063
+    id: rtc_klok
+    i2c_id: i2c_bus
+    # Wordt bij het opstarten ingelezen (on_boot hierboven); daarna komt de tijd
+    # via internet (sntp) en wordt hij hier weer in gezet
+    update_interval: never
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+globals:
+  - id: zoemer_stap
+    type: int
+    initial_value: "0"
+  # 0-1: hoe ver het oplopen van het wekgeluid is (zie hw_volume)
+  - id: zoemer_niveau
+    type: float
+    initial_value: "1.0"
+
+binary_sensor:
+  # Of de radio speelt kan de klok niet zien (HA speelt hem op een andere speaker)
+  - platform: template
+    id: radio_speelt
+    internal: true
+    lambda: return false;
+
+script:
+  # Piept in het ritme van het gekozen wekgeluid zolang de wekker afgaat.
+  # Bij een lager niveau (oplopen) zijn de pauzes langer.
+  - id: speel_wekgeluid
+    mode: single
+    then:
+      - while:
+          condition:
+            lambda: return id(gaat_af);
+          then:
+            - lambda: id(zoemer_stap) = 0;
+            - while:
+                condition:
+                  lambda: |-
+                    int lengte = 0;
+                    ws_s3_4::patroon(id(wekgeluid).current_option().str(), lengte);
+                    return id(gaat_af) && id(zoemer_stap) < lengte;
+                then:
+                  - lambda: ws_s3_4::zoemer(id(i2c_bus), id(zoemer_stap) % 2 == 0);
+                  - delay: !lambda |-
+                      int lengte = 0;
+                      const uint16_t *ms =
+                          ws_s3_4::patroon(id(wekgeluid).current_option().str(), lengte);
+                      const int stap = std::min(id(zoemer_stap), lengte - 1);
+                      if (stap % 2 == 0)
+                        return (uint32_t) ms[stap];
+                      return (uint32_t) (ms[stap] * (1.0f + 4.0f * (1.0f - id(zoemer_niveau))));
+                  - lambda: id(zoemer_stap)++;
+      - lambda: ws_s3_4::zoemer(id(i2c_bus), false);
+
+  - id: hw_geluid_stoppen
+    then:
+      - script.stop: speel_wekgeluid
+      - lambda: ws_s3_4::zoemer(id(i2c_bus), false);
+
+  # De zoemer heeft geen volume; het niveau bepaalt alleen de pauzes
+  - id: hw_volume
+    parameters:
+      niveau: float
+    then:
+      - lambda: |-
+          const float vol = id(volume).state / 100.0f;
+          id(zoemer_niveau) = vol > 0 ? std::min(1.0f, niveau / vol) : 1.0f;
+
+  # Tijd via internet binnen: ook in de klokchip zetten
+  - id: hw_tijd_gesynchroniseerd
+    then:
+      - pcf85063.write_time:
+          id: rtc_klok

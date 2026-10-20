@@ -1,8 +1,18 @@
 # Alarmklok + domotica-controller
 
 Een wekker voor op het nachtkastje die tegelijk je Home Assistant bedient.
-Gebouwd met [ESPHome](https://esphome.io) en LVGL op een **Waveshare
-ESP32-P4-WIFI6-Touch-LCD-7B** (7" IPS-touchscreen van 1024×600, liggend).
+Gebouwd met [ESPHome](https://esphome.io) en LVGL. Er zijn twee versies:
+
+| | 7" | 4" |
+|---|---|---|
+| Bord | Waveshare **ESP32-P4-WIFI6-Touch-LCD-7B** | Waveshare **ESP32-S3-Touch-LCD-4** (hetzelfde als in de Bosun-bootmonitor) |
+| Scherm | 1024×600, liggend | 480×480, vierkant |
+| Geluid | Speaker: melodieën, radio, TTS, langzaam luider | Zoemer: piepjes in een ritme; radio via een speaker in Home Assistant |
+| Tijd zonder wifi | Na een herstart pas weer met wifi | Klokchip (RTC) houdt de tijd vast |
+| Configuratie | `esphome/alarmklok.yaml` | `esphome/alarmklok-4inch.yaml` |
+
+Beide versies hebben dezelfde pagina's, wekkers en instellingen. De 4"-versie
+is **nog niet op het echte bord getest**; zie [Bekende aandachtspunten](#bekende-aandachtspunten).
 
 ![Navigatie](docs/screenshots/00-navigatie-overzicht.png)
 
@@ -67,21 +77,43 @@ Verder:
 
 | Onderdeel | Opmerking |
 |---|---|
+**7":**
+
+| Onderdeel | Opmerking |
+|---|---|
 | Waveshare ESP32-P4-WIFI6-Touch-LCD-7B | Versie zonder camera is genoeg |
 | Kleine speaker (4–8 Ω, 2–3 W) | Op de speakeraansluiting van het bord |
 | USB-C-voeding (5 V, 2 A) | |
 | Behuizing / standaard | Bijvoorbeeld 3D-geprint |
 
+**4":**
+
+| Onderdeel | Opmerking |
+|---|---|
+| Waveshare ESP32-S3-Touch-LCD-4, touchversie | Board V3 en V4 werken allebei |
+| Oplaadbare RTC-cel ML2032 of ML2020 met JST-SH-stekker | Aangeraden: houdt de tijd vast zonder stroom. Nooit een gewone CR2032 |
+| USB-C-voeding (5 V, 2 A) of 12 V op de schroefklem | |
+
+> **Later een 4" mét speaker?** De Waveshare **ESP32-P4-WIFI6-Touch-LCD-4B**
+> (720×720, ook verkocht als ESP32-P4-86-Panel-ETH-2RO) heeft een speaker-
+> aansluiting en dezelfde audiochip als de 7". De vierkante schermindeling
+> schaalt al mee (`k: "1.5"`); er is dan alleen nog een hardwarebestand nodig.
+
 ## Mappen
 
 ```
 esphome/
-  alarmklok.yaml                 Instellingen, standaardwaarden en wekker-logica
+  alarmklok.yaml                 De 7"-klok (dit flash je)
+  alarmklok-4inch.yaml           De 4"-klok (dit flash je)
+  instellingen.yaml              Standaardwaarden voor tegels en pagina's (hier pas je dingen aan)
   alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen)
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   onderdelen/
-    waveshare-p4-7b.yaml         Hardware: scherm, touch, backlight, audio, wifi
-    scherm.yaml                  De touch-interface (swipe-pagina's, klokontwerpen)
+    kern.yaml                    Wekkers, instellingen en logica (gedeeld door beide klokken)
+    waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, audio, wifi
+    waveshare-s3-4.yaml/.h       Hardware 4": scherm, touch, hulpchip, zoemer, klokchip
+    scherm.yaml                  De touch-interface voor 7" (swipe-pagina's, klokontwerpen)
+    scherm-vierkant.yaml         De touch-interface voor vierkante schermen (schaalt met k)
     ha-bediening.yaml            Haalt thermostaat, rolluik en muziek uit HA
     wekker.yaml                  Eén wekker: tijd, aan/uit en dagen
     tegel.yaml                   Eén bedieningstegel op het scherm
@@ -107,15 +139,22 @@ espcontrol-port/                 Patch om dit scherm aan EspControl toe te voege
    ```
    python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())"
    ```
-4. Pas in `alarmklok.yaml` het blok `substitutions:` aan: lampen, thermostaat,
-   rolluik, mediaspeler, radiozenders, scènes en de temperatuursensor.
+4. Pas in `instellingen.yaml` het blok `substitutions:` aan: lampen,
+   thermostaat, rolluik, mediaspeler, radiozenders, scènes en de
+   temperatuursensor. Dit geldt voor beide klokken; iets alleen voor één klok
+   zet je in de `substitutions:` van `alarmklok.yaml` of `alarmklok-4inch.yaml`.
 5. De eerste keer flash je via USB-C:
-   `esphome run alarmklok.yaml`, of in de add-on via *Install → Plug into this
-   computer*. Daarna gaat het draadloos (OTA).
+   `esphome run alarmklok.yaml` (7") of `esphome run alarmklok-4inch.yaml` (4"),
+   of in de add-on via *Install → Plug into this computer*. Daarna gaat het
+   draadloos (OTA).
 
 > **Chiprevisie:** de configuratie gaat uit van een productiechip (rev3). Toont
 > het bootlog `chip revision: v1.x`? Zet dan in
 > `onderdelen/waveshare-p4-7b.yaml` de optie `engineering_sample: true`.
+
+> **4": beeld op z'n kop?** In de Bosun-behuizing zit het scherm 180° gedraaid.
+> Zet dan in `alarmklok-4inch.yaml` onder `substitutions:` de regel
+> `draaiing: "180"`. De touch draait mee.
 
 ### 2. Koppelen aan Home Assistant
 
@@ -167,8 +206,18 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 
 | Event | Data |
 |---|---|
-| `esphome.alarmklok_wakeup` | `minuten`: duur van het wake-up light |
-| `esphome.alarmklok_wekker` | `status`: `gaat_af`, `snooze` of `gestopt`, en bij `gaat_af` ook `geluid` |
+| `esphome.alarmklok_wakeup` | `minuten`: duur van het wake-up light, `klok`: welke klok |
+| `esphome.alarmklok_wekker` | `status`: `gaat_af`, `snooze` of `gestopt`, `klok`: welke klok, en bij `gaat_af` ook `geluid` |
+
+`klok` is de `name` uit de configuratie: `alarmklok` (7") of `alarmklok-4inch`
+(4"). De entiteiten van de 4"-klok heten `…alarmklok_4_inch_…`, bijvoorbeeld
+`time.alarmklok_4_inch_wekker_1_tijd`.
+
+**Radio op de 4"-klok:** die heeft geen speaker. Zet in
+`homeassistant/packages/alarmklok.yaml` bij `speakers:` welke speaker de radio
+voor `alarmklok-4inch` afspeelt (staat op `media_player.slaapkamer`). De klok
+kan niet horen of de radio speelt: na 60 s piept hij als vangnet ook. Snooze of
+stop zet de radio weer uit.
 
 ## Pagina's aanpassen
 
@@ -243,3 +292,18 @@ het font `f_icoon` in `onderdelen/scherm.yaml`, de functie `icoon()` in
   pinnen onder `esp32_hosted:`, en of de firmware van de C6 actueel is.
 - **Flash:** het bord heeft 32 MB, maar de configuratie gebruikt 16 MB, omdat
   OTA met 32 MB in ESPHome nog experimenteel is.
+
+### 4"-klok (Waveshare ESP32-S3-Touch-LCD-4)
+
+- Compileert met ESPHome 2026.9.1, maar is **nog niet op het bord getest**.
+  Scherm, touch, hulpchip en klokchip volgen de pinnen en registers die in de
+  Bosun-bootmonitor op hetzelfde bord werken.
+- **Board V3 (TCA9554):** de backlight kan daar alleen aan of uit. Dimmen en
+  de nachtstand-helderheid werken alleen op board V4 (CH32V003).
+- **Zwart scherm?** Dan heeft de hulpchip scherm of touch niet uit reset
+  gehaald. Het log zegt bij het opstarten welke hulpchip gevonden is.
+- **Wekgeluid:** de zoemer piept in een ritme per wekgeluid (Klassiek,
+  Zacht, Mario). *Wekvolume* heeft geen effect; *langzaam luider* begint met
+  lange pauzes tussen de piepjes.
+- **Pagina Wekker:** past niet op één scherm. Veeg omhoog voor volume,
+  wake-up light, *Test wekker* en *Langzaam luider*.
