@@ -53,7 +53,9 @@ voice_assistant:
   # De microfoons van deze borden zijn zacht; 4.0 werkt goed op de P4-86
   volume_multiplier: 4.0
   on_listening:
-    - lambda: id(laatste_aanraking_ms) = millis();
+    - lambda: |-
+        id(laatste_aanraking_ms) = millis();
+        id(spraak_bezig) = true;
     - script.execute:
         id: spraak_tonen
         icoon: "\U000F036C"
@@ -77,9 +79,22 @@ voice_assistant:
         icoon: "\U000F04C3"
         tekst: !lambda return x;
         blijven: true
+  # Wacht tot het antwoord is uitgesproken (zoals in de 4B-configuratie van
+  # nishad2m8); pas dan mag de muziek weer harder en het wekwoord weer luisteren
   on_end:
+    - wait_until:
+        condition:
+          media_player.is_announcing: speler
+        timeout: 0.5s
+    - wait_until:
+        condition:
+          not:
+            media_player.is_announcing: speler
+        timeout: 60s
+    - script.execute: spraak_klaar
     - script.execute: spraak_vlak_verbergen
   on_error:
+    - script.execute: spraak_klaar
     - script.execute:
         id: spraak_tonen
         icoon: "\U000F0026"
@@ -100,6 +115,16 @@ switch:
     id: microfoon_dempen
     name: Microfoon dempen
     icon: mdi:microphone-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  # Uit: het wekwoord pauzeert terwijl de klok muziek of radio speelt, zodat
+  # die het niet per ongeluk activeert. Tijdens een melding of antwoord
+  # luistert het wekwoord nooit.
+  - platform: template
+    id: luisteren_tijdens_muziek
+    name: Luisteren tijdens muziek
+    icon: mdi:music-note
+    entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
   - platform: template
@@ -191,15 +216,33 @@ script:
                      id(api_verbonden).state && !id(gaat_af) &&
                      !(id(nachtstand) && id(stil_s_nachts).state);
           then:
+            # Toegestaan; maar niet terwijl de klok zelf praat of muziek speelt
             - if:
                 condition:
                   and:
                     - not:
-                        micro_wake_word.is_running:
-                    - not:
-                        voice_assistant.is_running:
+                        media_player.is_announcing: speler
+                    - or:
+                        - not:
+                            media_player.is_playing: speler
+                        - switch.is_on: luisteren_tijdens_muziek
                 then:
-                  - micro_wake_word.start:
+                  - if:
+                      condition:
+                        and:
+                          - not:
+                              micro_wake_word.is_running:
+                          - not:
+                              voice_assistant.is_running:
+                      then:
+                        - micro_wake_word.start:
+                else:
+                  # Alleen het wekwoord pauzeren; een lopende vraag gaat door
+                  - if:
+                      condition:
+                        micro_wake_word.is_running:
+                      then:
+                        - micro_wake_word.stop:
           else:
             - if:
                 condition:
@@ -238,6 +281,20 @@ script:
             - script.execute: spraak_vlak_verbergen
           else:
             - script.stop: spraak_vlak_verbergen
+
+  # Vraag klaar: muziek weer op normale sterkte (zie audio-p4.yaml)
+  - id: spraak_klaar
+    then:
+      - lambda: id(spraak_bezig) = false;
+      - if:
+          condition:
+            not:
+              media_player.is_announcing: speler
+          then:
+            - mixer_speaker.apply_ducking:
+                id: mix_media
+                decibel_reduction: 0
+                duration: 1s
 
   - id: spraak_vlak_verbergen
     mode: restart

@@ -21,10 +21,13 @@ substitutions:
   es7210_adres: "0x40"
 
 switch:
+  # Versterker alleen aan als er geluid is: geen ruis op het nachtkastje.
+  # Aan bij muziek, meldingen en het wekgeluid; uit na 2 s stilte
+  # (script versterker_uit).
   - platform: gpio
     id: speaker_versterker
     pin: GPIO53
-    restore_mode: ALWAYS_ON
+    restore_mode: ALWAYS_OFF
     internal: true
 
 i2s_audio:
@@ -106,11 +109,42 @@ media_player:
     announcement_pipeline:
       speaker: melding_resampler
       num_channels: 1
+    on_play:
+      - switch.turn_on: speaker_versterker
+    # Melding of antwoord van de spraakassistent: muziek 20 dB zachter
+    on_announcement:
+      - switch.turn_on: speaker_versterker
+      - mixer_speaker.apply_ducking:
+          id: mix_media
+          decibel_reduction: 20
+          duration: 0s
+    # Klaar met de melding (en geen vraag meer bezig): muziek weer normaal
+    on_state:
+      - if:
+          condition:
+            and:
+              - not:
+                  media_player.is_announcing: speler
+              - lambda: return !id(spraak_bezig);
+          then:
+            - mixer_speaker.apply_ducking:
+                id: mix_media
+                decibel_reduction: 0
+                duration: 1s
+    on_idle:
+      - script.execute: versterker_uit
 
 rtttl:
   id: zoemer_rtttl
   speaker: wekker_resampler
   gain: 0.8
+
+globals:
+  # Er loopt een vraag aan de spraakassistent (gezet door spraak.yaml); dan
+  # blijft de muziek zachter tot het antwoord klaar is
+  - id: spraak_bezig
+    type: bool
+    initial_value: "false"
 
 # ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
 binary_sensor:
@@ -128,6 +162,8 @@ script:
           condition:
             lambda: return id(gaat_af);
           then:
+            # Elke herhaling opnieuw aan: een wekker zonder geluid mag niet
+            - switch.turn_on: speaker_versterker
             - rtttl.play:
                 rtttl: !lambda return alarmklok::melodie(id(wekgeluid).current_option().str());
             - wait_until:
@@ -135,6 +171,7 @@ script:
                   not:
                     rtttl.is_playing:
             - delay: 1s
+      - script.execute: versterker_uit
 
   - id: hw_geluid_stoppen
     then:
@@ -144,6 +181,25 @@ script:
             lambda: return id(wekgeluid).current_option() == "Radio";
           then:
             - media_player.stop: speler
+      - script.execute: versterker_uit
+
+  # Versterker uit na 2 s stilte (niet als er nog iets speelt of de wekker afgaat)
+  - id: versterker_uit
+    mode: restart
+    then:
+      - delay: 2s
+      - if:
+          condition:
+            and:
+              - lambda: return !id(gaat_af);
+              - not:
+                  rtttl.is_playing:
+              - not:
+                  media_player.is_playing: speler
+              - not:
+                  media_player.is_announcing: speler
+          then:
+            - switch.turn_off: speaker_versterker
 
   # Volume van het wekgeluid, 0-1 (ook voor de radio)
   - id: hw_volume

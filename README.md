@@ -214,8 +214,9 @@ Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
 
 Zeg **"Hey Jarvis"** en stel je vraag, bijvoorbeeld *"doe de bedlamp uit"*. Het
 wekwoord wordt op de klok zelf herkend; pas daarna gaat het geluid naar Home
-Assistant (Assist). Het antwoord klinkt uit de speaker (de muziek wordt even
-zachter) en staat in een balk onderaan het scherm.
+Assistant (Assist). Het antwoord klinkt uit de speaker en staat in een balk
+onderaan het scherm. Speelt er muziek, dan gaat die tijdens het antwoord 20 dB
+zachter (ook bij meldingen uit HA).
 
 1. Stel in Home Assistant een spraakassistent in met Nederlandse
    spraakherkenning en -uitvoer: *Instellingen → Spraakassistenten*, met Home
@@ -230,9 +231,11 @@ zachter) en staat in een balk onderaan het scherm.
 | *Microfoon dempen* | Even niet luisteren; op het scherm staat dan rechtsonder een doorgestreepte microfoon |
 | *Wekwoord gevoeligheid* | Laag (minder vaak per ongeluk), Normaal of Hoog |
 | *Spraak stil 's nachts* | In de nachtstand niet luisteren (staat standaard aan) |
+| *Luisteren tijdens muziek* | Uit (standaard): het wekwoord pauzeert terwijl de klok muziek of radio speelt, zodat die het niet per ongeluk activeert |
 
-Het wekwoord luistert niet als de wekker afgaat of als er geen verbinding met
-HA is. Werkt het wekwoord niet, kijk dan in het log of de microfoonchip (ES7210)
+Het wekwoord luistert niet als de wekker afgaat, als er geen verbinding met HA
+is, en nooit terwijl de klok zelf iets uitspreekt. De versterker staat alleen
+aan als er geluid is, zodat de speaker 's nachts niet ruist. Werkt het wekwoord niet, kijk dan in het log of de microfoonchip (ES7210)
 gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 
 ## Entiteiten in Home Assistant
@@ -385,7 +388,11 @@ scherm goed werkt.
   backlight en wifi volgen de werkende instellingen van
   [EspControl](https://github.com/jtenniswood/espcontrol) voor dit paneel; de
   microfoon volgt [esphome-p4-86-panel-eth-2ro-lvgl](https://github.com/chrisdunnname/esphome-p4-86-panel-eth-2ro-lvgl),
-  dat met dezelfde ESPHome-versie werkt.
+  dat met dezelfde ESPHome-versie werkt. Het pauzeren van het wekwoord tijdens
+  eigen geluid, het zachter zetten van de muziek en de versterker die alleen bij
+  geluid aangaat komen uit [nishad2m8/WaveShare-ESP32-P4-Smart-86-Box](https://github.com/nishad2m8/WaveShare-ESP32-P4-Smart-86-Box)
+  (uit zijn [video](https://www.youtube.com/watch?v=s3PCJ3zLQ0k)), dat weer
+  voortbouwt op [alaltitov/Waveshare-ESP32-P4-86-Panel-ETH-2RO](https://github.com/alaltitov/Waveshare-ESP32-P4-86-Panel-ETH-2RO).
 - **Chiprevisie:** de 4B staat op `engineering_sample: true` (vroege chips, zoals
   bij EspControl). Toont het bootlog `chip revision: v3.x`, zet het dan in
   `onderdelen/waveshare-p4-4b.yaml` op `false`.

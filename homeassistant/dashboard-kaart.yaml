@@ -38,6 +38,7 @@ cards:
       - entity: switch.alarmklok_microfoon_dempen
       - entity: select.alarmklok_wekwoord_gevoeligheid
       - entity: switch.alarmklok_spraak_stil_s_nachts
+      - entity: switch.alarmklok_luisteren_tijdens_muziek
       - type: divider
       - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf
