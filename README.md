@@ -234,6 +234,7 @@ zachter (ook bij meldingen uit HA).
 | *Wekwoord gevoeligheid* | Laag (minder vaak per ongeluk), Normaal of Hoog |
 | *Spraak stil 's nachts* | In de nachtstand niet luisteren (staat standaard aan) |
 | *Luisteren tijdens muziek* | 7": standaard uit, het wekwoord pauzeert terwijl de klok muziek of radio speelt. 4B: standaard aan, dankzij de echo-onderdrukking |
+| *Luistergeluid* | Kort geluidje na het wekwoord: nu kun je praten (staat standaard aan). Het geluid is `esphome/geluiden/luisteren.wav` (16-bit mono 48 kHz); vervangen mag. Idee uit de voice-plugin van [Tessera](https://github.com/MaxGramser/tessera-plugins) |
 | *Echo-onderdrukking* (alleen 4B) | Haalt het eigen geluid van de klok uit de microfoon, zodat "Hey Jarvis" ook tijdens muziek werkt (staat standaard aan) |
 
 Het wekwoord luistert niet als de wekker afgaat, als er geen verbinding met HA

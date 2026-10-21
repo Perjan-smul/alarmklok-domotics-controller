@@ -38,8 +38,34 @@ micro_wake_word:
     - model: https://raw.githubusercontent.com/esphome/micro-wake-word-models/main/models/v2/hey_mycroft.json
       id: model_hey_mycroft
   on_wake_word_detected:
+    # Eerst een kort geluidje ("ik luister"), pas daarna opnemen: zo komt
+    # het geluid niet in de vraag terecht
+    - if:
+        condition:
+          switch.is_on: luistergeluid
+        then:
+          - media_player.speaker.play_on_device_media_file:
+              id: speler
+              media_file: luister_geluid
+              announcement: true
+          - wait_until:
+              condition:
+                media_player.is_announcing: speler
+              timeout: 0.3s
+          - wait_until:
+              condition:
+                not:
+                  media_player.is_announcing: speler
+              timeout: 1s
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
+
+# Het luistergeluid (eigen bestand: 16-bit mono 48 kHz WAV, mag je vervangen)
+media_player:
+  - id: !extend speler
+    files:
+      - id: luister_geluid
+        file: geluiden/luisteren.wav
 
 voice_assistant:
   id: assistent
@@ -128,6 +154,13 @@ switch:
     optimistic: true
     # Standaard aan met echo-onderdrukking (4B), anders uit (audio-p4-*.yaml)
     restore_mode: ${muziek_luisteren_standaard}
+  - platform: template
+    id: luistergeluid
+    name: Luistergeluid
+    icon: mdi:bell-ring-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
   - platform: template
     id: stil_s_nachts
     name: Spraak stil 's nachts
