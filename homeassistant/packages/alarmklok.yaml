@@ -55,7 +55,8 @@ script:
 automation:
   # ---------------------------------------------------------------------------
   #  Wake-up light: de klok stuurt dit event "Wake-up light vooraf" minuten
-  #  voor de wektijd. De lamp loopt dan langzaam op als een zonsopgang.
+  #  voor de wektijd (van welke wekker dan ook). In trigger.event.data.klok
+  #  staat welke klok het is, als je per klok een andere lamp wilt. De lamp loopt dan langzaam op als een zonsopgang.
   # ---------------------------------------------------------------------------
   - id: alarmklok_wakeup_light
     alias: "Alarmklok: wake-up light"
@@ -83,16 +84,25 @@ automation:
 
   # ---------------------------------------------------------------------------
   #  Wekken met de radio (als "Wekgeluid" op "Radio" staat).
-  #  Speelt er na 20 s niets, dan laat de klok zelf het wekgeluid horen.
+  #  Elke klok heeft zijn eigen speaker in "speakers" hieronder: de 7" en de
+  #  4B spelen de radio zelf, de 4" (Bosun-bord) heeft geen speaker en
+  #  gebruikt er een uit Home Assistant.
+  #  - 7" en 4B: het volume regelt de klok zelf ("Wekvolume", "Wekgeluid
+  #    oplopen"). Speelt er na 20 s niets, dan klinkt het eigen wekgeluid.
+  #  - 4": de klok piept na 60 s toch, als vangnet.
   # ---------------------------------------------------------------------------
   - id: alarmklok_radio
     alias: "Alarmklok: wekken met radio"
     mode: single
     variables:
-      speaker: media_player.alarmklok_speaker
+      # Klok (de "name" uit de ESPHome-configuratie) -> speaker
+      speakers:
+        alarmklok: media_player.alarmklok_speaker
+        alarmklok-4inch: media_player.slaapkamer
+        alarmklok-4b: media_player.alarmklok_4b_speaker
+      speaker: "{{ speakers.get(trigger.event.data.klok, 'media_player.alarmklok_speaker') }}"
       # NPO Radio 2 (MP3-stream); vervang door je eigen favoriet
       stream: https://icecast.omroep.nl/radio2-bb-mp3
-      volume: 0.4
     triggers:
       - trigger: event
         event_type: esphome.alarmklok_wekker
@@ -100,11 +110,6 @@ automation:
           status: gaat_af
           geluid: Radio
     actions:
-      - action: media_player.volume_set
-        target:
-          entity_id: "{{ speaker }}"
-        data:
-          volume_level: "{{ volume }}"
       - action: media_player.play_media
         target:
           entity_id: "{{ speaker }}"
@@ -112,9 +117,36 @@ automation:
           media_content_id: "{{ stream }}"
           media_content_type: music
 
+  # Snooze of stop: de radio weer uit. De 7"-klok doet dat zelf al; voor een
+  # klok zonder speaker moet Home Assistant het doen.
+  - id: alarmklok_radio_stoppen
+    alias: "Alarmklok: radio uit bij snooze of stop"
+    mode: single
+    variables:
+      speakers:
+        alarmklok-4inch: media_player.slaapkamer
+      speaker: "{{ speakers.get(trigger.event.data.klok, '') }}"
+    triggers:
+      - trigger: event
+        event_type: esphome.alarmklok_wekker
+        event_data:
+          status: snooze
+      - trigger: event
+        event_type: esphome.alarmklok_wekker
+        event_data:
+          status: gestopt
+    conditions:
+      - condition: template
+        value_template: "{{ speaker != '' and states(speaker) == 'playing' }}"
+    actions:
+      - action: media_player.media_stop
+        target:
+          entity_id: "{{ speaker }}"
+
   # ---------------------------------------------------------------------------
   #  Goedemorgen: na het uitzetten van de wekker het rolluik open.
-  #  Event: esphome.alarmklok_wekker  data: status = gaat_af | snooze | gestopt
+  #  Event: esphome.alarmklok_wekker  data: status = gaat_af | snooze | gestopt,
+  #  klok = alarmklok | alarmklok-4inch
   # ---------------------------------------------------------------------------
   - id: alarmklok_goedemorgen
     alias: "Alarmklok: goedemorgen na uitzetten wekker"
@@ -131,3 +163,21 @@ automation:
         target:
           entity_id: "{{ rolluik }}"
         continue_on_error: true
+
+  # ---------------------------------------------------------------------------
+  #  Voorbeeld: melding op de klok als de wasmachine klaar is. Haal de #'s weg
+  #  en vul je eigen sensor in. Overdag verschijnt de melding meteen, 's nachts
+  #  pas als je het scherm aanraakt. Voor de 4"-klok: esphome.alarmklok_4inch_melding.
+  # ---------------------------------------------------------------------------
+  # - id: alarmklok_melding_wasmachine
+  #   alias: "Alarmklok: melding wasmachine klaar"
+  #   triggers:
+  #     - trigger: state
+  #       entity_id: sensor.wasmachine_status
+  #       to: klaar
+  #   actions:
+  #     - action: esphome.alarmklok_melding
+  #       data:
+  #         titel: Wasmachine klaar
+  #         tekst: De was kan eruit.
+  #         icoon: washing-machine

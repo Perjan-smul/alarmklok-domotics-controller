@@ -1,0 +1,66 @@
+# Eén wekker met eigen tijd, aan/uit en dagen. Geluid, volume, snooze en het
+# wake-up light gelden voor alle wekkers samen (zie alarmklok.yaml).
+datetime:
+  - platform: template
+    id: wekker_${nr}_tijd
+    type: time
+    name: Wekker ${nr} tijd
+    icon: mdi:alarm
+    optimistic: true
+    restore_value: true
+    initial_value: "${tijd}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+
+switch:
+  - platform: template
+    id: wekker_${nr}_aan
+    name: Wekker ${nr} aan
+    icon: mdi:alarm-check
+    optimistic: true
+    restore_mode: ${aan}
+    on_state:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren
+    # Uitzetten stopt alleen het afgaan als dít de wekker is die afgaat.
+    on_turn_off:
+      - if:
+          condition:
+            lambda: return id(actieve_wekker) == ${nr};
+          then:
+            - script.execute: stop_wekker
+
+select:
+  - platform: template
+    id: wekker_${nr}_dagen
+    name: Wekker ${nr} dagen
+    icon: mdi:calendar-week
+    optimistic: true
+    restore_value: true
+    # "Eenmalig" gaat de eerstvolgende keer af en zet de wekker daarna uit.
+    options:
+      - Elke dag
+      - Werkdagen
+      - Weekend
+      - Eenmalig
+      - Maandag
+      - Dinsdag
+      - Woensdag
+      - Donderdag
+      - Vrijdag
+      - Zaterdag
+      - Zondag
+    initial_option: ${dagen}
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: ui_synchroniseren

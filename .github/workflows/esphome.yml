@@ -1,0 +1,63 @@
+# Controleert bij elke push en pull request dat de rekenlogica klopt en dat
+# beide klokken (7" en 4") nog compileren. Een geslaagde build zegt niets over
+# de echte hardware; dat blijft met de hand testen.
+name: Controle
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  ESPHOME_VERSION: "2026.9.1"
+
+jobs:
+  test:
+    name: Rekenlogica (alarmklok.h)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test compileren en draaien
+        run: |
+          g++ -std=c++17 -Wall -Werror -o test_alarmklok tests/test_alarmklok.cpp
+          ./test_alarmklok
+
+  compileren:
+    name: Firmware ${{ matrix.klok }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        klok: [alarmklok, alarmklok-4inch, alarmklok-4b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ESPHome installeren
+        run: pip install "esphome==${ESPHOME_VERSION}"
+      - name: Test-secrets aanmaken
+        working-directory: esphome
+        run: |
+          sleutel=$(python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())")
+          cat > secrets.yaml <<EOF
+          wifi_ssid: "test"
+          wifi_password: "testtest"
+          api_encryption_key: "${sleutel}"
+          fallback_ap_password: "testtest"
+          EOF
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+            esphome/.esphome
+          key: esphome-${{ env.ESPHOME_VERSION }}-${{ matrix.klok }}-${{ hashFiles('esphome/**/*.yaml', 'esphome/**/*.h') }}
+          restore-keys: |
+            esphome-${{ env.ESPHOME_VERSION }}-${{ matrix.klok }}-
+      - name: Configuratie controleren
+        working-directory: esphome
+        run: esphome config ${{ matrix.klok }}.yaml > /dev/null
+      - name: Compileren
+        working-directory: esphome
+        run: esphome compile ${{ matrix.klok }}.yaml

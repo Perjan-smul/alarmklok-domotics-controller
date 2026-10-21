@@ -1,0 +1,95 @@
+# =============================================================================
+#  Audiotransport met echo-onderdrukking (4B): het wekwoord werkt ook terwijl
+#  de klok muziek of radio speelt. Hoort bij audio-p4.yaml.
+#
+#  Gebruikt het externe component esphome-audio-stack (MIT-licentie,
+#  github.com/n-IA-hane/esphome-audio-stack), vastgezet op release 2026.10.2:
+#  dezelfde versie die Tessera op dit paneel gebruikt. Speaker en microfoon
+#  lopen tegelijk over één I2S-bus op 48 kHz. De echo-onderdrukker (esp_aec)
+#  haalt het eigen geluid uit de microfoon, met als referentie wat er naar de
+#  speaker gaat, en levert 16 kHz voor het wekwoord en de spraakassistent.
+#
+#  De audiochips blijven onder ESPHome zelf (es8311 in audio-p4.yaml, es7210
+#  hieronder), zodat elke chip maar één eigenaar heeft.
+#
+#  Experimenteel. Gaat er iets mis met het geluid of het wekwoord, gebruik dan
+#  in alarmklok-4b.yaml audio-p4-i2s.yaml in plaats van dit bestand.
+# =============================================================================
+
+substitutions:
+  # Met echo-onderdrukking mag het wekwoord tijdens muziek luisteren
+  muziek_luisteren_standaard: RESTORE_DEFAULT_ON
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/n-IA-hane/esphome-audio-stack
+      ref: 0482d741a938378ef948e3b8f3dd31536f9f2cc9
+      path: esphome/components
+    components: [esp_audio_stack, esp_aec]
+    refresh: never
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: i2c_bus
+    address: ${es7210_adres}
+    bits_per_sample: 16bit
+    # Zelfde snelheid als de bus; de stack zet het om naar 16 kHz
+    sample_rate: 48000
+
+# "sr_low_cost" is de aanbevolen stand naast een wekwoord
+esp_aec:
+  id: echo_onderdrukker
+  sample_rate: 16000
+  mode: sr_low_cost
+  filter_length: 4
+
+esp_audio_stack:
+  id: audio_stack
+  i2s_mclk_pin: GPIO13
+  i2s_bclk_pin: GPIO12
+  i2s_lrclk_pin: GPIO10
+  i2s_din_pin: GPIO11
+  i2s_dout_pin: GPIO9
+  sample_rate: 48000
+  output_sample_rate: 16000
+  bits_per_sample: 16
+  # Stereo bus, en stereo naar de speaker zoals de gedeelde mixer
+  # (audio-p4.yaml) levert
+  num_channels: 2
+  speaker_channels: 2
+  # De ES7210 geeft de microfoons op links/rechts; links wordt gebruikt
+  rx_slot_mode: stereo
+  mic_channel: left
+  processor_id: echo_onderdrukker
+  # Referentie: het geluid dat naar de speaker gaat (software). Er is ook een
+  # hardware-referentie op de ES7210, maar die vraagt TDM-instellingen die nog
+  # niet op dit bord zijn uitgezocht.
+  aec_reference: ring_buffer
+  buffers_in_psram: true
+
+microphone:
+  - platform: esp_audio_stack
+    id: microfoon
+
+speaker:
+  - platform: esp_audio_stack
+    id: hw_speaker
+    audio_dac: es8311_dac
+    sample_rate: 48000
+    bits_per_sample: 16
+    buffer_duration: 100ms
+
+switch:
+  - platform: template
+    id: echo_onderdrukking
+    name: Echo-onderdrukking
+    icon: mdi:microphone-settings
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: id(echo_onderdrukker).set_feature(esp_audio_stack::AudioFeature::AEC, true);
+    on_turn_off:
+      - lambda: id(echo_onderdrukker).set_feature(esp_audio_stack::AudioFeature::AEC, false);

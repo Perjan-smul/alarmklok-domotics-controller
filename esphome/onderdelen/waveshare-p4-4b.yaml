@@ -1,0 +1,150 @@
+# =============================================================================
+#  Hardware: Waveshare ESP32-P4-WIFI6-Touch-LCD-4B
+#  (ook verkocht als ESP32-P4-86-Panel-ETH-2RO)
+#  4" IPS 720x720 (MIPI-DSI), GT911 touch, ESP32-C6 als wifi-coprocessor, twee
+#  relais. Audio (ES8311 + ES7210) staat in audio-p4.yaml: zelfde pinnen als de 7".
+#
+#  Pinnen volgens het schema van Waveshare (ESP32-P4-WIFI6-Touch-LCD-4B.pdf,
+#  pagina 1), EspControl (devices/esp32-p4-86) en Tessera (wavesharep4):
+#    I2C (touch + audio)   SDA GPIO7, SCL GPIO8
+#    Backlight             GPIO26 (PWM, geïnverteerd, max. 80%)
+#    Backlight aan (BL_EN) GPIO33
+#    LCD reset             GPIO27 (zit in het ESPHome-model)
+#    Touch reset (TP_RST)  GPIO23; de touch-interrupt gaat naar een testpunt,
+#                          dus de touch wordt elke 20 ms uitgelezen
+#    Relais                GPIO32 en GPIO46
+#    ESP32-C6 (SDIO)       zelfde pinnen als de 7"
+#
+#  Netwerkpoort, RS485 en SD-kaart worden niet gebruikt. Er is een aansluiting
+#  voor een RTC-batterij, maar welke klokchip erop zit is niet bekend; de tijd
+#  komt via internet of Home Assistant.
+# =============================================================================
+
+substitutions:
+  # Schermindeling (scherm-vierkant.yaml): 1.5 = 720x720
+  k: "1.5"
+  draaiing: "0"
+  lvgl_buffer: 100%
+
+esp32:
+  variant: esp32p4
+  # Het bord heeft 32 MB flash, maar OTA met 32 MB is in ESPHome nog
+  # experimenteel. 16 MB is ruim voldoende.
+  flash_size: 16MB
+  # De panelen die EspControl test hebben een vroege chip (rev 1.x). Toont het
+  # bootlog "chip revision: v3.x"? Zet dit dan op false.
+  engineering_sample: true
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # Uit EspControl, getest op echte P4-panelen (zie README, "Stabiliteit"):
+      # meer stack voor de hoofdtaak (HTTPS, o.a. de C6-update) ...
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      # ... ruimere watchdog voor het opstarten van het scherm ...
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+      # ... en de wifi-coprocessor (C6) zonder vooraf gereserveerd intern
+      # geheugen, met zijn taken en buffers in PSRAM
+      CONFIG_ESP_HOSTED_USE_MEMPOOL: "n"
+      CONFIG_ESP_HOSTED_DFLT_TASK_FROM_SPIRAM: "y"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+esp32_hosted:
+  variant: ESP32C6
+  active_high: true
+  clk_pin: GPIO18
+  cmd_pin: GPIO19
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  reset_pin: GPIO54
+  use_psram: true
+  sdio_frequency: 20MHz
+
+# Sneller en betrouwbaarder verbinden via de C6 (ESPHome-issue #13636)
+wifi:
+  fast_connect: true
+
+i2c:
+  - id: i2c_bus
+    sda: GPIO7
+    scl: GPIO8
+    frequency: 400kHz
+    # Het bord heeft eigen pull-ups
+    sda_pullup_enabled: false
+    scl_pullup_enabled: false
+
+# ---- Scherm ----------------------------------------------------------------
+# Voeding van de MIPI-DSI PHY (2,5 V via interne LDO-kanaal 3)
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+display:
+  - platform: mipi_dsi
+    id: scherm
+    model: WAVESHARE-P4-86-PANEL
+    # BL_EN: zonder dit blijft de backlight uit (schema: GPIO33 -> R32 -> BL_EN)
+    enable_pin: GPIO33
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: gt911
+    id: touch
+    i2c_id: i2c_bus
+    display: scherm
+    # Schema: GPIO23 -> R37 -> TP_RST
+    reset_pin: GPIO23
+    update_interval: 20ms
+    on_touch:
+      - script.execute: aangeraakt
+
+output:
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO26
+    inverted: true
+    frequency: 1000Hz
+    # Boven 80% wordt de backlight alleen warmer, niet feller
+    min_power: 0.0
+    max_power: 0.8
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Schermhelderheid
+    icon: mdi:brightness-6
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 500ms
+
+# ---- Relais ------------------------------------------------------------------
+switch:
+  - platform: gpio
+    id: relais_1
+    name: Relais 1
+    icon: mdi:electric-switch
+    pin: GPIO32
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relais_2
+    name: Relais 2
+    icon: mdi:electric-switch
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+script:
+  # Klokchip onbekend: niets te doen als de tijd binnenkomt
+  - id: hw_tijd_gesynchroniseerd
+    then:
+      - logger.log:
+          level: DEBUG
+          format: "Tijd gesynchroniseerd"

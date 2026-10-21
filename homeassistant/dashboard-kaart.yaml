@@ -7,14 +7,38 @@ cards:
     show_header_toggle: false
     entities:
       - entity: sensor.alarmklok_wekker_status
-      - entity: switch.alarmklok_wekker_aan
-      - entity: time.alarmklok_wektijd
-      - entity: select.alarmklok_wekdagen
+      - entity: sensor.alarmklok_volgende_wekker
+      - entity: switch.alarmklok_volgende_wekker_overslaan
+      - type: section
+        label: Wekker 1
+      - entity: switch.alarmklok_wekker_1_aan
+      - entity: time.alarmklok_wekker_1_tijd
+      - entity: select.alarmklok_wekker_1_dagen
+      - type: section
+        label: Wekker 2
+      - entity: switch.alarmklok_wekker_2_aan
+      - entity: time.alarmklok_wekker_2_tijd
+      - entity: select.alarmklok_wekker_2_dagen
+      - type: section
+        label: Wekker 3
+      - entity: switch.alarmklok_wekker_3_aan
+      - entity: time.alarmklok_wekker_3_tijd
+      - entity: select.alarmklok_wekker_3_dagen
       - type: divider
       - entity: number.alarmklok_wake_up_light_vooraf
       - entity: number.alarmklok_snooze_duur
       - entity: select.alarmklok_wekgeluid
       - entity: number.alarmklok_wekvolume
+      - entity: number.alarmklok_wekgeluid_oplopen
+      - entity: switch.alarmklok_niet_op_feestdagen
+      - type: divider
+      - type: section
+        label: Spraakassistent
+      - entity: switch.alarmklok_spraakassistent
+      - entity: switch.alarmklok_microfoon_dempen
+      - entity: select.alarmklok_wekwoord_gevoeligheid
+      - entity: switch.alarmklok_spraak_stil_s_nachts
+      - entity: switch.alarmklok_luisteren_tijdens_muziek
       - type: divider
       - entity: select.alarmklok_klokontwerp
       - entity: time.alarmklok_nachtstand_vanaf

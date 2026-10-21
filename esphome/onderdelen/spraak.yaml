@@ -1,0 +1,337 @@
+# =============================================================================
+#  Spraakassistent: "Hey Jarvis, doe het licht uit"
+#
+#  Het wekwoord wordt op de klok zelf herkend (micro_wake_word). Pas daarna
+#  gaat het geluid naar Home Assistant (Assist); het antwoord klinkt via de
+#  speaker. Alleen voor klokken met microfoons (7" en 4B, zie audio-p4.yaml).
+#  Welk wekwoord (Hey Jarvis, Okay Nabu of Hey Mycroft) kies je in Home
+#  Assistant; de klok volgt die keuze.
+#
+#  Het wekwoord luistert alleen als:
+#    - "Spraakassistent" aan staat en "Microfoon dempen" uit,
+#    - de klok met Home Assistant verbonden is,
+#    - er geen wekker afgaat,
+#    - het geen nachtstand is (tenzij "Stil 's nachts" uit staat).
+#
+#  Stel in HA een spraakassistent in met Nederlandse spraakherkenning en
+#  -uitvoer (Instellingen -> Spraakassistenten). Zie README.md.
+# =============================================================================
+
+micro_wake_word:
+  id: wekwoord_herkenning
+  microphone:
+    microphone: microfoon
+    channels: 0
+  # Het geheugen van de taak in PSRAM: meer intern geheugen voor scherm en audio
+  task_stack_in_psram: true
+  # Modellen van ESPHome (github.com/esphome/micro-wake-word-models), als
+  # directe URL: dat werkt ook achter een proxy die GitHub-doorverwijzingen
+  # blokkeert. Een stemdetector (vad) voorkomt dat geluid zonder spraak het
+  # wekwoord activeert.
+  vad:
+    model: https://raw.githubusercontent.com/esphome/micro-wake-word-models/main/models/v2/vad.json
+  models:
+    - model: https://raw.githubusercontent.com/esphome/micro-wake-word-models/main/models/v2/hey_jarvis.json
+      id: model_hey_jarvis
+    - model: https://raw.githubusercontent.com/esphome/micro-wake-word-models/main/models/v2/okay_nabu.json
+      id: model_okay_nabu
+    - model: https://raw.githubusercontent.com/esphome/micro-wake-word-models/main/models/v2/hey_mycroft.json
+      id: model_hey_mycroft
+  on_wake_word_detected:
+    # Eerst een kort geluidje ("ik luister"), pas daarna opnemen: zo komt
+    # het geluid niet in de vraag terecht
+    - if:
+        condition:
+          switch.is_on: luistergeluid
+        then:
+          - media_player.speaker.play_on_device_media_file:
+              id: speler
+              media_file: luister_geluid
+              announcement: true
+          - wait_until:
+              condition:
+                media_player.is_announcing: speler
+              timeout: 0.3s
+          - wait_until:
+              condition:
+                not:
+                  media_player.is_announcing: speler
+              timeout: 1s
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+# Het luistergeluid (eigen bestand: 16-bit mono 48 kHz WAV, mag je vervangen)
+media_player:
+  - id: !extend speler
+    files:
+      - id: luister_geluid
+        file: geluiden/luisteren.wav
+
+voice_assistant:
+  id: assistent
+  microphone:
+    microphone: microfoon
+    channels: 0
+  media_player: speler
+  micro_wake_word: wekwoord_herkenning
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  # De microfoons van deze borden zijn zacht; 4.0 werkt goed op de P4-86
+  volume_multiplier: 4.0
+  on_listening:
+    - lambda: |-
+        id(laatste_aanraking_ms) = millis();
+        id(spraak_bezig) = true;
+    - script.execute:
+        id: spraak_tonen
+        icoon: "\U000F036C"
+        tekst: "Luistert..."
+        blijven: true
+  on_stt_vad_end:
+    - script.execute:
+        id: spraak_tonen
+        icoon: "\U000F01D8"
+        tekst: "Even denken..."
+        blijven: true
+  on_stt_end:
+    - script.execute:
+        id: spraak_tonen
+        icoon: "\U000F036C"
+        tekst: !lambda return x;
+        blijven: true
+  on_tts_start:
+    - script.execute:
+        id: spraak_tonen
+        icoon: "\U000F04C3"
+        tekst: !lambda return x;
+        blijven: true
+  # Wacht tot het antwoord is uitgesproken (zoals in de 4B-configuratie van
+  # nishad2m8); pas dan mag de muziek weer harder en het wekwoord weer luisteren
+  on_end:
+    - wait_until:
+        condition:
+          media_player.is_announcing: speler
+        timeout: 0.5s
+    - wait_until:
+        condition:
+          not:
+            media_player.is_announcing: speler
+        timeout: 60s
+    - script.execute: spraak_klaar
+    - script.execute: spraak_vlak_verbergen
+  on_error:
+    - script.execute: spraak_klaar
+    - script.execute:
+        id: spraak_tonen
+        icoon: "\U000F0026"
+        tekst: !lambda return "Dat lukte niet (" + code + ")";
+        blijven: false
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - micro_wake_word.stop:
+
+switch:
+  - platform: template
+    id: spraakassistent
+    name: Spraakassistent
+    icon: mdi:account-voice
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: microfoon_dempen
+    name: Microfoon dempen
+    icon: mdi:microphone-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  # Uit: het wekwoord pauzeert terwijl de klok muziek of radio speelt, zodat
+  # die het niet per ongeluk activeert. Tijdens een melding of antwoord
+  # luistert het wekwoord nooit.
+  - platform: template
+    id: luisteren_tijdens_muziek
+    name: Luisteren tijdens muziek
+    icon: mdi:music-note
+    entity_category: config
+    optimistic: true
+    # Standaard aan met echo-onderdrukking (4B), anders uit (audio-p4-*.yaml)
+    restore_mode: ${muziek_luisteren_standaard}
+  - platform: template
+    id: luistergeluid
+    name: Luistergeluid
+    icon: mdi:bell-ring-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: stil_s_nachts
+    name: Spraak stil 's nachts
+    icon: mdi:sleep
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+# Welk wekwoord actief is kies je in Home Assistant: bij het apparaat onder
+# Configuratie (de instellingen van de Assist-satelliet). De klok meldt de drie
+# modellen hieronder aan HA, zet het gekozen model aan en onthoudt dat.
+select:
+  # Laag = minder vaak per ongeluk, maar je moet duidelijker praten
+  - platform: template
+    id: wekwoord_gevoeligheid
+    name: Wekwoord gevoeligheid
+    icon: mdi:tune-variant
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - Laag
+      - Normaal
+      - Hoog
+    initial_option: Normaal
+    on_value:
+      - script.execute: wekwoord_instellen
+
+globals:
+  # Standaarddrempels van de modellen (0-255), bij het opstarten bewaard
+  - id: wekwoord_drempels
+    type: std::array<uint8_t, 3>
+  # Eerste keer opgestart: alleen Hey Jarvis aan (daarna beslist HA)
+  - id: wekwoord_standaard_gezet
+    type: bool
+    restore_value: true
+    initial_value: "false"
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: |-
+            id(wekwoord_drempels) = {id(model_hey_jarvis)->get_probability_cutoff(),
+                                     id(model_okay_nabu)->get_probability_cutoff(),
+                                     id(model_hey_mycroft)->get_probability_cutoff()};
+            if (!id(wekwoord_standaard_gezet)) {
+              id(model_okay_nabu)->disable();
+              id(model_hey_mycroft)->disable();
+              id(model_hey_jarvis)->enable();
+              id(wekwoord_standaard_gezet) = true;
+            }
+        - script.execute: wekwoord_instellen
+
+interval:
+  - interval: 1s
+    then:
+      - script.execute: spraak_bijwerken
+
+script:
+  # Gevoeligheid voor alle modellen (welk model aan staat beslist HA)
+  - id: wekwoord_instellen
+    then:
+      - lambda: |-
+          micro_wake_word::WakeWordModel *modellen[] = {id(model_hey_jarvis), id(model_okay_nabu),
+                                                       id(model_hey_mycroft)};
+          const int stand = id(wekwoord_gevoeligheid).active_index().value_or(1);
+          for (int i = 0; i < 3; i++) {
+            const int basis = id(wekwoord_drempels)[i];
+            if (basis == 0)
+              continue;  // nog niet opgestart
+            int drempel = basis;
+            if (stand == 0)
+              drempel = basis + (255 - basis) / 2;  // laag: strenger
+            else if (stand == 2)
+              drempel = std::max(basis - 25, 128);   // hoog: soepeler
+            modellen[i]->set_probability_cutoff((uint8_t) drempel);
+          }
+
+  # Elke seconde: moet het wekwoord luisteren of niet?
+  - id: spraak_bijwerken
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(spraakassistent).state && !id(microfoon_dempen).state &&
+                     id(api_verbonden).state && !id(gaat_af) &&
+                     !(id(nachtstand) && id(stil_s_nachts).state);
+          then:
+            # Toegestaan; maar niet terwijl de klok zelf praat of muziek speelt
+            - if:
+                condition:
+                  and:
+                    - not:
+                        media_player.is_announcing: speler
+                    - or:
+                        - not:
+                            media_player.is_playing: speler
+                        - switch.is_on: luisteren_tijdens_muziek
+                then:
+                  - if:
+                      condition:
+                        and:
+                          - not:
+                              micro_wake_word.is_running:
+                          - not:
+                              voice_assistant.is_running:
+                      then:
+                        - micro_wake_word.start:
+                else:
+                  # Alleen het wekwoord pauzeren; een lopende vraag gaat door
+                  - if:
+                      condition:
+                        micro_wake_word.is_running:
+                      then:
+                        - micro_wake_word.stop:
+          else:
+            - if:
+                condition:
+                  micro_wake_word.is_running:
+                then:
+                  - micro_wake_word.stop:
+            # Een afgaande wekker of dempen breekt een lopende vraag af
+            - if:
+                condition:
+                  voice_assistant.is_running:
+                then:
+                  - voice_assistant.stop:
+      - if:
+          condition:
+            switch.is_on: microfoon_dempen
+          then:
+            - lvgl.widget.show: spraak_gedempt
+          else:
+            - lvgl.widget.hide: spraak_gedempt
+
+  # Balk onderaan met wat de assistent doet of zegt
+  - id: spraak_tonen
+    parameters:
+      icoon: string
+      tekst: string
+      blijven: bool
+    then:
+      - lambda: |-
+          lv_label_set_text(id(spraak_icoon), icoon.c_str());
+          lv_label_set_text(id(spraak_tekst), tekst.c_str());
+      - lvgl.widget.show: spraak_vlak
+      - if:
+          condition:
+            lambda: return !blijven;
+          then:
+            - script.execute: spraak_vlak_verbergen
+          else:
+            - script.stop: spraak_vlak_verbergen
+
+  # Vraag klaar: muziek weer op normale sterkte (zie audio-p4.yaml)
+  - id: spraak_klaar
+    then:
+      - lambda: id(spraak_bezig) = false;
+      - if:
+          condition:
+            not:
+              media_player.is_announcing: speler
+          then:
+            - mixer_speaker.apply_ducking:
+                id: mix_media
+                decibel_reduction: 0
+                duration: 1s
+
+  - id: spraak_vlak_verbergen
+    mode: restart
+    then:
+      - delay: 6s
+      - lvgl.widget.hide: spraak_vlak

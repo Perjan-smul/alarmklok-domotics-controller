@@ -1,0 +1,179 @@
+# =============================================================================
+#  Audio van de Waveshare ESP32-P4-borden met speaker en microfoons:
+#  ESP32-P4-WIFI6-Touch-LCD-7B (7") en ESP32-P4-WIFI6-Touch-LCD-4B (4", ook
+#  verkocht als ESP32-P4-86-Panel-ETH-2RO). Beide gebruiken dezelfde pinnen.
+#
+#    ES8311 (speaker)      I2C 0x18, versterker NS4150B aan via GPIO53
+#    ES7210 (microfoons)   I2C ${es7210_adres}
+#    I2S                   MCLK GPIO13, BCLK GPIO12, LRCK GPIO10,
+#                          DOUT GPIO9 (speaker), DIN GPIO11 (microfoon)
+#
+#  Verwacht een I2C-bus met id "i2c_bus" uit het hardwarebestand, en een
+#  transportbestand (audio-p4-i2s.yaml of audio-p4-aec.yaml) met de I2S-bus,
+#  de microfoon "microfoon" en de speaker "hw_speaker".
+#  Levert wat de kern verwacht: radio_speelt, speel_wekgeluid,
+#  hw_geluid_stoppen en hw_volume (zie kern.yaml).
+# =============================================================================
+
+substitutions:
+  # Speelt de radio na zoveel tijd nog niet, dan klinkt het eigen wekgeluid
+  radio_terugval: 20s
+  # I2C-adres van de microfoonchip. Meestal 0x40; staat er bij het opstarten
+  # een fout over de ES7210 in het log, probeer dan 0x41, 0x42 of 0x43.
+  es7210_adres: "0x40"
+
+switch:
+  # Versterker alleen aan als er geluid is: geen ruis op het nachtkastje.
+  # Aan bij muziek, meldingen en het wekgeluid; uit na 2 s stilte
+  # (script versterker_uit).
+  - platform: gpio
+    id: speaker_versterker
+    pin: GPIO53
+    restore_mode: ALWAYS_OFF
+    internal: true
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: i2c_bus
+    address: 0x18
+    use_mclk: true
+    sample_rate: 48000
+
+# De I2S-bus, de microfoonchip, de microfoon en "hw_speaker" komen uit het
+# transportbestand: audio-p4-i2s.yaml (eenvoudig) of audio-p4-aec.yaml (met
+# echo-onderdrukking).
+speaker:
+  # Drie geluidsbronnen worden gemengd naar de ene speaker:
+  # muziek/radio, meldingen (TTS en antwoorden van de spraakassistent) en het
+  # wekgeluid.
+  - platform: mixer
+    id: audio_mixer
+    output_speaker: hw_speaker
+    num_channels: 2
+    source_speakers:
+      - id: mix_media
+      - id: mix_melding
+      - id: mix_wekker
+
+  - platform: resampler
+    id: media_resampler
+    output_speaker: mix_media
+  - platform: resampler
+    id: melding_resampler
+    output_speaker: mix_melding
+  - platform: resampler
+    id: wekker_resampler
+    output_speaker: mix_wekker
+
+media_player:
+  - platform: speaker
+    id: speler
+    name: Speaker
+    media_pipeline:
+      speaker: media_resampler
+      num_channels: 2
+    announcement_pipeline:
+      speaker: melding_resampler
+      num_channels: 1
+    on_play:
+      - switch.turn_on: speaker_versterker
+    # Melding of antwoord van de spraakassistent: muziek 20 dB zachter
+    on_announcement:
+      - switch.turn_on: speaker_versterker
+      - mixer_speaker.apply_ducking:
+          id: mix_media
+          decibel_reduction: 20
+          duration: 0s
+    # Klaar met de melding (en geen vraag meer bezig): muziek weer normaal
+    on_state:
+      - if:
+          condition:
+            and:
+              - not:
+                  media_player.is_announcing: speler
+              - lambda: return !id(spraak_bezig);
+          then:
+            - mixer_speaker.apply_ducking:
+                id: mix_media
+                decibel_reduction: 0
+                duration: 1s
+    on_idle:
+      - script.execute: versterker_uit
+
+rtttl:
+  id: zoemer_rtttl
+  speaker: wekker_resampler
+  gain: 0.8
+
+globals:
+  # Er loopt een vraag aan de spraakassistent (gezet door spraak.yaml); dan
+  # blijft de muziek zachter tot het antwoord klaar is
+  - id: spraak_bezig
+    type: bool
+    initial_value: "false"
+
+# ---- Wat de kern van de hardware verwacht (zie kern.yaml) --------------------
+binary_sensor:
+  - platform: template
+    id: radio_speelt
+    internal: true
+    lambda: return id(speler).state == media_player::MEDIA_PLAYER_STATE_PLAYING;
+
+script:
+  # Speelt de gekozen melodie (Klassiek, Zacht, Mario) zolang de wekker afgaat
+  - id: speel_wekgeluid
+    mode: single
+    then:
+      - while:
+          condition:
+            lambda: return id(gaat_af);
+          then:
+            # Elke herhaling opnieuw aan: een wekker zonder geluid mag niet
+            - switch.turn_on: speaker_versterker
+            - rtttl.play:
+                rtttl: !lambda return alarmklok::melodie(id(wekgeluid).current_option().str());
+            - wait_until:
+                condition:
+                  not:
+                    rtttl.is_playing:
+            - delay: 1s
+      - script.execute: versterker_uit
+
+  - id: hw_geluid_stoppen
+    then:
+      - rtttl.stop:
+      - if:
+          condition:
+            lambda: return id(wekgeluid).current_option() == "Radio";
+          then:
+            - media_player.stop: speler
+      - script.execute: versterker_uit
+
+  # Versterker uit na 2 s stilte (niet als er nog iets speelt of de wekker afgaat)
+  - id: versterker_uit
+    mode: restart
+    then:
+      - delay: 2s
+      - if:
+          condition:
+            and:
+              - lambda: return !id(gaat_af);
+              - not:
+                  rtttl.is_playing:
+              - not:
+                  media_player.is_playing: speler
+              - not:
+                  media_player.is_announcing: speler
+          then:
+            - switch.turn_off: speaker_versterker
+
+  # Volume van het wekgeluid, 0-1 (ook voor de radio)
+  - id: hw_volume
+    parameters:
+      niveau: float
+    then:
+      - lambda: |-
+          id(zoemer_rtttl).set_gain(niveau);
+          if (id(wekgeluid).current_option() == "Radio")
+            id(speler).make_call().set_volume(niveau).perform();

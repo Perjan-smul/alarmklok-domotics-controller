@@ -1,0 +1,24 @@
+# =============================================================================
+#  Firmware van de wifi-chip (ESP32-C6) bijwerken vanuit Home Assistant
+#
+#  Op de P4-borden loopt wifi via een aparte ESP32-C6 met eigen firmware. Een
+#  oude of niet-passende versie geeft wegvallende wifi of herstarts (ESPHome-
+#  issues #13636 en #14313). ESPHome zoekt hier elke 6 uur de versie die bij
+#  deze firmware hoort; in HA verschijnt dan een update "Wifi-chip (C6)".
+#
+#  Installeren doe je zelf, met de knop in HA: nooit automatisch, zodat er
+#  nooit midden in de nacht een update misgaat.
+# =============================================================================
+
+http_request:
+  id: http_verzoek
+  timeout: 30s
+
+update:
+  - platform: esp32_hosted
+    id: c6_update
+    name: Wifi-chip (C6)
+    type: http
+    http_request_id: http_verzoek
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
+    update_interval: 6h
