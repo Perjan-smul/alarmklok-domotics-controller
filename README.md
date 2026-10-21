@@ -187,6 +187,12 @@ espcontrol-port/                 Patch om dit scherm aan EspControl toe te voege
 > Zet dan in `alarmklok-4inch.yaml` onder `substitutions:` de regel
 > `draaiing: "180"`. De touch draait mee.
 
+> **4B: USB-C onderaan.** Het beeld van de 4B staat standaard een kwartslag
+> gedraaid (`draaiing: "270"` in `alarmklok-4b.yaml`), zodat de USB-C-aansluiting
+> die normaal rechts zit onderaan komt. Staat het beeld verkeerd, probeer dan
+> `"90"`; `"0"` is de fabrieksstand. Het draaien kost geen beeldkwaliteit (de
+> P4 doet het met een eigen hardwareblok).
+
 ### 2. Koppelen aan Home Assistant
 
 1. HA vindt de klok vanzelf (*Instellingen → Apparaten & diensten*). Voer bij

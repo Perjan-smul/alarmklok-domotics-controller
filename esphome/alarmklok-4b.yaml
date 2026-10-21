@@ -14,6 +14,11 @@
 substitutions:
   name: alarmklok-4b
   friendly_name: Alarmklok 4B
+  # Beeld een kwartslag gedraaid, zodat de USB-C-aansluiting (normaal rechts)
+  # onderaan zit en de kabel netjes weg kan. Staat het beeld op z'n kant of
+  # kop, probeer dan "90"; "0" is de stand van de fabriek. Het scherm is
+  # vierkant, dus de indeling past in elke stand; de touch draait mee.
+  draaiing: "270"
 
 packages:
   instellingen: !include instellingen.yaml
