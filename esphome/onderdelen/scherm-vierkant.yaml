@@ -462,12 +462,12 @@ lvgl:
                                             id: wijzer_minuut
                                             width: '${(5 * (k | float)) | int}'
                                             color: 0xFFFFFF
-                                            r_mod: '${-(26 * (k | float)) | int}'
+                                            length: '${-(26 * (k | float)) | int}'
                                         - line:
                                             id: wijzer_seconde
                                             width: 2
                                             color: 0xF5A623
-                                            r_mod: '${-(14 * (k | float)) | int}'
+                                            length: '${-(14 * (k | float)) | int}'
                                     # Uurcijfers
                                     - range_from: 1
                                       range_to: 12
@@ -494,7 +494,7 @@ lvgl:
                                             id: wijzer_uur
                                             width: '${(8 * (k | float)) | int}'
                                             color: 0xFFFFFF
-                                            r_mod: '${-(72 * (k | float)) | int}'
+                                            length: '${-(72 * (k | float)) | int}'
                               - obj:
                                   align: BOTTOM_MID
                                   y: '${-(26 * (k | float)) | int}'

@@ -462,12 +462,12 @@ lvgl:
                                             id: wijzer_minuut
                                             width: 8
                                             color: 0xFFFFFF
-                                            r_mod: -40
+                                            length: -40
                                         - line:
                                             id: wijzer_seconde
                                             width: 3
                                             color: 0xF5A623
-                                            r_mod: -20
+                                            length: -20
                                     # Uurcijfers
                                     - range_from: 1
                                       range_to: 12
@@ -494,7 +494,7 @@ lvgl:
                                             id: wijzer_uur
                                             width: 12
                                             color: 0xFFFFFF
-                                            r_mod: -110
+                                            length: -110
                               - obj:
                                   x: 620
                                   y: 110

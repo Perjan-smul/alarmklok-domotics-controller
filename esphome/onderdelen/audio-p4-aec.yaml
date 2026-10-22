@@ -3,8 +3,9 @@
 #  de klok muziek of radio speelt. Hoort bij audio-p4.yaml.
 #
 #  Gebruikt het externe component esphome-audio-stack (MIT-licentie,
-#  github.com/n-IA-hane/esphome-audio-stack), vastgezet op release 2026.10.2:
-#  dezelfde versie die Tessera op dit paneel gebruikt. Speaker en microfoon
+#  github.com/n-IA-hane/esphome-audio-stack), vastgezet op commit d5aa6bc
+#  (2026.10.3-dev): de stabiele 2026.10.2 bouwt niet met ESPHome 2026.10
+#  (gewijzigde RingBuffer), deze voorlopige versie wel. Speaker en microfoon
 #  lopen tegelijk over één I2S-bus op 48 kHz. De echo-onderdrukker (esp_aec)
 #  haalt het eigen geluid uit de microfoon, met als referentie wat er naar de
 #  speaker gaat, en levert 16 kHz voor het wekwoord en de spraakassistent.
@@ -24,7 +25,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/n-IA-hane/esphome-audio-stack
-      ref: 0482d741a938378ef948e3b8f3dd31536f9f2cc9
+      ref: d5aa6bc14fdb950c0c65652735187428243a8dce
       path: esphome/components
     components: [esp_audio_stack, esp_aec]
     refresh: never

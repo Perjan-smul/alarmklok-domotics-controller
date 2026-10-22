@@ -410,8 +410,10 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
   `engineering_sample` op de andere waarde; dat hangt af van de chiprevisie.
 - **Flikkerend of verschoven beeld (4" Bosun-bord):** zet bij `display:` in
   `onderdelen/waveshare-s3-4.yaml` `pclk_frequency: 10MHz`.
-- **Gebruik ESPHome 2026.9.1:** met 2026.5.3 werkte wifi op het P4-86-paneel niet
-  meer (HA-forum), en `micro_wake_word` heeft minstens 2026.7 nodig.
+- **Gebruik ESPHome 2026.10 of nieuwer** (de versie van de ESPHome-add-on in
+  HA). De backlight gebruikt `restore_state`, dat pas sinds 2026.10 bestaat; met
+  2026.5.3 werkte wifi op het P4-86-paneel niet meer (HA-forum), en
+  `micro_wake_word` heeft minstens 2026.7 nodig.
 
 ## Inbranden
 
@@ -456,7 +458,7 @@ scherm goed werkt.
 
 ## Bekende aandachtspunten
 
-- Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.9.1),
+- Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.10.0),
   **nog niet op echte hardware getest**. Bij de eerste keer flashen kan er nog
   iets bijgesteld moeten worden.
 - **Touch omgekeerd of gespiegeld?** Voeg in `onderdelen/waveshare-p4-7b.yaml`
@@ -470,7 +472,7 @@ scherm goed werkt.
 
 ### 4"-klok (Waveshare ESP32-S3-Touch-LCD-4)
 
-- Compileert met ESPHome 2026.9.1, maar is **nog niet op het bord getest**.
+- Compileert met ESPHome 2026.10.0, maar is **nog niet op het bord getest**.
   Scherm, touch, hulpchip en klokchip volgen de pinnen en registers die in de
   Bosun-bootmonitor op hetzelfde bord werken.
 - **Board V3 (TCA9554):** de backlight kan daar alleen aan of uit. Dimmen en
@@ -485,7 +487,7 @@ scherm goed werkt.
 
 ### 4B (Waveshare ESP32-P4-WIFI6-Touch-LCD-4B)
 
-- Compileert met ESPHome 2026.9.1, **niet op het bord getest**. Scherm, touch,
+- Compileert met ESPHome 2026.10.0, **niet op het bord getest**. Scherm, touch,
   backlight en wifi volgen de werkende instellingen van
   [EspControl](https://github.com/jtenniswood/espcontrol) voor dit paneel; de
   microfoon volgt [esphome-p4-86-panel-eth-2ro-lvgl](https://github.com/chrisdunnname/esphome-p4-86-panel-eth-2ro-lvgl),
@@ -505,7 +507,8 @@ scherm goed werkt.
   interrupt-lijn niet is aangesloten.
 - **Echo-onderdrukking (experimenteel):** de 4B gebruikt het externe component
   [esphome-audio-stack](https://github.com/n-IA-hane/esphome-audio-stack)
-  (MIT, release 2026.10.2, dezelfde versie als Tessera). Speaker en microfoon
+  (MIT, commit d5aa6bc = voorlopige versie 2026.10.3-dev; de stabiele 2026.10.2
+  bouwt niet met ESPHome 2026.10). Speaker en microfoon
   lopen dan tegelijk, en het wekwoord werkt ook tijdens muziek. Problemen met
   geluid of wekwoord? Neem dan in `alarmklok-4b.yaml` bij `audio_transport`
   het bestand `onderdelen/audio-p4-i2s.yaml`: dan werkt de 4B net als de 7".

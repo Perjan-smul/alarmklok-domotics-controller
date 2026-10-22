@@ -121,7 +121,10 @@ light:
     name: Schermhelderheid
     icon: mdi:brightness-6
     output: backlight_uitgang
-    restore_mode: ALWAYS_ON
+    # Na het opstarten altijd aan; niets bewaren (ESPHome 2026.10: restore_state)
+    initial_state:
+      state: ON
+    restore_state: NONE
     default_transition_length: 500ms
 
 # ---- Klokchip ------------------------------------------------------------------
