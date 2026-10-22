@@ -130,6 +130,10 @@ globals:
   - id: licht_donker
     type: bool
     initial_value: "false"
+  # Minuten achter elkaar met zwak wifi-signaal (zie wifi_signaal)
+  - id: zwak_signaal_minuten
+    type: int
+    initial_value: "0"
   # Plek van de maan zoals in de schermindeling (-1 = nog niet gelezen); de
   # maan zwerft daar elk uur een stukje omheen (tegen inbranden)
   - id: maan_basis_x
@@ -465,6 +469,12 @@ button:
     on_press:
       - script.execute: snooze_wekker
   - platform: template
+    name: Sterker access point zoeken
+    icon: mdi:wifi-sync
+    entity_category: diagnostic
+    on_press:
+      - wifi.roam:
+  - platform: template
     name: Wekker testen
     icon: mdi:alarm-bell
     entity_category: diagnostic
@@ -589,9 +599,22 @@ sensor:
     internal: true
 
   - platform: wifi_signal
+    id: wifi_signaal
     name: WiFi signaal
     update_interval: 60s
     entity_category: diagnostic
+    # Drie minuten achter elkaar zwak signaal: zoek een sterker access point
+    # (mesh of meerdere AP's). Niet als de wekker afgaat of snoozet.
+    on_value:
+      - lambda: |-
+          id(zwak_signaal_minuten) = x < -75 ? id(zwak_signaal_minuten) + 1 : 0;
+      - if:
+          condition:
+            lambda: return id(zwak_signaal_minuten) >= 3 && !id(gaat_af) && !id(snoozet);
+          then:
+            - lambda: id(zwak_signaal_minuten) = 0;
+            - logger.log: "Zwak wifi-signaal: zoeken naar een sterker access point"
+            - wifi.roam:
 
 # -----------------------------------------------------------------------------
 #  Wekker-logica

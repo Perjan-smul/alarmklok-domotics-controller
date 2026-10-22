@@ -399,6 +399,8 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
 | 4B: touch-reset GPIO23, backlight aan via GPIO33 | Volgens het schema; zonder BL_EN mogelijk een zwart scherm | Waveshare-schema, [Tessera](https://github.com/MaxGramser/homeassistant_espscreen) |
 | 7" en 4B: update **Wifi-chip (C6)** in HA | Een oude C6-firmware gaf wegvallende wifi of herstarts elke ~10 minuten. Installeren doe je zelf, met de knop in HA. | #13636, [ESPHome #14313](https://github.com/esphome/esphome/issues/14313) |
 | 4" (Bosun-bord): beeldinstellingen voor het RGB-scherm, wifi eerst starten | Verschoven of flikkerend beeld en wifi-geheugentekort op hetzelfde type paneel | EspControl (4848S040) |
+| Instellingenbuffer in PSRAM (`nvs_cache_in_psram`, ESPHome 2026.10) | Ca. 10 kB meer intern geheugen voor scherm, wifi en audio; vooral fijn op de S3 | [ESPHome 2026.10](https://esphome.io/blog/2026/10/21/esphome-2026-10/) |
+| Wifi: na 3 minuten zwak signaal (< -75 dBm) zelf een sterker access point zoeken (`wifi.roam`), en de knop *Sterker access point zoeken* | Handig met mesh of meerdere access points; niet als de wekker afgaat | ESPHome 2026.10 |
 | Diagnose-entiteiten: *Vrij geheugen*, *Grootste vrije blok*, *Minst vrije geheugen*, *Vrij PSRAM*, *Uptime*, *Laatste herstart oorzaak* | Herstart de klok onverwacht, of daalt het vrije geheugen over dagen? Dan zie je dat hier. | [ESPHome debug](https://esphome.io/components/debug/) |
 
 **Als het toch misgaat:**
