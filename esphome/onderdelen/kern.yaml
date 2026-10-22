@@ -15,18 +15,18 @@ packages:
   wekker_1: !include { file: wekker.yaml, vars: { nr: 1, tijd: "07:00:00", aan: RESTORE_DEFAULT_ON, dagen: Werkdagen } }
   wekker_2: !include { file: wekker.yaml, vars: { nr: 2, tijd: "08:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Weekend } }
   wekker_3: !include { file: wekker.yaml, vars: { nr: 3, tijd: "06:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Eenmalig } }
-  tegel_licht_1: !include { file: tegel-instellingen.yaml, vars: { nr: licht_1, titel: "Tegel verlichting 1", naam: "${licht_1_naam}", entity: "${licht_1_entity}", icoon: "${licht_1_icoon}" } }
-  tegel_licht_2: !include { file: tegel-instellingen.yaml, vars: { nr: licht_2, titel: "Tegel verlichting 2", naam: "${licht_2_naam}", entity: "${licht_2_entity}", icoon: "${licht_2_icoon}" } }
-  tegel_licht_3: !include { file: tegel-instellingen.yaml, vars: { nr: licht_3, titel: "Tegel verlichting 3", naam: "${licht_3_naam}", entity: "${licht_3_entity}", icoon: "${licht_3_icoon}" } }
-  tegel_licht_4: !include { file: tegel-instellingen.yaml, vars: { nr: licht_4, titel: "Tegel verlichting 4", naam: "${licht_4_naam}", entity: "${licht_4_entity}", icoon: "${licht_4_icoon}" } }
-  tegel_licht_5: !include { file: tegel-instellingen.yaml, vars: { nr: licht_5, titel: "Tegel verlichting 5", naam: "${licht_5_naam}", entity: "${licht_5_entity}", icoon: "${licht_5_icoon}" } }
-  tegel_licht_6: !include { file: tegel-instellingen.yaml, vars: { nr: licht_6, titel: "Tegel verlichting 6", naam: "${licht_6_naam}", entity: "${licht_6_entity}", icoon: "${licht_6_icoon}" } }
-  tegel_scene_1: !include { file: tegel-instellingen.yaml, vars: { nr: scene_1, titel: "Tegel scène 1", naam: "${scene_1_naam}", entity: "${scene_1_entity}", icoon: "${scene_1_icoon}" } }
-  tegel_scene_2: !include { file: tegel-instellingen.yaml, vars: { nr: scene_2, titel: "Tegel scène 2", naam: "${scene_2_naam}", entity: "${scene_2_entity}", icoon: "${scene_2_icoon}" } }
-  tegel_scene_3: !include { file: tegel-instellingen.yaml, vars: { nr: scene_3, titel: "Tegel scène 3", naam: "${scene_3_naam}", entity: "${scene_3_entity}", icoon: "${scene_3_icoon}" } }
-  tegel_scene_4: !include { file: tegel-instellingen.yaml, vars: { nr: scene_4, titel: "Tegel scène 4", naam: "${scene_4_naam}", entity: "${scene_4_entity}", icoon: "${scene_4_icoon}" } }
-  tegel_scene_5: !include { file: tegel-instellingen.yaml, vars: { nr: scene_5, titel: "Tegel scène 5", naam: "${scene_5_naam}", entity: "${scene_5_entity}", icoon: "${scene_5_icoon}" } }
-  tegel_scene_6: !include { file: tegel-instellingen.yaml, vars: { nr: scene_6, titel: "Tegel scène 6", naam: "${scene_6_naam}", entity: "${scene_6_entity}", icoon: "${scene_6_icoon}" } }
+  tegel_licht_1: !include { file: tegel-instellingen.yaml, vars: { nr: licht_1, titel: "Tegel verlichting 1", naam: "${licht_1_naam}", entity: "${licht_1_entity}", icoon: "${licht_1_icoon}", schakelaar: "true" } }
+  tegel_licht_2: !include { file: tegel-instellingen.yaml, vars: { nr: licht_2, titel: "Tegel verlichting 2", naam: "${licht_2_naam}", entity: "${licht_2_entity}", icoon: "${licht_2_icoon}", schakelaar: "true" } }
+  tegel_licht_3: !include { file: tegel-instellingen.yaml, vars: { nr: licht_3, titel: "Tegel verlichting 3", naam: "${licht_3_naam}", entity: "${licht_3_entity}", icoon: "${licht_3_icoon}", schakelaar: "true" } }
+  tegel_licht_4: !include { file: tegel-instellingen.yaml, vars: { nr: licht_4, titel: "Tegel verlichting 4", naam: "${licht_4_naam}", entity: "${licht_4_entity}", icoon: "${licht_4_icoon}", schakelaar: "true" } }
+  tegel_licht_5: !include { file: tegel-instellingen.yaml, vars: { nr: licht_5, titel: "Tegel verlichting 5", naam: "${licht_5_naam}", entity: "${licht_5_entity}", icoon: "${licht_5_icoon}", schakelaar: "true" } }
+  tegel_licht_6: !include { file: tegel-instellingen.yaml, vars: { nr: licht_6, titel: "Tegel verlichting 6", naam: "${licht_6_naam}", entity: "${licht_6_entity}", icoon: "${licht_6_icoon}", schakelaar: "true" } }
+  tegel_scene_1: !include { file: tegel-instellingen.yaml, vars: { nr: scene_1, titel: "Tegel scène 1", naam: "${scene_1_naam}", entity: "${scene_1_entity}", icoon: "${scene_1_icoon}", schakelaar: "false" } }
+  tegel_scene_2: !include { file: tegel-instellingen.yaml, vars: { nr: scene_2, titel: "Tegel scène 2", naam: "${scene_2_naam}", entity: "${scene_2_entity}", icoon: "${scene_2_icoon}", schakelaar: "false" } }
+  tegel_scene_3: !include { file: tegel-instellingen.yaml, vars: { nr: scene_3, titel: "Tegel scène 3", naam: "${scene_3_naam}", entity: "${scene_3_entity}", icoon: "${scene_3_icoon}", schakelaar: "false" } }
+  tegel_scene_4: !include { file: tegel-instellingen.yaml, vars: { nr: scene_4, titel: "Tegel scène 4", naam: "${scene_4_naam}", entity: "${scene_4_entity}", icoon: "${scene_4_icoon}", schakelaar: "false" } }
+  tegel_scene_5: !include { file: tegel-instellingen.yaml, vars: { nr: scene_5, titel: "Tegel scène 5", naam: "${scene_5_naam}", entity: "${scene_5_entity}", icoon: "${scene_5_icoon}", schakelaar: "false" } }
+  tegel_scene_6: !include { file: tegel-instellingen.yaml, vars: { nr: scene_6, titel: "Tegel scène 6", naam: "${scene_6_naam}", entity: "${scene_6_entity}", icoon: "${scene_6_icoon}", schakelaar: "false" } }
 
 esphome:
   name: ${name}

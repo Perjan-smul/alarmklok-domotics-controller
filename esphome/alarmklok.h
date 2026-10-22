@@ -1,6 +1,7 @@
 #pragma once
 // Hulpfuncties voor de alarmklok (gebruikt vanuit de lambda's in de YAML).
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 
 namespace alarmklok {
@@ -172,6 +173,96 @@ inline const char *icoon(const std::string &naam, const char *standaard = "\U000
       return paar[1];
   }
   return standaard;
+}
+
+// ---- Tegels met status ------------------------------------------------------
+
+// "light.bedlamp" -> "light"
+inline std::string domein(const std::string &entiteit) {
+  const auto punt = entiteit.find('.');
+  return punt == std::string::npos ? "" : entiteit.substr(0, punt);
+}
+
+// Het attribuut met een percentage voor de statusregel, of "" als er geen is
+inline const char *waarde_attribuut(const std::string &domein) {
+  if (domein == "light")
+    return "brightness";
+  if (domein == "cover")
+    return "current_position";
+  if (domein == "fan")
+    return "percentage";
+  return "";
+}
+
+// Ruwe attribuutwaarde uit HA naar 0-100, of -1 als er geen is (lamp uit: "None")
+inline int waarde_procent(const std::string &domein, const std::string &ruw) {
+  char *eind = nullptr;
+  const float x = std::strtof(ruw.c_str(), &eind);
+  if (ruw.empty() || eind == ruw.c_str() || x != x)
+    return -1;
+  const float procent = domein == "light" ? x * 100.0f / 255.0f : x;
+  if (procent < 0)
+    return 0;
+  return procent > 100 ? 100 : (int) (procent + 0.5f);
+}
+
+// Telt de status als "aan" (tegel licht op, schakelaartje aan)?
+inline bool status_aan(const std::string &status) {
+  return status == "on" || status == "open" || status == "opening" || status == "playing" ||
+         status == "heat" || status == "cool" || status == "heat_cool" || status == "auto";
+}
+
+// Tweede regel van een tegel: "Aan · 80%", "Uit", "Open 50%", ...
+// Tegels zonder schakelaar (scènes, scripts) tonen alleen wat ze zijn.
+inline std::string tegel_status(const std::string &domein, const std::string &status,
+                                int procent, bool schakelaar = true) {
+  if (!schakelaar) {
+    if (domein == "scene")
+      return "Scène";
+    if (domein == "script")
+      return "Script";
+    if (domein == "automation")
+      return "Automatisering";
+    return "";
+  }
+  if (status.empty())
+    return "";
+  if (status == "unavailable" || status == "unknown")
+    return "Niet beschikbaar";
+  char buf[32];
+  if (domein == "cover") {
+    if (status == "open") {
+      if (procent >= 0 && procent < 100) {
+        snprintf(buf, sizeof(buf), "Open %d%%", procent);
+        return buf;
+      }
+      return "Open";
+    }
+    if (status == "closed")
+      return "Dicht";
+    if (status == "opening")
+      return "Gaat open";
+    if (status == "closing")
+      return "Gaat dicht";
+    return status;
+  }
+  if (domein == "media_player") {
+    if (status == "playing")
+      return "Speelt";
+    if (status == "paused")
+      return "Gepauzeerd";
+    return "Uit";
+  }
+  if (status == "on") {
+    if (procent >= 0) {
+      snprintf(buf, sizeof(buf), "Aan · %d%%", procent);
+      return buf;
+    }
+    return "Aan";
+  }
+  if (status == "off")
+    return "Uit";
+  return status;
 }
 
 inline const char *melodie(const std::string &naam) {

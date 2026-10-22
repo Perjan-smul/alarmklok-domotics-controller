@@ -24,6 +24,7 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 |---|---|
 | **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
 | **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld of Info. De keuze wordt onthouden. |
+| **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
 
 De stippen onderaan geven aan op welke pagina je bent; de stippen rechts op de
@@ -39,11 +40,13 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 | ![Gestapeld](docs/screenshots/03-klok-gestapeld.png) | ![Info](docs/screenshots/04-klok-info.png) |
 | **Gestapeld:** uren boven minuten, zoals StandBy | **Info:** tijd met kaarten voor weer, wekker en wake-up light |
 | ![Verlichting](docs/screenshots/05-verlichting.png) | ![Klimaat](docs/screenshots/06-klimaat.png) |
-| **Verlichting:** 6 tegels (oranje = aan) en een dimschuif | **Klimaat & rolluik:** thermostaat ± 0,5° en rolluik open/stop/dicht/positie |
+| **Verlichting:** 6 tegels met status ("Aan · 80%") en schakelaartje, plus een dimmerkaart | **Klimaat & rolluik:** thermostaatkaart met − / + en rolluikkaart (vulling = positie) |
 | ![Muziek](docs/screenshots/07-muziek.png) | ![Scènes](docs/screenshots/08-scenes.png) |
 | **Muziek:** wat er speelt, bediening, volume en 3 radiozenders | **Scènes:** 6 knoppen voor scènes en scripts |
 | ![Wekker](docs/screenshots/09-wekker.png) | ![Wekker gaat af](docs/screenshots/10-wekker-gaat-af.png) |
 | **Wekker:** drie wekkers (1/2/3) met elk een eigen tijd, aan/uit en dagen; geluid, volume, langzaam luider, wake-up light | **Wekker gaat af:** grote Snooze-knop; Stop moet je lang indrukken |
+| ![Detailpagina](docs/screenshots/12-detail.png) | |
+| **Detailpagina:** lang drukken op een tegel; helderheid, aan en uit | |
 
 > De screenshots zijn **ontwerpweergaven**, nagebouwd met dezelfde maten,
 > lettertypen, iconen en kleuren als de LVGL-configuratie, met voorbeelddata.
@@ -148,6 +151,7 @@ esphome/
     wekker.yaml                  Eén wekker: tijd, aan/uit en dagen
     tegel.yaml                   Eén bedieningstegel op het scherm
     tegel-instellingen.yaml      Naam, entiteit en icoon van een tegel (in te stellen vanuit HA)
+    detail-pagina.yaml           Detailpagina bij lang drukken op een tegel
     radio-knop.yaml              Eén radiozender-knop
 docs/screenshots/                Ontwerpweergaven van alle schermen
 homeassistant/
@@ -312,6 +316,11 @@ Tegels op de pagina Verlichting doen een `toggle` (werkt met `light`,
 `switch`, `fan`, `cover`, `input_boolean` en dergelijke). Scèneknoppen doen
 `turn_on` (werkt met `scene`, `script` en `automation`).
 
+Elke verlichtingstegel toont de status uit Home Assistant: "Aan · 80%" voor
+een gedimde lamp, "Open 50%" voor een rolluik, "Uit", of "Niet beschikbaar".
+Lang drukken opent de detailpagina van die entiteit, met een schuif voor
+helderheid (`light`), positie (`cover`) of snelheid (`fan`).
+
 ### Overige pagina's en standaardwaarden
 
 De rest staat bovenin `esphome/alarmklok.yaml`. Daar staan ook de
@@ -323,7 +332,8 @@ verandert:
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
   licht_1_icoon: desk-lamp
-  dim_lamp: light.slaapkamer     # voor de dimschuif
+  dim_lamp: light.slaapkamer     # voor de dimmerkaart
+  dim_lamp_naam: Bedlamp         # naam op de dimmerkaart
 
   # Klimaat & rolluik
   thermostaat: climate.slaapkamer

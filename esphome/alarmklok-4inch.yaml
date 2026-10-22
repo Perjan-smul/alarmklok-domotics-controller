@@ -26,3 +26,4 @@ packages:
   kern: !include onderdelen/kern.yaml
   hardware: !include onderdelen/waveshare-s3-4.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
+  detail: !include onderdelen/detail-pagina.yaml

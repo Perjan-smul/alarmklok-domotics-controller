@@ -1,6 +1,10 @@
-# Eén bedieningstegel. Een tik voert ${actie} uit op de entiteit uit Home
-# Assistant (homeassistant.toggle voor lampen e.d., homeassistant.turn_on voor
-# scènes). Naam, icoon en entiteit: zie tegel-instellingen.yaml.
+# Eén bedieningstegel: icoon linksboven, schakelaartje rechtsboven (alleen bij
+# schakelaar: true), naam en status onderaan. Een tik voert ${actie} uit op de
+# entiteit uit Home Assistant (homeassistant.toggle voor lampen e.d.,
+# homeassistant.turn_on voor scènes); lang drukken opent de detailpagina
+# (detail-pagina.yaml). Naam, icoon en entiteit: zie tegel-instellingen.yaml.
+# Maten per scherm: icoon_font, sw_b en sw_h (breedte/hoogte schakelaartje) en
+# naam_y (naam boven de statusregel).
 button:
   id: tegel_${nr}
   grid_cell_row_pos: ${rij}
@@ -8,23 +12,52 @@ button:
   grid_cell_x_align: STRETCH
   grid_cell_y_align: STRETCH
   styles: tegel_stijl
-  layout:
-    type: FLEX
-    flex_flow: COLUMN
-    flex_align_main: CENTER
-    flex_align_cross: CENTER
-    flex_align_track: CENTER
+  # Aan: lichtere kaart (niet oranje zoals de wekkerknoppen)
+  checked:
+    bg_color: 0x364152
+    text_color: 0xE8EAED
   widgets:
     - label:
         id: tegel_${nr}_icoon_tekst
+        align: TOP_LEFT
         text: ""
-        text_font: f_icoon
+        text_font: ${icoon_font}
+    - switch:
+        id: tegel_${nr}_schakelaar
+        align: TOP_RIGHT
+        width: ${sw_b}
+        height: ${sw_h}
+        clickable: false
     - label:
         id: tegel_${nr}_naam_tekst
+        align: BOTTOM_LEFT
+        y: ${naam_y}
+        width: 100%
+        long_mode: DOT
         text: ""
         text_font: f_midden
+    - label:
+        id: tegel_${nr}_status_tekst
+        align: BOTTOM_LEFT
+        width: 100%
+        long_mode: DOT
+        text: ""
+        text_font: f_klein
+        text_color: 0x9AA4B2
   on_click:
-    - homeassistant.action:
-        action: ${actie}
-        data:
-          entity_id: !lambda return id(tegel_${nr}_entiteit).state;
+    - if:
+        condition:
+          lambda: return !id(lang_gedrukt);
+        then:
+          - homeassistant.action:
+              action: ${actie}
+              data:
+                entity_id: !lambda return id(tegel_${nr}_entiteit).state;
+    - lambda: id(lang_gedrukt) = false;
+  on_long_press:
+    - if:
+        condition:
+          lambda: return ${schakelaar};
+        then:
+          - lambda: id(lang_gedrukt) = true;
+          - script.execute: tegel_${nr}_detail

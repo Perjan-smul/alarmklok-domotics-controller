@@ -93,6 +93,7 @@ font:
       - "\U000F036C"  # microphone (spraakassistent)
       - "\U000F036D"  # microphone-off
       - "\U000F01D8"  # dots-horizontal
+      - "\U000F004D"  # arrow-left (detailpagina)
   - file: *mdi
     id: f_stip
     size: '${(14 * (k | float)) | int}'
@@ -100,6 +101,45 @@ font:
       - "\U000F0765"  # circle
       - "\U000F0766"  # circle-outline
       - "\U000F036D"  # microphone-off (gedempt)
+
+  # Groot icoon op de detailpagina (alleen de tegeliconen)
+  - file: *mdi
+    id: f_icoon_groot
+    size: '${(100 * (k | float)) | int}'
+    glyphs: &tegel_iconen
+      - "\U000F0335"  # lightbulb
+      - "\U000F06E8"  # lightbulb-on
+      - "\U000F1253"  # lightbulb-group
+      - "\U000F0769"  # ceiling-light
+      - "\U000F08DD"  # floor-lamp
+      - "\U000F095F"  # desk-lamp
+      - "\U000F06B5"  # lamp
+      - "\U000F00AC"  # blinds
+      - "\U000F111C"  # window-shutter
+      - "\U000F1A6B"  # roller-shade
+      - "\U000F1846"  # curtains
+      - "\U000F075A"  # music
+      - "\U000F0439"  # radio
+      - "\U000F043B"  # radio-tower
+      - "\U000F04C3"  # speaker
+      - "\U000F0502"  # television
+      - "\U000F0FCE"  # movie-open
+      - "\U000F0210"  # fan
+      - "\U000F0438"  # radiator
+      - "\U000F0393"  # thermostat
+      - "\U000F0904"  # power-sleep
+      - "\U000F0594"  # weather-night
+      - "\U000F059C"  # weather-sunset-up
+      - "\U000F02DC"  # home
+      - "\U000F04B9"  # sofa
+      - "\U000F02E3"  # bed
+      - "\U000F0A70"  # silverware-fork-knife
+      - "\U000F140B"  # lightning-bolt
+  # Kleiner icoon voor de tegels op een vierkant scherm
+  - file: *mdi
+    id: f_icoon_klein
+    size: '${(34 * (k | float)) | int}'
+    glyphs: *tegel_iconen
 
 lvgl:
   displays: scherm
@@ -122,7 +162,7 @@ lvgl:
     label:
       text_color: 0xE8EAED
     button:
-      bg_color: 0x23262D
+      bg_color: 0x2B3340
       text_color: 0xE8EAED
       radius: '${(14 * (k | float)) | int}'
       border_width: 0
@@ -132,27 +172,27 @@ lvgl:
         bg_color: 0xF5A623
         text_color: 0x16181D
     slider:
-      bg_color: 0x3A3F48
+      bg_color: 0x46505F
       indicator:
         bg_color: 0xF5A623
       knob:
         bg_color: 0xFFFFFF
     switch:
-      bg_color: 0x3A3F48
+      bg_color: 0x46505F
       indicator:
         checked:
           bg_color: 0xF5A623
     dropdown:
-      bg_color: 0x23262D
+      bg_color: 0x2B3340
       text_color: 0xE8EAED
       border_width: 0
       radius: '${(10 * (k | float)) | int}'
     roller:
-      bg_color: 0x16181D
+      bg_color: 0x232A35
       text_color: 0x6C727C
       border_width: 0
       selected:
-        bg_color: 0x23262D
+        bg_color: 0x2B3340
         text_color: 0xFFFFFF
 
   style_definitions:
@@ -163,12 +203,12 @@ lvgl:
       pad_all: 0
       radius: 0
     - id: tegel_stijl
-      bg_color: 0x23262D
+      bg_color: 0x2B3340
       text_color: 0xE8EAED
       radius: '${(18 * (k | float)) | int}'
-      pad_all: '${(6 * (k | float)) | int}'
+      pad_all: '${(12 * (k | float)) | int}'
     - id: kaart
-      bg_color: 0x16181D
+      bg_color: 0x232A35
       bg_opa: COVER
       border_width: 0
       radius: '${(18 * (k | float)) | int}'
@@ -220,7 +260,7 @@ lvgl:
                 align: CENTER
                 width: '${(448 * (k | float)) | int}'
                 height: '${(330 * (k | float)) | int}'
-                bg_color: 0x23262D
+                bg_color: 0x2B3340
                 border_color: 0xF5A623
                 border_width: '${(2 * (k | float)) | int}'
                 radius: '${(18 * (k | float)) | int}'
@@ -239,7 +279,7 @@ lvgl:
           y: '${-(28 * (k | float)) | int}'
           width: '${(456 * (k | float)) | int}'
           height: SIZE_CONTENT
-          bg_color: 0x23262D
+          bg_color: 0x2B3340
           border_color: 0xF5A623
           border_width: '${(2 * (k | float)) | int}'
           radius: '${(18 * (k | float)) | int}'
@@ -596,45 +636,88 @@ lvgl:
                       pad_all: '${(12 * (k | float)) | int}'
                       layout:
                         type: GRID
-                        grid_rows: [FR(1), FR(1), FR(1), '${((44 * (k | float)) | int) ~ "px"}']
+                        grid_rows: [FR(1), FR(1), FR(1), '${((64 * (k | float)) | int) ~ "px"}']
                         grid_columns: [FR(1), FR(1)]
                         pad_row: '${(10 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
-                        - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 1, kolom: 0, actie: homeassistant.toggle } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 1, actie: homeassistant.toggle } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 2, kolom: 0, actie: homeassistant.toggle } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 2, kolom: 1, actie: homeassistant.toggle } }
-                        - slider:
-                            id: sl_dimmer
+                        - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 1, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 2, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 2, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        # Dimmerkaart: de hele kaart is de schuif; warm gevuld tot de helderheid
+                        - obj:
                             grid_cell_row_pos: 3
                             grid_cell_column_pos: 0
                             grid_cell_column_span: 2
                             grid_cell_x_align: STRETCH
-                            grid_cell_y_align: CENTER
-                            height: '${(28 * (k | float)) | int}'
-                            min_value: 0
-                            max_value: 255
-                            on_release:
-                              - if:
-                                  condition:
-                                    lambda: return x < 3;
-                                  then:
-                                    - homeassistant.action:
-                                        action: light.turn_off
-                                        data:
-                                          entity_id: ${dim_lamp}
-                                  else:
-                                    - homeassistant.action:
-                                        action: light.turn_on
-                                        data:
-                                          entity_id: ${dim_lamp}
-                                          brightness: !lambda return std::to_string((int) x);
+                            grid_cell_y_align: STRETCH
+                            styles: leeg
+                            widgets:
+                              - slider:
+                                  id: sl_dimmer
+                                  width: 100%
+                                  height: 100%
+                                  min_value: 0
+                                  max_value: 255
+                                  bg_color: 0x2B3340
+                                  bg_opa: COVER
+                                  radius: '${(13 * (k | float)) | int}'
+                                  pad_all: 0
+                                  indicator:
+                                    bg_color: 0xF5A623
+                                    bg_grad_color: 0xF5C35A
+                                    bg_grad_dir: HOR
+                                    radius: '${(13 * (k | float)) | int}'
+                                  knob:
+                                    bg_opa: TRANSP
+                                    shadow_width: 0
+                                    pad_all: 0
+                                  on_value:
+                                    - lvgl.label.update:
+                                        id: lbl_dimmer
+                                        text: !lambda |-
+                                          if (x < 3) return std::string("Uit");
+                                          return std::to_string((int) (x * 100.0f / 255.0f + 0.5f)) + "%";
+                                  on_release:
+                                    - if:
+                                        condition:
+                                          lambda: return x < 3;
+                                        then:
+                                          - homeassistant.action:
+                                              action: light.turn_off
+                                              data:
+                                                entity_id: ${dim_lamp}
+                                        else:
+                                          - homeassistant.action:
+                                              action: light.turn_on
+                                              data:
+                                                entity_id: ${dim_lamp}
+                                                brightness: !lambda return std::to_string((int) x);
+                              - label:
+                                  align: LEFT_MID
+                                  x: '${(12 * (k | float)) | int}'
+                                  clickable: false
+                                  text_font: f_icoon_klein
+                                  text: "\U000F06E8"
+                              - label:
+                                  align: LEFT_MID
+                                  x: '${(58 * (k | float)) | int}'
+                                  clickable: false
+                                  text_font: f_midden
+                                  text: "${dim_lamp_naam}"
+                              - label:
+                                  id: lbl_dimmer
+                                  align: RIGHT_MID
+                                  x: '${(-14 * (k | float)) | int}'
+                                  clickable: false
+                                  text_font: f_midden
+                                  text: "Uit"
 
               # ===============================================================
-              #  Klimaat & rolluik: twee kaarten onder elkaar
+              #  Klimaat & rolluik: thermostaatkaart en rolluikkaart
               # ===============================================================
               - id: vak_klimaat
                 row: 0
@@ -642,31 +725,35 @@ lvgl:
                 dir: HOR
                 widgets:
                   - label: { text: "Klimaat & rolluik", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
-                  # ---- Thermostaat ----
+                  # ---- Thermostaat: ingestelde temperatuur groot, - en + ernaast ----
                   - obj:
                       x: '${(12 * (k | float)) | int}'
                       y: '${(44 * (k | float)) | int}'
                       width: '${(456 * (k | float)) | int}'
-                      height: '${(196 * (k | float)) | int}'
-                      styles: kaart
+                      height: '${(190 * (k | float)) | int}'
+                      styles: tegel_stijl
                       widgets:
-                        - label: { text: "\U000F0393", text_font: f_icoon, text_color: 0xF5A623 }
-                        - label: { text: "Thermostaat", x: '${(58 * (k | float)) | int}', y: '${(10 * (k | float)) | int}', text_font: f_midden }
+                        - label: { text: "\U000F0393", text_font: f_icoon_klein, text_color: 0xF5C35A }
+                        - label: { text: "Thermostaat", x: '${(46 * (k | float)) | int}', text_font: f_midden }
                         - label:
                             id: lbl_klimaat_huidig
                             align: TOP_RIGHT
-                            y: '${(14 * (k | float)) | int}'
-                            text_color: 0xB0B6C0
+                            y: '${(4 * (k | float)) | int}'
+                            text_color: 0x9AA4B2
                             text: ""
                         - label:
                             id: lbl_klimaat_doel
-                            align: BOTTOM_MID
+                            align: CENTER
+                            y: '${(16 * (k | float)) | int}'
                             text_font: f_klok_mid
                             text: "--"
                         - button:
-                            align: BOTTOM_LEFT
-                            width: '${(100 * (k | float)) | int}'
-                            height: '${(80 * (k | float)) | int}'
+                            align: LEFT_MID
+                            y: '${(16 * (k | float)) | int}'
+                            width: '${(76 * (k | float)) | int}'
+                            height: '${(76 * (k | float)) | int}'
+                            radius: '${(38 * (k | float)) | int}'
+                            bg_color: 0x46505F
                             on_click:
                               - homeassistant.action:
                                   action: climate.set_temperature
@@ -679,9 +766,12 @@ lvgl:
                             widgets:
                               - label: { text: "\U000F0374", text_font: f_icoon, align: CENTER }
                         - button:
-                            align: BOTTOM_RIGHT
-                            width: '${(100 * (k | float)) | int}'
-                            height: '${(80 * (k | float)) | int}'
+                            align: RIGHT_MID
+                            y: '${(16 * (k | float)) | int}'
+                            width: '${(76 * (k | float)) | int}'
+                            height: '${(76 * (k | float)) | int}'
+                            radius: '${(38 * (k | float)) | int}'
+                            bg_color: 0x46505F
                             on_click:
                               - homeassistant.action:
                                   action: climate.set_temperature
@@ -693,36 +783,50 @@ lvgl:
                                       return std::string(buf);
                             widgets:
                               - label: { text: "\U000F0415", text_font: f_icoon, align: CENTER }
-                  # ---- Rolluik ----
+                  # ---- Rolluik: kaart gevuld tot de positie, knoppen eronder ----
                   - obj:
                       x: '${(12 * (k | float)) | int}'
-                      y: '${(250 * (k | float)) | int}'
+                      y: '${(244 * (k | float)) | int}'
                       width: '${(456 * (k | float)) | int}'
-                      height: '${(196 * (k | float)) | int}'
-                      styles: kaart
+                      height: '${(200 * (k | float)) | int}'
+                      styles: leeg
                       widgets:
-                        - label: { text: "\U000F111C", text_font: f_icoon, text_color: 0xF5A623 }
-                        - label: { text: "Rolluik", x: '${(58 * (k | float)) | int}', y: '${(10 * (k | float)) | int}', text_font: f_midden }
-                        - label:
-                            id: lbl_rolluik
-                            align: TOP_RIGHT
-                            y: '${(10 * (k | float)) | int}'
-                            text_font: f_midden
-                            text: "--"
                         - slider:
                             id: sl_rolluik
                             align: TOP_MID
-                            y: '${(70 * (k | float)) | int}'
-                            width: '${(380 * (k | float)) | int}'
-                            height: '${(26 * (k | float)) | int}'
+                            width: 100%
+                            height: '${(110 * (k | float)) | int}'
                             min_value: 0
                             max_value: 100
+                            bg_color: 0x2B3340
+                            bg_opa: COVER
+                            radius: '${(18 * (k | float)) | int}'
+                            pad_all: 0
+                            indicator:
+                              bg_color: 0x5B7FA6
+                              bg_grad_color: 0x7FA3C9
+                              bg_grad_dir: HOR
+                              radius: '${(18 * (k | float)) | int}'
+                            knob:
+                              bg_opa: TRANSP
+                              shadow_width: 0
+                              pad_all: 0
                             on_release:
                               - homeassistant.action:
                                   action: cover.set_cover_position
                                   data:
                                     entity_id: ${rolluik}
                                     position: !lambda return std::to_string((int) x);
+                        - label: { text: "\U000F111C", x: '${(14 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', clickable: false, text_font: f_icoon_klein }
+                        - label: { text: "Rolluik", x: '${(14 * (k | float)) | int}', y: '${(70 * (k | float)) | int}', clickable: false, text_font: f_midden }
+                        - label:
+                            id: lbl_rolluik
+                            align: TOP_RIGHT
+                            x: '${(-14 * (k | float)) | int}'
+                            y: '${(70 * (k | float)) | int}'
+                            clickable: false
+                            text_font: f_midden
+                            text: "--"
                         - obj:
                             align: BOTTOM_MID
                             width: 100%
@@ -734,8 +838,9 @@ lvgl:
                               flex_align_main: SPACE_BETWEEN
                             widgets:
                               - button:
-                                  width: '${(122 * (k | float)) | int}'
+                                  width: '${(144 * (k | float)) | int}'
                                   height: '${(66 * (k | float)) | int}'
+                                  styles: tegel_stijl
                                   on_click:
                                     - homeassistant.action:
                                         action: cover.open_cover
@@ -744,8 +849,9 @@ lvgl:
                                   widgets:
                                     - label: { text: "\U000F005D", text_font: f_icoon, align: CENTER }
                               - button:
-                                  width: '${(122 * (k | float)) | int}'
+                                  width: '${(144 * (k | float)) | int}'
                                   height: '${(66 * (k | float)) | int}'
+                                  styles: tegel_stijl
                                   on_click:
                                     - homeassistant.action:
                                         action: cover.stop_cover
@@ -754,8 +860,9 @@ lvgl:
                                   widgets:
                                     - label: { text: "\U000F04DB", text_font: f_icoon, align: CENTER }
                               - button:
-                                  width: '${(122 * (k | float)) | int}'
+                                  width: '${(144 * (k | float)) | int}'
                                   height: '${(66 * (k | float)) | int}'
+                                  styles: tegel_stijl
                                   on_click:
                                     - homeassistant.action:
                                         action: cover.close_cover
@@ -785,7 +892,7 @@ lvgl:
                             y: 0
                             width: '${(96 * (k | float)) | int}'
                             height: '${(96 * (k | float)) | int}'
-                            bg_color: 0x2A2D34
+                            bg_color: 0x364152
                             border_width: 0
                             radius: '${(14 * (k | float)) | int}'
                             widgets:
@@ -901,12 +1008,12 @@ lvgl:
                         pad_row: '${(10 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
-                        - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 1, kolom: 0, actie: homeassistant.turn_on } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 1, actie: homeassistant.turn_on } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 2, kolom: 0, actie: homeassistant.turn_on } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 2, kolom: 1, actie: homeassistant.turn_on } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 1, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 2, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 2, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
 
               # ===============================================================
               #  Wekker instellen. Past niet op één scherm: omhoog vegen voor
@@ -1028,7 +1135,7 @@ lvgl:
                             options: ["Elke dag", "Werkdagen", "Weekend", "Eenmalig", "Maandag", "Dinsdag",
                                       "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
                             dropdown_list:
-                              bg_color: 0x23262D
+                              bg_color: 0x2B3340
                               text_color: 0xE8EAED
                               text_font: f_midden
                               selected:
@@ -1052,7 +1159,7 @@ lvgl:
                             text_font: f_midden
                             options: ["Klassiek", "Zacht", "Mario", "Radio"]
                             dropdown_list:
-                              bg_color: 0x23262D
+                              bg_color: 0x2B3340
                               text_color: 0xE8EAED
                               text_font: f_midden
                               selected:

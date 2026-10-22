@@ -40,3 +40,4 @@ packages:
   c6_update: !include onderdelen/c6-update.yaml
   spraak: !include onderdelen/spraak.yaml
   scherm: !include onderdelen/scherm.yaml
+  detail: !include onderdelen/detail-pagina.yaml

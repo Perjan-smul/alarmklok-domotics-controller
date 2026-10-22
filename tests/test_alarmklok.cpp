@@ -94,6 +94,23 @@ int main() {
   CONTROLEER(std::strncmp(melodie("Mario"), "mario:", 6) == 0);
   CONTROLEER(std::strncmp(melodie("iets anders"), "klassiek:", 9) == 0);
 
+  // Tegels met status
+  CONTROLEER(domein("light.bedlamp") == "light" && domein("geen_punt") == "");
+  CONTROLEER(std::strcmp(waarde_attribuut("cover"), "current_position") == 0);
+  CONTROLEER(std::strcmp(waarde_attribuut("switch"), "") == 0);
+  CONTROLEER(waarde_procent("light", "255") == 100 && waarde_procent("light", "128") == 50);
+  CONTROLEER(waarde_procent("light", "None") == -1 && waarde_procent("light", "") == -1);
+  CONTROLEER(waarde_procent("cover", "37") == 37 && waarde_procent("fan", "150") == 100);
+  CONTROLEER(status_aan("on") && status_aan("open") && !status_aan("off") && !status_aan("closed"));
+  CONTROLEER(tegel_status("light", "on", 80) == "Aan · 80%");
+  CONTROLEER(tegel_status("light", "on", -1) == "Aan" && tegel_status("switch", "off", -1) == "Uit");
+  CONTROLEER(tegel_status("cover", "open", 50) == "Open 50%" && tegel_status("cover", "open", 100) == "Open");
+  CONTROLEER(tegel_status("cover", "closed", 0) == "Dicht");
+  CONTROLEER(tegel_status("media_player", "playing", -1) == "Speelt");
+  CONTROLEER(tegel_status("light", "unavailable", -1) == "Niet beschikbaar");
+  CONTROLEER(tegel_status("scene", "2026-10-22T10:00:00", -1, false) == "Scène");
+  CONTROLEER(tegel_status("light", "", -1) == "");
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

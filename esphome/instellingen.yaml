@@ -27,7 +27,9 @@ substitutions:
 
   # ---- Pagina "Verlichting": 6 tegels + dimschuif ---------------------------
   # Een tik doet "homeassistant.toggle" (lamp, schakelaar, ventilator, ...).
+  # Dimmerkaart onder de tegels: welke lamp, en de naam op de kaart
   dim_lamp: light.slaapkamer
+  dim_lamp_naam: Bedlamp
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
   licht_1_icoon: desk-lamp
