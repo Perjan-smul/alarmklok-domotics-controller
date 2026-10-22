@@ -138,6 +138,28 @@ int main() {
     CONTROLEER(x == 150 && y == 100);
   }
 
+  // Maan
+  {
+    // Volle maan 26 oktober 2026 ~05:12 UTC, nieuwe maan 10 oktober 2026 ~16:50 UTC
+    const float vol = maan_fase(1792991520.0);
+    const float nieuw = maan_fase(1791651000.0);
+    CONTROLEER(std::fabs(vol - 0.5f) < 0.02f);
+    CONTROLEER(nieuw < 0.03f || nieuw > 0.97f);  // gemiddelde maand: tot ~1 dag verschil
+    CONTROLEER(std::strcmp(maan_fase_naam(0.5f), "Volle maan") == 0);
+    CONTROLEER(std::strcmp(maan_fase_naam(0.26f), "Eerste kwartier") == 0);
+    CONTROLEER(std::strcmp(maan_fase_naam(0.97f), "Nieuwe maan") == 0);
+    CONTROLEER(std::fabs(maan_verlicht(0.5f) - 1.0f) < 1e-4f && maan_verlicht(0.0f) < 1e-4f);
+    // Eerste kwartier: rechts licht, links donker; buiten de schijf niets
+    CONTROLEER(maan_licht(0.25f, 0.5f, 0.0f) > 0.9f && maan_licht(0.25f, -0.5f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.75f, -0.5f, 0.0f) > 0.9f && maan_licht(0.75f, 0.5f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.5f, 0.0f, 0.0f) > 0.9f && maan_licht(0.0f, 0.0f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.5f, 0.9f, 0.9f) == 0.0f);
+    int x, y, g, x2, y2, g2;
+    ster(3, 100, 50, x, y, g);
+    ster(3, 100, 50, x2, y2, g2);
+    CONTROLEER(x == x2 && y == y2 && x < 100 && y < 50 && g >= 1 && g <= 3);
+  }
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

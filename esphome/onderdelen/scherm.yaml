@@ -113,6 +113,16 @@ font:
     id: f_zwevend
     size: 330
     glyphs: "0123456789-"
+  # Dun en rustig voor het maanscherm
+  - file: "gfonts://Outfit@200"
+    id: f_maan_tijd
+    size: 160
+    glyphs: "0123456789:-"
+  - file: "gfonts://Outfit@300"
+    id: f_maan_klein
+    size: 30
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true
   # Groot icoon op de detailpagina (alleen de tegeliconen)
   - file: *mdi
     id: f_icoon_groot
@@ -731,6 +741,50 @@ lvgl:
                                   y: -40
                                   text_font: f_midden
                                   styles: klok_sub
+                                  text: ""
+
+                        # ---- 7. Maan: de maan in de fase van vandaag (ook de nachtstand)
+                        - obj:
+                            id: ontwerp_maan
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - obj:
+                                  id: maan_sterren
+                                  width: 100%
+                                  height: 100%
+                                  styles: leeg
+                              - canvas:
+                                  id: maan_canvas
+                                  x: 70
+                                  y: 100
+                                  width: 400
+                                  height: 400
+                              - label:
+                                  id: lbl_m_temp
+                                  align: TOP_RIGHT
+                                  x: -60
+                                  y: 28
+                                  text_align: RIGHT
+                                  text_line_space: 6
+                                  text_font: f_maan_klein
+                                  styles: klok_sub
+                                  text: ""
+                              - label:
+                                  id: lbl_m_tijd
+                                  x: 530
+                                  y: 170
+                                  text_font: f_maan_tijd
+                                  styles: klok_tekst
+                                  text: "--:--"
+                              - label:
+                                  id: lbl_m_wekker
+                                  x: 540
+                                  y: 360
+                                  text_font: f_maan_klein
+                                  styles: klok_accent
                                   text: ""
 
                         # Stippen rechts: welk klokontwerp?

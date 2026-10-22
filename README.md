@@ -23,7 +23,7 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 | Gebaar | Wat gebeurt er |
 |---|---|
 | **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon of Zwevend. De keuze wordt onthouden. |
+| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend of Maan. De keuze wordt onthouden. |
 | **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
 | **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
@@ -63,6 +63,14 @@ Verder:
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
   scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
+- **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
+  nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
+  grijs) op een sterrenhemel, met de tijd en de volgende wekker in rood en
+  rechtsboven de temperatuur binnen (thermostaat) en buiten. Overdag te kiezen als klokontwerp *Maan*. Met de
+  schakelaar *Maan in de nachtstand* uit krijg je weer je eigen ontwerp onder
+  het rode filter. De maantextuur is gemaakt met `tools/maan_textuur.py` uit de
+  maankaart van [NASA's Scientific Visualization Studio](https://svs.gsfc.nasa.gov/4720)
+  (Lunar Reconnaissance Orbiter, publiek domein).
 - **Klokontwerpen in StandBy-stijl:** *Zon*
   ([screenshot](docs/screenshots/13-klok-zon.png)) laat de zon (of 's nachts
   de maan) over een boog lopen tussen zonsopkomst en -ondergang, en de lucht
@@ -143,7 +151,8 @@ esphome/
   alarmklok.yaml                 De 7"-klok (dit flash je)
   alarmklok-4inch.yaml           De 4"-klok (dit flash je)
   instellingen.yaml              Standaardwaarden voor tegels en pagina's (hier pas je dingen aan)
-  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen)
+  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen, maanfase)
+  maan_textuur.h                 De maan in grijstinten (gemaakt met tools/maan_textuur.py)
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   alarmklok-4b.yaml              De 4B-klok (dit flash je)
   onderdelen/
@@ -282,7 +291,8 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
-| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend |
+| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan |
+| `switch.alarmklok_maan_in_de_nachtstand` | Nachtstand met het maanscherm (aan) of met het rode filter over je eigen ontwerp (uit) |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
 | `update.alarmklok_wifi_chip_c6` | Firmware van de wifi-chip (7" en 4B), zie [Stabiliteit](#stabiliteit) |

@@ -33,6 +33,7 @@ esphome:
   friendly_name: ${friendly_name}
   includes:
     - alarmklok.h
+    - maan_textuur.h
   on_boot:
     # Vóór de verbinding met Home Assistant: zeg welke entiteiten de tegels
     # volgen. HA vraagt die lijst alleen op bij het verbinden.
@@ -47,6 +48,8 @@ esphome:
         - lambda: id(ui_klaar) = true;
         - script.execute: tegels_tonen
         - script.execute: klokkleur_toepassen
+        - script.execute: sterren_maken
+        - script.execute: maan_tekenen
         - script.execute: ui_synchroniseren
         - script.execute: scherm_bijwerken
 
@@ -174,6 +177,12 @@ time:
                 lambda: return id(ui_klaar) && id(klokontwerp).active_index().value_or(0) == 4;
               then:
                 - script.execute: zon_bijwerken
+          # Elk uur de maanfase opnieuw tekenen (verandert langzaam)
+          - if:
+              condition:
+                lambda: return id(ui_klaar) && id(klok).now().minute == 0;
+              then:
+                - script.execute: maan_tekenen
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
@@ -261,6 +270,7 @@ select:
       - Info
       - Zon
       - Zwevend
+      - Maan
     initial_option: Digitaal
     on_value:
       - if:
@@ -460,6 +470,22 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
+
+  # In de nachtstand het maanscherm: grijze maan in de fase van vandaag, rode
+  # tekst. Uit: het gekozen klokontwerp onder een rood filter.
+  - platform: template
+    id: maan_s_nachts
+    name: Maan in de nachtstand
+    icon: mdi:moon-waning-crescent
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      - if:
+          condition:
+            lambda: return id(ui_klaar) && id(overlay_zichtbaar);
+          then:
+            - script.execute: nacht_stijl
 
   # Nachtstand ook bij weinig licht (alleen met een lichtsensor, zie hierboven)
   - platform: template
@@ -895,42 +921,129 @@ script:
   # ---------------------------------------------------------------------------
   - id: toon_klokontwerp
     then:
-      - lvgl.widget.hide: [ontwerp_digitaal, ontwerp_analoog, ontwerp_gestapeld, ontwerp_info, ontwerp_zon, ontwerp_zwevend]
+      - lambda: |-
+          // In de nachtstand (met "Maan in de nachtstand") altijd het maanscherm
+          int keuze = id(klokontwerp).active_index().value_or(0);
+          if (id(overlay_zichtbaar) && id(maan_s_nachts).state)
+            keuze = 6;
+          lv_obj_t *ontwerpen[] = {id(ontwerp_digitaal), id(ontwerp_analoog), id(ontwerp_gestapeld),
+                                   id(ontwerp_info), id(ontwerp_zon), id(ontwerp_zwevend),
+                                   id(ontwerp_maan)};
+          for (int i = 0; i < 7; i++) {
+            if (i == keuze)
+              lv_obj_clear_flag(ontwerpen[i], LV_OBJ_FLAG_HIDDEN);
+            else
+              lv_obj_add_flag(ontwerpen[i], LV_OBJ_FLAG_HIDDEN);
+          }
+          lv_label_set_text(id(lbl_ontwerp_stippen),
+                            alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 7, "\n").c_str());
+          if (keuze == 4)
+            id(zon_bijwerken).execute();
+          if (keuze == 6)
+            id(maan_tekenen).execute();
+
+  # Nachtstand aan of uit: maanscherm met rode tekst, of het rode filter
+  - id: nacht_stijl
+    then:
       - if:
           condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 4;
+            lambda: return id(overlay_zichtbaar) && id(maan_s_nachts).state;
           then:
-            - lvgl.widget.show: ontwerp_zon
-            - script.execute: zon_bijwerken
-      - if:
-          condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 5;
-          then:
-            - lvgl.widget.show: ontwerp_zwevend
-      - if:
-          condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 1;
-          then:
-            - lvgl.widget.show: ontwerp_analoog
-      - if:
-          condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 2;
-          then:
-            - lvgl.widget.show: ontwerp_gestapeld
-      - if:
-          condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 3;
-          then:
-            - lvgl.widget.show: ontwerp_info
-      - if:
-          condition:
-            lambda: return id(klokontwerp).active_index().value_or(0) == 0;
-          then:
-            - lvgl.widget.show: ontwerp_digitaal
-      - lvgl.label.update:
-          id: lbl_ontwerp_stippen
-          text: !lambda |-
-            return alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 6, "\n");
+            - lvgl.widget.hide: nacht_filter
+            - lvgl.style.update:
+                id: klok_tekst
+                text_color: 0x9A2A1A
+            - lvgl.style.update:
+                id: klok_sub
+                text_color: 0x5A1A10
+            - lvgl.style.update:
+                id: klok_accent
+                text_color: 0x5A1A10
+          else:
+            - lvgl.style.update:
+                id: klok_sub
+                text_color: 0xB0B6C0
+            - lvgl.style.update:
+                id: klok_accent
+                text_color: 0xF5A623
+            - script.execute: klokkleur_toepassen
+            - if:
+                condition:
+                  lambda: return id(overlay_zichtbaar);
+                then:
+                  - lvgl.widget.show: nacht_filter
+                else:
+                  - lvgl.widget.hide: nacht_filter
+      - script.execute: toon_klokontwerp
+
+  # De maan in de fase van nu: textuur (maan_textuur.h) x licht van de zon.
+  # Rechtstreeks in de canvasbuffer; daarna één keer opnieuw tekenen.
+  - id: maan_tekenen
+    then:
+      - lambda: |-
+          auto nu = id(klok).now();
+          const float fase = alarmklok::maan_fase(nu.is_valid() ? (double) nu.timestamp : 0.0);
+          lv_draw_buf_t *buf = lv_canvas_get_draw_buf(id(maan_canvas));
+          if (buf == nullptr || buf->header.cf != LV_COLOR_FORMAT_RGB565)
+            return;
+          const int d = buf->header.w;
+          const int T = alarmklok::MAAN_TEXTUUR_MAAT;
+          const float schaal = (float) T / d;
+          for (int y = 0; y < d; y++) {
+            uint16_t *rij = (uint16_t *) (buf->data + y * buf->header.stride);
+            const float ny = (2.0f * y + 1) / d - 1.0f;
+            for (int x = 0; x < d; x++) {
+              const float nx = (2.0f * x + 1) / d - 1.0f;
+              const float r = std::sqrt(nx * nx + ny * ny);
+              // Zachte rand (1 pixel), daarbuiten zwart
+              float rand = (1.0f - r) * d * 0.5f + 0.5f;
+              if (rand <= 0) {
+                rij[x] = 0;
+                continue;
+              }
+              if (rand > 1)
+                rand = 1;
+              // Bilineair uit de textuur
+              float u = (x + 0.5f) * schaal - 0.5f, v = (y + 0.5f) * schaal - 0.5f;
+              u = u < 0 ? 0 : (u > T - 1.001f ? T - 1.001f : u);
+              v = v < 0 ? 0 : (v > T - 1.001f ? T - 1.001f : v);
+              const int u0 = (int) u, v0 = (int) v;
+              const float fu = u - u0, fv = v - v0;
+              const uint8_t *t0 = alarmklok::MAAN_TEXTUUR + v0 * T + u0;
+              const float tex = (t0[0] * (1 - fu) + t0[1] * fu) * (1 - fv) +
+                                (t0[T] * (1 - fu) + t0[T + 1] * fu) * fv;
+              const float licht = alarmklok::maan_licht(fase, nx, ny);
+              const int g = (int) (tex * (licht < 0.06f ? 0.06f : licht) * rand * 0.92f);
+              rij[x] = lv_color_to_u16(lv_color_make(g, g, g));
+            }
+          }
+          lv_obj_invalidate(id(maan_canvas));
+
+  # Sterren achter de maan (eenmalig bij het opstarten), niet achter de maan zelf
+  - id: sterren_maken
+    then:
+      - lambda: |-
+          lv_obj_t *vlak = id(maan_sterren);
+          lv_obj_update_layout(vlak);
+          const int b = lv_obj_get_width(vlak), h = lv_obj_get_height(vlak);
+          lv_area_t maan;
+          lv_obj_get_coords(id(maan_canvas), &maan);
+          for (int i = 0; i < 40; i++) {
+            int x, y, g;
+            alarmklok::ster(i, b, h, x, y, g);
+            if (x + g >= maan.x1 - 8 && x <= maan.x2 + 8 && y + g >= maan.y1 - 8 && y <= maan.y2 + 8)
+              continue;
+            if (x > b * 6 / 10 && y < h / 5)  // niet door de temperaturen rechtsboven
+              continue;
+            lv_obj_t *s = lv_obj_create(vlak);
+            lv_obj_remove_style_all(s);
+            lv_obj_set_size(s, g, g);
+            lv_obj_set_pos(s, x, y);
+            lv_obj_set_style_radius(s, LV_RADIUS_CIRCLE, 0);
+            lv_obj_set_style_bg_color(s, lv_color_hex(0x8C98B0), 0);
+            lv_obj_set_style_bg_opa(s, (lv_opa_t) (70 + (i * 37) % 90), 0);
+            lv_obj_remove_flag(s, LV_OBJ_FLAG_CLICKABLE);
+          }
 
   # Klokkleur op de cijfers (Digitaal, Gestapeld, Info, Zon), de wijzers en Zwevend
   - id: klokkleur_toepassen
@@ -1078,6 +1191,22 @@ script:
           lv_label_set_text(id(lbl_f_uur), tijd.substr(0, 2).c_str());
           lv_label_set_text(id(lbl_f_min), tijd.substr(3, 2).c_str());
           lv_label_set_text(id(lbl_f_info), wekker);
+          // Maan
+          lv_label_set_text(id(lbl_m_tijd), tijd.c_str());
+          {
+            // Binnen (thermostaat) en buiten, rechtsboven
+            char binnen[24] = "", buiten[24] = "";
+            if (!std::isnan(id(klimaat_huidig).state))
+              snprintf(binnen, sizeof(binnen), "Binnen %.1f\u00B0", id(klimaat_huidig).state);
+            if (temp[0])
+              snprintf(buiten, sizeof(buiten), "Buiten %s", temp);
+            std::string temps = binnen;
+            if (binnen[0] && buiten[0])
+              temps += "\n";
+            temps += buiten;
+            lv_label_set_text(id(lbl_m_temp), temps.c_str());
+          }
+          lv_label_set_text(id(lbl_m_wekker), wekker);
           // Wekker gaat af
           lv_label_set_text(id(lbl_tijd_alarm), tijd.c_str());
       - if:
@@ -1191,8 +1320,8 @@ script:
                   - script.execute: naar_klokscherm
                   - lvgl.widget.hide: [pagina_indicator, lbl_ontwerp_stippen]
                   - lvgl.widget.show: wek_laag
-                  # Rood filter over alles, zoals de nachtstand van StandBy
-                  - lvgl.widget.show: nacht_filter
+                  # Maanscherm of rood filter over alles (zoals StandBy)
+                  - script.execute: nacht_stijl
           else:
             - if:
                 condition:
@@ -1201,7 +1330,7 @@ script:
                   - lambda: id(overlay_zichtbaar) = false;
                   - lvgl.widget.hide: wek_laag
                   - lvgl.widget.show: lbl_ontwerp_stippen
-                  - lvgl.widget.hide: nacht_filter
+                  - script.execute: nacht_stijl
                   - if:
                       condition:
                         lambda: return !id(gaat_af);

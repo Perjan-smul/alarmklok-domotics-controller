@@ -350,6 +350,64 @@ inline void boog_punt(float fractie, int cx, int cy, int r, int &x, int &y) {
   y = cy - (int) std::lround(r * std::sin(hoek));
 }
 
+// ---- Maan ------------------------------------------------------------------------
+
+// Maanfase 0..1 (0 = nieuwe maan, 0.5 = volle maan) uit de Unix-tijd (UTC)
+inline float maan_fase(double unix_utc) {
+  const double SYNODISCH = 29.530588853 * 86400.0;
+  const double NIEUW = 947182440.0;  // nieuwe maan 6 januari 2000 18:14 UTC
+  double f = std::fmod((unix_utc - NIEUW) / SYNODISCH, 1.0);
+  if (f < 0)
+    f += 1.0;
+  return (float) f;
+}
+
+// Welk deel van de schijf verlicht is (0..1)
+inline float maan_verlicht(float fase) { return (1.0f - std::cos(2.0f * 3.14159265f * fase)) / 2.0f; }
+
+inline const char *maan_fase_naam(float fase) {
+  static const char *const NAMEN[] = {"Nieuwe maan",    "Wassende sikkel", "Eerste kwartier",
+                                      "Wassende maan",  "Volle maan",      "Afnemende maan",
+                                      "Laatste kwartier", "Afnemende sikkel"};
+  int i = (int) std::floor(fase * 8.0f + 0.5f) % 8;
+  return NAMEN[i < 0 ? 0 : i];
+}
+
+// Helderheid (0..1) van punt (nx, ny) op de maanschijf (straal 1, y omlaag),
+// zoals vanaf het noordelijk halfrond: wassend licht rechts, afnemend links.
+// Zachte terminator en een beetje aardschijn op de donkere kant.
+inline float maan_licht(float fase, float nx, float ny) {
+  const float r2 = nx * nx + ny * ny;
+  if (r2 > 1.0f)
+    return 0.0f;
+  const float AARDSCHIJN = 0.06f;
+  const float breedte = std::sqrt(1.0f - ny * ny);  // halve breedte van de schijf op deze hoogte
+  if (breedte < 1e-4f)
+    return AARDSCHIJN;
+  // Terminator op x = cos(2*pi*fase) * breedte; verlicht aan de kant van de zon
+  const float t = std::cos(2.0f * 3.14159265f * fase) * breedte;
+  const float x = fase < 0.5f ? nx : -nx;  // wassend: rechts verlicht
+  const float zacht = 0.12f;
+  float licht = (x - t) / zacht + 0.5f;
+  licht = licht < 0 ? 0 : (licht > 1 ? 1 : licht);
+  return AARDSCHIJN + (1.0f - AARDSCHIJN) * licht;
+}
+
+// Ster i van de vaste sterrenhemel (pseudo-willekeurig, steeds hetzelfde)
+inline void ster(int i, int breedte, int hoogte, int &x, int &y, int &grootte) {
+  uint32_t h = 2166136261u ^ (uint32_t) i;
+  auto volgende = [&h]() {
+    h ^= h << 13;
+    h ^= h >> 17;
+    h ^= h << 5;
+    return h;
+  };
+  volgende();
+  x = (int) (volgende() % (uint32_t) breedte);
+  y = (int) (volgende() % (uint32_t) hoogte);
+  grootte = 1 + (int) (volgende() % 3);
+}
+
 inline const char *melodie(const std::string &naam) {
   if (naam == "Mario")
     return "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b";
