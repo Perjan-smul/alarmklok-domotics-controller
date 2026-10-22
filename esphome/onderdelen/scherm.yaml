@@ -156,7 +156,13 @@ font:
       - "\U000F02E3"  # bed
       - "\U000F0A70"  # silverware-fork-knife
       - "\U000F140B"  # lightning-bolt
+      - "\U000F0140"  # chevron-down (keuzelijsten)
 
+  # Kleiner icoon (o.a. het pijltje van de keuzelijsten)
+  - file: *mdi
+    id: f_icoon_klein
+    size: 36
+    glyphs: *tegel_iconen
 lvgl:
   displays: scherm
   touchscreens: touch
@@ -219,6 +225,7 @@ lvgl:
       radius: 0
     - id: tegel_stijl
       bg_color: 0x2B3340
+      border_width: 0
       text_color: 0xE8EAED
       radius: 22
       pad_all: 18
@@ -462,12 +469,12 @@ lvgl:
                                             id: wijzer_minuut
                                             width: 8
                                             color: 0xFFFFFF
-                                            length: -40
+                                            length: 220
                                         - line:
                                             id: wijzer_seconde
                                             width: 3
                                             color: 0xF5A623
-                                            length: -20
+                                            length: 240
                                     # Uurcijfers
                                     - range_from: 1
                                       range_to: 12
@@ -494,7 +501,7 @@ lvgl:
                                             id: wijzer_uur
                                             width: 12
                                             color: 0xFFFFFF
-                                            length: -110
+                                            length: 150
                               - obj:
                                   x: 620
                                   y: 110
@@ -1319,6 +1326,10 @@ lvgl:
                       text_color: 0xB0B6C0
                   - dropdown:
                       id: dd_wekdagen
+                      # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
+                      symbol: "\U000F0140"
+                      indicator:
+                        text_font: f_icoon_klein
                       x: 640
                       y: 98
                       width: 330
@@ -1345,6 +1356,10 @@ lvgl:
                       text_color: 0xB0B6C0
                   - dropdown:
                       id: dd_wekgeluid
+                      # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
+                      symbol: "\U000F0140"
+                      indicator:
+                        text_font: f_icoon_klein
                       x: 640
                       y: 168
                       width: 330

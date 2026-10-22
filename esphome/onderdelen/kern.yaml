@@ -79,24 +79,6 @@ api:
             tekst: !lambda return tekst;
             icoon: !lambda return icoon;
 
-ota:
-  - platform: esphome
-    # Gebruikt dezelfde sleutel als de api hierboven
-    encryption: {}
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  # Stroombesparing maakt wifi op deze borden onbetrouwbaar (ESPHome-issue
-  # #13636, HA-forum); herstart pas na 30 min zonder wifi (zoals EspControl)
-  power_save_mode: none
-  reboot_timeout: 30min
-  ap:
-    ssid: "${friendly_name} Setup"
-    password: !secret fallback_ap_password
-
-captive_portal:
-
 # -----------------------------------------------------------------------------
 #  Interne toestand
 # -----------------------------------------------------------------------------
@@ -130,10 +112,6 @@ globals:
   - id: licht_donker
     type: bool
     initial_value: "false"
-  # Minuten achter elkaar met zwak wifi-signaal (zie wifi_signaal)
-  - id: zwak_signaal_minuten
-    type: int
-    initial_value: "0"
   # Plek van de maan zoals in de schermindeling (-1 = nog niet gelezen); de
   # maan zwerft daar elk uur een stukje omheen (tegen inbranden)
   - id: maan_basis_x
@@ -178,52 +156,15 @@ globals:
 #  Tijd: NTP, zodat de wekker ook zonder Home Assistant werkt
 # -----------------------------------------------------------------------------
 time:
-  - platform: sntp
-    id: klok
-    timezone: ${tijdzone}
-    on_time:
-      - seconds: 0
-        then:
-          - script.execute: controleer_wekker
-          - if:
-              condition:
-                lambda: return id(ui_klaar) && id(klokontwerp).active_index().value_or(0) == 4;
-              then:
-                - script.execute: zon_bijwerken
-          # Elk uur de maanfase opnieuw tekenen (verandert langzaam)
-          - if:
-              condition:
-                lambda: return id(ui_klaar) && id(klok).now().minute == 0;
-              then:
-                - script.execute: maan_tekenen
-                - if:
-                    condition:
-                      lambda: return id(klok).now().hour == 0;
-                    then:
-                      - script.execute: klok_verschuiven
-    on_time_sync:
-      - script.execute: scherm_bijwerken
-      - script.execute: hw_tijd_gesynchroniseerd
-      - if:
-          condition:
-            lambda: return id(ui_klaar);
-          then:
-            - script.execute: klok_verschuiven
-            - script.execute: maan_tekenen
+  # De hoofdklok "klok" (internettijd) staat in esp.yaml; die roept elke minuut
+  # "elke_minuut" aan en na het gelijkzetten "tijd_gesynchroniseerd".
   # Tweede bron: de tijd van Home Assistant, voor als internettijd (NTP) niet
   # lukt maar HA wel bereikbaar is. Beide zetten dezelfde systeemklok.
   - platform: homeassistant
     id: ha_tijd
     timezone: ${tijdzone}
     on_time_sync:
-      - script.execute: scherm_bijwerken
-      - script.execute: hw_tijd_gesynchroniseerd
-      - if:
-          condition:
-            lambda: return id(ui_klaar);
-          then:
-            - script.execute: klok_verschuiven
-            - script.execute: maan_tekenen
+      - script.execute: tijd_gesynchroniseerd
 
 # Zon voor het klokontwerp Zon (plaats: breedtegraad/lengtegraad)
 sun:
@@ -469,12 +410,6 @@ button:
     on_press:
       - script.execute: snooze_wekker
   - platform: template
-    name: Sterker access point zoeken
-    icon: mdi:wifi-sync
-    entity_category: diagnostic
-    on_press:
-      - wifi.roam:
-  - platform: template
     name: Wekker testen
     icon: mdi:alarm-bell
     entity_category: diagnostic
@@ -532,15 +467,7 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
 
-# Diagnose: helpt bij onverwachte herstarts of geheugenlekken (zie README)
-debug:
-  update_interval: 60s
-
 text_sensor:
-  - platform: debug
-    reset_reason:
-      name: Laatste herstart oorzaak
-      entity_category: diagnostic
   - platform: template
     id: wekker_status
     name: Wekker status
@@ -577,19 +504,6 @@ binary_sensor:
     internal: true
 
 sensor:
-  - platform: debug
-    free:
-      name: Vrij geheugen
-      entity_category: diagnostic
-    block:
-      name: Grootste vrije blok
-      entity_category: diagnostic
-    min_free:
-      name: Minst vrije geheugen
-      entity_category: diagnostic
-    psram:
-      name: Vrij PSRAM
-      entity_category: diagnostic
   - platform: uptime
     name: Uptime
     entity_category: diagnostic
@@ -598,28 +512,44 @@ sensor:
     entity_id: ${temperatuur_sensor}
     internal: true
 
-  - platform: wifi_signal
-    id: wifi_signaal
-    name: WiFi signaal
-    update_interval: 60s
-    entity_category: diagnostic
-    # Drie minuten achter elkaar zwak signaal: zoek een sterker access point
-    # (mesh of meerdere AP's). Niet als de wekker afgaat of snoozet.
-    on_value:
-      - lambda: |-
-          id(zwak_signaal_minuten) = x < -75 ? id(zwak_signaal_minuten) + 1 : 0;
-      - if:
-          condition:
-            lambda: return id(zwak_signaal_minuten) >= 3 && !id(gaat_af) && !id(snoozet);
-          then:
-            - lambda: id(zwak_signaal_minuten) = 0;
-            - logger.log: "Zwak wifi-signaal: zoeken naar een sterker access point"
-            - wifi.roam:
 
 # -----------------------------------------------------------------------------
 #  Wekker-logica
 # -----------------------------------------------------------------------------
 script:
+  # Elke minuut (op seconde 0, vanuit de tijdbron "klok"): wekkers en klokken
+  - id: elke_minuut
+    then:
+      - script.execute: controleer_wekker
+      - if:
+          condition:
+            lambda: return id(ui_klaar) && id(klokontwerp).active_index().value_or(0) == 4;
+          then:
+            - script.execute: zon_bijwerken
+      # Elk uur de maanfase opnieuw tekenen (verandert langzaam)
+      - if:
+          condition:
+            lambda: return id(ui_klaar) && id(klok).now().minute == 0;
+          then:
+            - script.execute: maan_tekenen
+            - if:
+                condition:
+                  lambda: return id(klok).now().hour == 0;
+                then:
+                  - script.execute: klok_verschuiven
+
+  # De tijd is (opnieuw) gelijkgezet: scherm, klokchip en tegen inbranden
+  - id: tijd_gesynchroniseerd
+    then:
+      - script.execute: scherm_bijwerken
+      - script.execute: hw_tijd_gesynchroniseerd
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: klok_verschuiven
+            - script.execute: maan_tekenen
+
   # Elke minuut: is het tijd voor het wake-up light of voor een van de wekkers?
   - id: controleer_wekker
     then:
@@ -1036,6 +966,10 @@ script:
             return;
           int dx, dy;
           alarmklok::verschuiving(nu.day_of_year, (int) (8 * ${k}), dx, dy);
+          // Het verschoven vlak steekt een paar pixels uit: niet laten scrollen
+          lv_obj_t *tegel = lv_obj_get_parent(id(klok_vlak));
+          lv_obj_remove_flag(tegel, LV_OBJ_FLAG_SCROLLABLE);
+          lv_obj_set_scrollbar_mode(tegel, LV_SCROLLBAR_MODE_OFF);
           lv_obj_set_pos(id(klok_vlak), dx, dy);
 
   - id: maan_tekenen

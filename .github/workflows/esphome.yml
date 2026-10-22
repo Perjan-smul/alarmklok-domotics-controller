@@ -1,5 +1,6 @@
 # Controleert bij elke push en pull request dat de rekenlogica klopt en dat
-# beide klokken (7" en 4") nog compileren. Een geslaagde build zegt niets over
+# alle klokken nog compileren, en maakt echte schermafdrukken van de 4"-klok
+# (computer-build, zie esphome/voorbeeld-4inch.yaml). Een geslaagde build zegt niets over
 # de echte hardware; dat blijft met de hand testen.
 name: Controle
 
@@ -61,3 +62,30 @@ jobs:
       - name: Compileren
         working-directory: esphome
         run: esphome compile ${{ matrix.klok }}.yaml
+
+  afdrukken:
+    name: Schermafdrukken 4" (computer-build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ESPHome en Pillow installeren
+        run: pip install "esphome==${ESPHOME_VERSION}" pillow
+      - name: Test-secrets aanmaken
+        working-directory: esphome
+        run: |
+          sleutel=$(python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())")
+          cat > secrets.yaml <<EOF
+          wifi_ssid: "test"
+          wifi_password: "testtest"
+          api_encryption_key: "${sleutel}"
+          fallback_ap_password: "testtest"
+          EOF
+      - name: Bouwen, draaien en afdrukken maken
+        run: tools/afdrukken.sh afdrukken
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schermafdrukken-4inch
+          path: afdrukken/*.png

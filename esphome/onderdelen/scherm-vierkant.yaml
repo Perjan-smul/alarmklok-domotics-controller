@@ -150,6 +150,7 @@ font:
       - "\U000F02E3"  # bed
       - "\U000F0A70"  # silverware-fork-knife
       - "\U000F140B"  # lightning-bolt
+      - "\U000F0140"  # chevron-down (keuzelijsten)
   # Kleiner icoon voor de tegels op een vierkant scherm
   - file: *mdi
     id: f_icoon_klein
@@ -219,6 +220,7 @@ lvgl:
       radius: 0
     - id: tegel_stijl
       bg_color: 0x2B3340
+      border_width: 0
       text_color: 0xE8EAED
       radius: '${(18 * (k | float)) | int}'
       pad_all: '${(12 * (k | float)) | int}'
@@ -250,7 +252,7 @@ lvgl:
       - label:
           id: pagina_indicator
           align: BOTTOM_MID
-          y: '${-(6 * (k | float)) | int}'
+          y: '${(-6 * (k | float)) | int}'
           text_font: f_stip
           text_color: 0x6C727C
           text_letter_space: '${(8 * (k | float)) | int}'
@@ -291,7 +293,7 @@ lvgl:
       - obj:
           id: spraak_vlak
           align: BOTTOM_MID
-          y: '${-(28 * (k | float)) | int}'
+          y: '${(-28 * (k | float)) | int}'
           width: '${(456 * (k | float)) | int}'
           height: SIZE_CONTENT
           bg_color: 0x2B3340
@@ -308,8 +310,8 @@ lvgl:
       - label:
           id: spraak_gedempt
           align: BOTTOM_RIGHT
-          x: '${-(10 * (k | float)) | int}'
-          y: '${-(6 * (k | float)) | int}'
+          x: '${(-10 * (k | float)) | int}'
+          y: '${(-6 * (k | float)) | int}'
           text_font: f_stip
           text_color: 0x6C727C
           text: "\U000F036D"
@@ -401,7 +403,7 @@ lvgl:
                               - label:
                                   id: lbl_temperatuur
                                   align: TOP_RIGHT
-                                  x: '${-(30 * (k | float)) | int}'
+                                  x: '${(-30 * (k | float)) | int}'
                                   y: '${(18 * (k | float)) | int}'
                                   text_font: f_midden
                                   styles: klok_sub
@@ -416,14 +418,14 @@ lvgl:
                               - label:
                                   id: lbl_tijd
                                   align: CENTER
-                                  y: '${-(6 * (k | float)) | int}'
+                                  y: '${(-6 * (k | float)) | int}'
                                   text_font: f_klok
                                   styles: klok_tekst
                                   text: "--:--"
                               - label:
                                   id: lbl_wekker_info
                                   align: BOTTOM_MID
-                                  y: '${-(44 * (k | float)) | int}'
+                                  y: '${(-44 * (k | float)) | int}'
                                   text_font: f_midden
                                   styles: klok_accent
                                   text: ""
@@ -462,12 +464,12 @@ lvgl:
                                             id: wijzer_minuut
                                             width: '${(5 * (k | float)) | int}'
                                             color: 0xFFFFFF
-                                            length: '${-(26 * (k | float)) | int}'
+                                            length: '${(119 * (k | float)) | int}'
                                         - line:
                                             id: wijzer_seconde
                                             width: 2
                                             color: 0xF5A623
-                                            length: '${-(14 * (k | float)) | int}'
+                                            length: '${(131 * (k | float)) | int}'
                                     # Uurcijfers
                                     - range_from: 1
                                       range_to: 12
@@ -494,11 +496,11 @@ lvgl:
                                             id: wijzer_uur
                                             width: '${(8 * (k | float)) | int}'
                                             color: 0xFFFFFF
-                                            length: '${-(72 * (k | float)) | int}'
+                                            length: '${(73 * (k | float)) | int}'
                               - obj:
-                                  align: BOTTOM_MID
-                                  y: '${-(26 * (k | float)) | int}'
-                                  width: 100%
+                                  x: 0
+                                  y: '${(318 * (k | float)) | int}'
+                                  width: '${(480 * (k | float)) | int}'
                                   height: '${(140 * (k | float)) | int}'
                                   styles: leeg
                                   layout:
@@ -506,6 +508,7 @@ lvgl:
                                     flex_flow: COLUMN
                                     flex_align_main: CENTER
                                     flex_align_cross: CENTER
+                                    flex_align_track: CENTER
                                     pad_row: '${(4 * (k | float)) | int}'
                                   widgets:
                                     - obj:
@@ -549,7 +552,7 @@ lvgl:
                               - label:
                                   id: lbl_s_uur
                                   x: '${(24 * (k | float)) | int}'
-                                  y: '${-(6 * (k | float)) | int}'
+                                  y: '${(-6 * (k | float)) | int}'
                                   text_font: f_klok
                                   styles: klok_accent
                                   text: "--"
@@ -715,6 +718,14 @@ lvgl:
                                   text: ""
                               - label:
                                   id: lbl_z_wekker
+                                  # Donker pilletje: leesbaar op een lichte lucht
+                                  bg_color: 0x000000
+                                  bg_opa: 35%
+                                  radius: '${(14 * (k | float)) | int}'
+                                  pad_left: '${(12 * (k | float)) | int}'
+                                  pad_right: '${(12 * (k | float)) | int}'
+                                  pad_top: '${(4 * (k | float)) | int}'
+                                  pad_bottom: '${(4 * (k | float)) | int}'
                                   align: BOTTOM_MID
                                   x: 0
                                   y: '${(-24 * (k | float)) | int}'
@@ -801,7 +812,7 @@ lvgl:
                         - label:
                             id: lbl_ontwerp_stippen
                             align: RIGHT_MID
-                            x: '${-(6 * (k | float)) | int}'
+                            x: '${(-6 * (k | float)) | int}'
                             text_font: f_stip
                             text_color: 0x4A4F58
                             text_line_space: '${(6 * (k | float)) | int}'
@@ -1277,7 +1288,7 @@ lvgl:
                             width: '${(140 * (k | float)) | int}'
                             height: '${(250 * (k | float)) | int}'
                             text_font: f_groot
-                            visible_row_count: 5
+                            visible_row_count: 3
                             mode: NORMAL
                             options: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
                                       "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"]
@@ -1299,7 +1310,7 @@ lvgl:
                             width: '${(140 * (k | float)) | int}'
                             height: '${(250 * (k | float)) | int}'
                             text_font: f_groot
-                            visible_row_count: 5
+                            visible_row_count: 3
                             mode: NORMAL
                             options: ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
                             on_change:
@@ -1317,6 +1328,10 @@ lvgl:
                             text_color: 0xB0B6C0
                         - dropdown:
                             id: dd_wekdagen
+                            # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
+                            symbol: "\U000F0140"
+                            indicator:
+                              text_font: f_icoon_klein
                             x: '${(130 * (k | float)) | int}'
                             y: '${(340 * (k | float)) | int}'
                             width: '${(334 * (k | float)) | int}'
@@ -1342,6 +1357,10 @@ lvgl:
                             text_color: 0xB0B6C0
                         - dropdown:
                             id: dd_wekgeluid
+                            # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
+                            symbol: "\U000F0140"
+                            indicator:
+                              text_font: f_icoon_klein
                             x: '${(130 * (k | float)) | int}'
                             y: '${(400 * (k | float)) | int}'
                             width: '${(334 * (k | float)) | int}'

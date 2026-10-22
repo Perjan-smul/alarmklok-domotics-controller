@@ -38,6 +38,15 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 
 ## Wat kan hij?
 
+**Echte schermafdrukken van de 4"-klok** (480×480), rechtstreeks uit de
+LVGL-configuratie op de computer gemaakt (`tools/afdrukken.sh`, zie
+[Ontwikkelen](#ontwikkelen)); GitHub Actions maakt ze bij elke push opnieuw:
+
+![Alle schermen van de 4"-klok](docs/screenshots/4inch/overzicht.png)
+
+De losse afdrukken staan in `docs/screenshots/4inch/`. De tabel hieronder
+toont oudere ontwerpweergaven van de 7".
+
 | | |
 |---|---|
 | ![Digitaal](docs/screenshots/01-klok-digitaal.png) | ![Analoog](docs/screenshots/02-klok-analoog.png) |
@@ -159,8 +168,11 @@ esphome/
   maan_textuur.h                 De maan in grijstinten (gemaakt met tools/maan_textuur.py)
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   alarmklok-4b.yaml              De 4B-klok (dit flash je)
+  voorbeeld-4inch.yaml           De 4"-schermen op de computer, voor schermafdrukken
   onderdelen/
     kern.yaml                    Wekkers, instellingen en logica (gedeeld door alle klokken)
+    esp.yaml                     Wifi, internettijd, updates en diagnose (alleen op de ESP32)
+    voorbeeld-host.yaml          "Hardware" voor de computer-build: geheugenscherm, demotijd
     waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, wifi
     waveshare-p4-4b.yaml         Hardware 4B: scherm, touch, backlight, wifi, relais
     audio-p4.yaml                Speaker, mixer, mediaspeler en wekgeluid van de 7" en de 4B
@@ -176,11 +188,12 @@ esphome/
     tegel-instellingen.yaml      Naam, entiteit en icoon van een tegel (in te stellen vanuit HA)
     detail-pagina.yaml           Detailpagina bij lang drukken op een tegel
     radio-knop.yaml              Eén radiozender-knop
-docs/screenshots/                Ontwerpweergaven van alle schermen
+docs/screenshots/                Ontwerpweergaven (7") en in 4inch/ echte afdrukken van de 4"
 homeassistant/
   packages/alarmklok.yaml        Automations: wake-up light, radio, goedemorgen
   dashboard-kaart.yaml           Kaart voor je HA-dashboard
 espcontrol-port/                 Patch om dit scherm aan EspControl toe te voegen
+tools/                           Maantextuur maken en schermafdrukken (afdrukken.sh)
 ```
 
 ## Installatie
@@ -440,7 +453,16 @@ paar uur wisselend beeld zien; bij LCD trekt dat meestal weg.
 - **4" eerst:** nieuwe functies en indelingen eerst voor het vierkante scherm
   (`onderdelen/scherm-vierkant.yaml`, 480×480 en via `k` 720×720) ontwerpen en
   testen; daarna de 7" (`onderdelen/scherm.yaml`) bijwerken.
-- Ontwerpweergaven in `docs/screenshots/` voortaan op 480×480.
+- **Schermafdrukken:** `tools/afdrukken.sh` bouwt `esphome/voorbeeld-4inch.yaml`
+  voor de computer (ESPHome `host` met de snapshot-display), loopt met
+  voorbeelddata alle klokontwerpen en pagina's langs en zet de afdrukken als PNG
+  in `docs/screenshots/4inch/` (met `overzicht.png`). Nodig: ESPHome 2026.10 en
+  Pillow. Controleer na een wijziging in de indeling altijd de afdrukken.
+- Alles wat alleen op een ESP32 werkt (wifi, internettijd, updates, diagnose)
+  staat in `onderdelen/esp.yaml`; zo kan de rest ook op de computer draaien.
+- Let op in de vierkante indeling: schrijf negatieve maten als
+  `'${(-44 * (k | float)) | int}'`. De vorm `'${-(44 * …)}'` wordt in ESPHome
+  2026.10 positief.
 - Voor elke commit: de test hieronder en `esphome compile` voor alle drie de
   klokken (de 4" eerst).
 
