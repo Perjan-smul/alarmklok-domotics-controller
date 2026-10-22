@@ -50,6 +50,7 @@ esphome:
         - script.execute: klokkleur_toepassen
         - script.execute: sterren_maken
         - script.execute: maan_tekenen
+        - script.execute: klok_verschuiven
         - script.execute: ui_synchroniseren
         - script.execute: scherm_bijwerken
 
@@ -129,6 +130,14 @@ globals:
   - id: licht_donker
     type: bool
     initial_value: "false"
+  # Plek van de maan zoals in de schermindeling (-1 = nog niet gelezen); de
+  # maan zwerft daar elk uur een stukje omheen (tegen inbranden)
+  - id: maan_basis_x
+    type: int
+    initial_value: "-1"
+  - id: maan_basis_y
+    type: int
+    initial_value: "-1"
   # Instellingen worden geladen vóór de LVGL-interface bestaat; pas na het
   # opstarten mogen ze widgets bijwerken.
   - id: ui_klaar
@@ -183,9 +192,20 @@ time:
                 lambda: return id(ui_klaar) && id(klok).now().minute == 0;
               then:
                 - script.execute: maan_tekenen
+                - if:
+                    condition:
+                      lambda: return id(klok).now().hour == 0;
+                    then:
+                      - script.execute: klok_verschuiven
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: klok_verschuiven
+            - script.execute: maan_tekenen
   # Tweede bron: de tijd van Home Assistant, voor als internettijd (NTP) niet
   # lukt maar HA wel bereikbaar is. Beide zetten dezelfde systeemklok.
   - platform: homeassistant
@@ -194,6 +214,12 @@ time:
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: klok_verschuiven
+            - script.execute: maan_tekenen
 
 # Zon voor het klokontwerp Zon (plaats: breedtegraad/lengtegraad)
 sun:
@@ -978,11 +1004,31 @@ script:
 
   # De maan in de fase van nu: textuur (maan_textuur.h) x licht van de zon.
   # Rechtstreeks in de canvasbuffer; daarna één keer opnieuw tekenen.
+  # Tegen inbranden: het hele klokvlak staat elke dag een paar pixels anders
+  - id: klok_verschuiven
+    then:
+      - lambda: |-
+          auto nu = id(klok).now();
+          if (!nu.is_valid())
+            return;
+          int dx, dy;
+          alarmklok::verschuiving(nu.day_of_year, (int) (8 * ${k}), dx, dy);
+          lv_obj_set_pos(id(klok_vlak), dx, dy);
+
   - id: maan_tekenen
     then:
       - lambda: |-
           auto nu = id(klok).now();
           const float fase = alarmklok::maan_fase(nu.is_valid() ? (double) nu.timestamp : 0.0);
+          // Tegen inbranden: elk uur een andere plek rond de basispositie
+          if (id(maan_basis_x) < 0) {
+            id(maan_basis_x) = lv_obj_get_x(id(maan_canvas));
+            id(maan_basis_y) = lv_obj_get_y(id(maan_canvas));
+          }
+          int dx = 0, dy = 0;
+          if (nu.is_valid())
+            alarmklok::verschuiving(nu.hour, (int) (14 * ${k}), dx, dy);
+          lv_obj_set_pos(id(maan_canvas), id(maan_basis_x) + dx, id(maan_basis_y) + dy);
           lv_draw_buf_t *buf = lv_canvas_get_draw_buf(id(maan_canvas));
           if (buf == nullptr || buf->header.cf != LV_COLOR_FORMAT_RGB565)
             return;
@@ -1026,12 +1072,19 @@ script:
           lv_obj_t *vlak = id(maan_sterren);
           lv_obj_update_layout(vlak);
           const int b = lv_obj_get_width(vlak), h = lv_obj_get_height(vlak);
-          lv_area_t maan;
-          lv_obj_get_coords(id(maan_canvas), &maan);
+          // Vrij houden: het hele gebied waar de maan zwerft, plus een marge
+          if (id(maan_basis_x) < 0) {
+            id(maan_basis_x) = lv_obj_get_x(id(maan_canvas));
+            id(maan_basis_y) = lv_obj_get_y(id(maan_canvas));
+          }
+          const int zwerf = (int) (14 * ${k}) + 8;
+          const int d = lv_obj_get_width(id(maan_canvas));
+          const int x1 = id(maan_basis_x) - zwerf, y1 = id(maan_basis_y) - zwerf;
+          const int x2 = id(maan_basis_x) + d + zwerf, y2 = id(maan_basis_y) + d + zwerf;
           for (int i = 0; i < 40; i++) {
             int x, y, g;
             alarmklok::ster(i, b, h, x, y, g);
-            if (x + g >= maan.x1 - 8 && x <= maan.x2 + 8 && y + g >= maan.y1 - 8 && y <= maan.y2 + 8)
+            if (x + g >= x1 && x <= x2 && y + g >= y1 && y <= y2)
               continue;
             if (x > b * 6 / 10 && y < h / 5)  // niet door de temperaturen rechtsboven
               continue;

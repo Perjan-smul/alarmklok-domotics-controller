@@ -769,7 +769,7 @@ lvgl:
                               - canvas:
                                   id: maan_canvas
                                   x: '${(125 * (k | float)) | int}'
-                                  y: '${(24 * (k | float)) | int}'
+                                  y: '${(34 * (k | float)) | int}'
                                   width: '${(230 * (k | float)) | int}'
                                   height: '${(230 * (k | float)) | int}'
                               - label:

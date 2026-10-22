@@ -13,6 +13,10 @@ Gebouwd met [ESPHome](https://esphome.io) en LVGL. Er zijn drie versies:
 | Extra | | Twee relais | |
 | Configuratie | `esphome/alarmklok.yaml` | `esphome/alarmklok-4b.yaml` | `esphome/alarmklok-4inch.yaml` |
 
+**De 4"-klok is het primaire scherm** (nu het Bosun-bord, later de 4B): nieuwe
+functies worden eerst voor het vierkante scherm ontworpen en getest, de 7"
+volgt. Zie [Ontwikkelen](#ontwikkelen).
+
 Alle versies hebben dezelfde pagina's, wekkers en instellingen. Ze compileren,
 maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](#bekende-aandachtspunten).
 
@@ -408,6 +412,33 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
   `onderdelen/waveshare-s3-4.yaml` `pclk_frequency: 10MHz`.
 - **Gebruik ESPHome 2026.9.1:** met 2026.5.3 werkte wifi op het P4-86-paneel niet
   meer (HA-forum), en `micro_wake_word` heeft minstens 2026.7 nodig.
+
+## Inbranden
+
+Alle borden hebben een **IPS-LCD**-scherm, geen OLED. Echt inbranden zoals bij
+OLED gebeurt daar vrijwel niet, maar een beeld dat maandenlang dag en nacht
+hetzelfde is kan een zwakke schaduw achterlaten (*beeldretentie*), en de
+achtergrondverlichting slijt sneller naarmate hij feller staat. Wat de klok
+daartegen doet:
+
+| Wat | Hoe |
+|---|---|
+| Klok verschuift elke dag | Het hele klokvlak (alle ontwerpen, ook de stippen) staat elke dag een paar pixels anders: een vaste ronde langs 9 posities, max. 8 px op 480×480 (12 px op 720×720). Om middernacht en na het opstarten. |
+| Maan zwerft | Op het maanscherm schuift de maan elk uur naar een andere plek in een klein gebied (max. 14 px op 480×480). |
+| Dimmen | *Helderheid overdag* en *'s nachts*; een lagere stand overdag rekt de levensduur van de verlichting. |
+| Nachtstand | Donkere achtergrond met weinig, gedimd rood licht. |
+
+Tip: wissel af en toe van klokontwerp. Zie je toch een schaduw, laat dan een
+paar uur wisselend beeld zien; bij LCD trekt dat meestal weg.
+
+## Ontwikkelen
+
+- **4" eerst:** nieuwe functies en indelingen eerst voor het vierkante scherm
+  (`onderdelen/scherm-vierkant.yaml`, 480×480 en via `k` 720×720) ontwerpen en
+  testen; daarna de 7" (`onderdelen/scherm.yaml`) bijwerken.
+- Ontwerpweergaven in `docs/screenshots/` voortaan op 480×480.
+- Voor elke commit: de test hieronder en `esphome compile` voor alle drie de
+  klokken (de 4" eerst).
 
 ## Automatische controle
 

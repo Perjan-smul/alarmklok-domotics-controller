@@ -160,6 +160,28 @@ int main() {
     CONTROLEER(x == x2 && y == y2 && x < 100 && y < 50 && g >= 1 && g <= 3);
   }
 
+  // Verschuiving tegen inbranden: binnen het raster, 9 verschillende punten,
+  // nooit twee keer achter elkaar hetzelfde (ook niet over de rand van 9)
+  {
+    bool gezien[3][3] = {};
+    int vx = 0, vy = 0;
+    verschuiving(-1, 8, vx, vy);
+    for (int n = 0; n < 9; n++) {
+      int dx, dy;
+      verschuiving(n, 8, dx, dy);
+      CONTROLEER(dx >= -8 && dx <= 8 && dy >= -8 && dy <= 8 && dx % 8 == 0 && dy % 8 == 0);
+      CONTROLEER(dx != vx || dy != vy);
+      gezien[dy / 8 + 1][dx / 8 + 1] = true;
+      vx = dx;
+      vy = dy;
+    }
+    int aantal = 0;
+    for (auto &rij : gezien)
+      for (bool g : rij)
+        aantal += g;
+    CONTROLEER(aantal == 9);
+  }
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

@@ -393,6 +393,16 @@ inline float maan_licht(float fase, float nx, float ny) {
   return AARDSCHIJN + (1.0f - AARDSCHIJN) * licht;
 }
 
+// Tegen inbranden: verschuiving (dx, dy) voor stap n (dag of uur). Een vaste
+// volgorde door de 9 punten van het raster {-max, 0, +max}^2: nooit twee keer
+// achter elkaar hetzelfde punt, en elk punt even vaak.
+inline void verschuiving(int stap, int max, int &dx, int &dy) {
+  static const int VOLGORDE[9] = {4, 0, 8, 2, 6, 1, 7, 3, 5};
+  const int i = VOLGORDE[((stap % 9) + 9) % 9];
+  dx = (i % 3 - 1) * max;
+  dy = (i / 3 - 1) * max;
+}
+
 // Ster i van de vaste sterrenhemel (pseudo-willekeurig, steeds hetzelfde)
 inline void ster(int i, int breedte, int hoogte, int &x, int &y, int &grootte) {
   uint32_t h = 2166136261u ^ (uint32_t) i;
