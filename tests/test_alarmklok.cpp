@@ -2,6 +2,7 @@
 // Draaien:  g++ -std=c++17 -Wall -Werror -o /tmp/test_alarmklok tests/test_alarmklok.cpp && /tmp/test_alarmklok
 #include "../esphome/alarmklok.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -110,6 +111,32 @@ int main() {
   CONTROLEER(tegel_status("light", "unavailable", -1) == "Niet beschikbaar");
   CONTROLEER(tegel_status("scene", "2026-10-22T10:00:00", -1, false) == "Scène");
   CONTROLEER(tegel_status("light", "", -1) == "");
+
+  // StandBy-klokken
+  CONTROLEER(!donker(NAN, 5, false) && donker(3, 5, false) && !donker(6, 5, false));
+  CONTROLEER(donker(7, 5, true) && !donker(9, 5, true));  // hysterese: uit pas boven 8.5
+  CONTROLEER(klok_kleur("Oranje") == 0xF5A623 && klok_kleur("onbekend") == 0xFFFFFF);
+  CONTROLEER(meng(0x000000, 0xFFFFFF, 0.5f) == 0x808080 && meng(0x102030, 0x102030, 0.3f) == 0x102030);
+  {
+    uint32_t b, o;
+    lucht_kleur(-30, b, o);
+    CONTROLEER(b == 0x03050B && o == 0x0A0F1E);
+    lucht_kleur(60, b, o);
+    CONTROLEER(b == 0x1E6FD0);
+    lucht_kleur(-3, b, o);
+    CONTROLEER(b == meng(0x0B1230, 0x1F2A5A, 0.5f));
+    bool dag;
+    CONTROLEER(zon_fractie(12 * 60, 6 * 60, 18 * 60, dag) == 0.5f && dag);
+    CONTROLEER(zon_fractie(0, 6 * 60, 18 * 60, dag) == 0.5f && !dag);
+    CONTROLEER(zon_fractie(18 * 60, 6 * 60, 18 * 60, dag) == 0.0f && !dag);
+    int x, y;
+    boog_punt(0.0f, 100, 100, 50, x, y);
+    CONTROLEER(x == 50 && y == 100);
+    boog_punt(0.5f, 100, 100, 50, x, y);
+    CONTROLEER(x == 100 && y == 50);
+    boog_punt(1.0f, 100, 100, 50, x, y);
+    CONTROLEER(x == 150 && y == 100);
+  }
 
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");

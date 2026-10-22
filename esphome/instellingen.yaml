@@ -15,6 +15,12 @@ substitutions:
   # Workday-sensor uit HA voor "Niet op feestdagen" (aan = werkdag). Maak hem
   # aan via Instellingen -> Apparaten & diensten -> Integratie toevoegen -> Workday.
   werkdag_sensor: binary_sensor.workday_sensor
+  # Plaats voor het klokontwerp Zon (zonsopkomst en -ondergang).
+  breedtegraad: "52.09"
+  lengtegraad: "5.12"
+  # Lichtsensor (lux) uit HA: nachtstand ook als het donker is. Leeg = alleen
+  # het tijdvenster. Later aan te passen in HA (Configuratie -> Lichtsensor).
+  lichtsensor: ""
 
   # ===========================================================================
   #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)

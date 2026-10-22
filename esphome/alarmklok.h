@@ -1,5 +1,7 @@
 #pragma once
 // Hulpfuncties voor de alarmklok (gebruikt vanuit de lambda's in de YAML).
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -263,6 +265,89 @@ inline std::string tegel_status(const std::string &domein, const std::string &st
   if (status == "off")
     return "Uit";
   return status;
+}
+
+// ---- Klokken in StandBy-stijl -------------------------------------------------
+
+// Nachtstand bij weinig licht, met hysterese zodat het scherm niet knippert
+// rond de drempel. NaN (geen sensor) = niet donker.
+inline bool donker(float lux, float drempel, bool was_donker) {
+  if (std::isnan(lux))
+    return false;
+  if (was_donker)
+    return lux < drempel * 1.5f + 1.0f;
+  return lux < drempel;
+}
+
+// Klokkleur (select "Klokkleur") als 0xRRGGBB; onbekend = wit
+inline uint32_t klok_kleur(const std::string &naam) {
+  static const struct { const char *naam; uint32_t kleur; } KLEUREN[] = {
+      {"Wit", 0xFFFFFF},   {"Warm", 0xFFE2B8}, {"Oranje", 0xF5A623}, {"Rood", 0xFF5A4E},
+      {"Roze", 0xFF7EB6},  {"Paars", 0xB48CFF}, {"Blauw", 0x5AB4FF},  {"Groen", 0x6EDC8C},
+  };
+  for (const auto &k : KLEUREN) {
+    if (naam == k.naam)
+      return k.kleur;
+  }
+  return 0xFFFFFF;
+}
+
+// Mengt kleur a met b: t = 0 geeft a, t = 1 geeft b
+inline uint32_t meng(uint32_t a, uint32_t b, float t) {
+  uint32_t uit = 0;
+  for (int schuif = 0; schuif <= 16; schuif += 8) {
+    const float ka = (a >> schuif) & 0xFF, kb = (b >> schuif) & 0xFF;
+    uit |= (uint32_t) (ka + (kb - ka) * t + 0.5f) << schuif;
+  }
+  return uit;
+}
+
+// Luchtkleuren (boven en onder) voor het ontwerp Zon, uit de zonnehoogte in graden
+inline void lucht_kleur(float elevatie, uint32_t &boven, uint32_t &onder) {
+  struct Stap { float hoogte; uint32_t boven, onder; };
+  static const Stap STAPPEN[] = {
+      {-18, 0x03050B, 0x0A0F1E},  // nacht
+      {-6, 0x0B1230, 0x2A2550},   // blauwe uur
+      {0, 0x1F2A5A, 0xC0563A},    // zonsopkomst/-ondergang
+      {8, 0x2C5FA8, 0xF0A35A},    // laag
+      {25, 0x1E6FD0, 0x8CC4F2},   // dag
+  };
+  const int n = sizeof(STAPPEN) / sizeof(STAPPEN[0]);
+  if (std::isnan(elevatie) || elevatie <= STAPPEN[0].hoogte) {
+    boven = STAPPEN[0].boven;
+    onder = STAPPEN[0].onder;
+    return;
+  }
+  for (int i = 1; i < n; i++) {
+    if (elevatie <= STAPPEN[i].hoogte) {
+      const float t = (elevatie - STAPPEN[i - 1].hoogte) / (STAPPEN[i].hoogte - STAPPEN[i - 1].hoogte);
+      boven = meng(STAPPEN[i - 1].boven, STAPPEN[i].boven, t);
+      onder = meng(STAPPEN[i - 1].onder, STAPPEN[i].onder, t);
+      return;
+    }
+  }
+  boven = STAPPEN[n - 1].boven;
+  onder = STAPPEN[n - 1].onder;
+}
+
+// Waar staat de zon (overdag) of de maan ('s nachts) op de boog? 0 = links
+// (opkomst), 1 = rechts (ondergang). Tijden als minuut van de dag.
+inline float zon_fractie(int nu, int op, int onder, bool &dag) {
+  dag = nu >= op && nu < onder;
+  if (onder <= op)
+    return 0.5f;
+  if (dag)
+    return float(nu - op) / float(onder - op);
+  const int nacht = op + 1440 - onder;
+  const int sinds = nu >= onder ? nu - onder : nu + 1440 - onder;
+  return float(sinds) / float(nacht);
+}
+
+// Punt op een halve cirkel (boven het middelpunt cx, cy) bij fractie 0..1
+inline void boog_punt(float fractie, int cx, int cy, int r, int &x, int &y) {
+  const float hoek = 3.14159265f * (1.0f - fractie);
+  x = cx + (int) std::lround(r * std::cos(hoek));
+  y = cy - (int) std::lround(r * std::sin(hoek));
 }
 
 inline const char *melodie(const std::string &naam) {

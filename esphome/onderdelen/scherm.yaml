@@ -108,6 +108,11 @@ font:
       - "\U000F0766"  # circle-outline
       - "\U000F036D"  # microphone-off (gedempt)
 
+  # Rond en dik voor het klokontwerp Zwevend
+  - file: "gfonts://Nunito@900"
+    id: f_zwevend
+    size: 330
+    glyphs: "0123456789-"
   # Groot icoon op de detailpagina (alleen de tegeliconen)
   - file: *mdi
     id: f_icoon_groot
@@ -299,6 +304,20 @@ lvgl:
           text_color: 0x6C727C
           text: "\U000F036D"
           hidden: true
+      # Nachtstand: rood filter over alles (vermenigvuldigen), zoals StandBy
+      - obj:
+          id: nacht_filter
+          x: 0
+          y: 0
+          width: 1024
+          height: 600
+          border_width: 0
+          radius: 0
+          bg_color: 0xB0281A
+          bg_opa: COVER
+          blend_mode: MULTIPLY
+          clickable: false
+          hidden: true
       # Vangt in de nachtstand de eerste tik op (alleen scherm wekken)
       - obj:
           id: wek_laag
@@ -347,6 +366,11 @@ lvgl:
                       on_swipe_up:
                         - select.previous:
                             id: klokontwerp
+                            cycle: true
+                      # Lang drukken: volgende klokkleur (zoals StandBy)
+                      on_long_press:
+                        - select.next:
+                            id: klokkleur
                             cycle: true
                       widgets:
                         # ---- 1. Digitaal ------------------------------------
@@ -597,6 +621,117 @@ lvgl:
                                           - label: { text: "\U000F059C", text_font: f_icoon, styles: klok_sub }
                                           - label: { text: "Wake-up light", y: 80, styles: klok_sub }
                                           - label: { id: lbl_i_wakeup, text: "", y: 118, text_font: f_midden, styles: klok_tekst }
+
+                        # ---- 5. Zon: zon of maan over een boog, lucht kleurt mee
+                        - obj:
+                            id: ontwerp_zon
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - obj:
+                                  id: zon_lucht
+                                  width: 100%
+                                  height: 100%
+                                  border_width: 0
+                                  radius: 0
+                                  bg_opa: COVER
+                                  bg_color: 0x0B1230
+                                  bg_grad_color: 0x2A2550
+                                  bg_grad_dir: VER
+                              - obj:
+                                  y: 520
+                                  width: 100%
+                                  height: 2
+                                  border_width: 0
+                                  radius: 0
+                                  bg_color: 0xFFFFFF
+                                  bg_opa: 25%
+                              - arc:
+                                  id: zon_boog
+                                  x: 242
+                                  y: 250
+                                  width: 540
+                                  height: 540
+                                  rotation: 180
+                                  start_angle: 0
+                                  end_angle: 180
+                                  value: 0
+                                  adjustable: false
+                                  clickable: false
+                                  arc_color: 0xFFFFFF
+                                  arc_opa: 30%
+                                  arc_width: 3
+                                  indicator:
+                                    arc_opa: TRANSP
+                                  knob:
+                                    bg_opa: TRANSP
+                              - obj:
+                                  id: zon_bol
+                                  width: 64
+                                  height: 64
+                                  radius: 32
+                                  border_width: 0
+                                  bg_opa: COVER
+                                  bg_color: 0xFFD36B
+                                  shadow_color: 0xFFB347
+                                  shadow_width: 60
+                                  shadow_spread: 6
+                                  shadow_opa: 60%
+                              - label:
+                                  id: lbl_z_tijd
+                                  x: 48
+                                  y: 30
+                                  text_font: f_klok_mid
+                                  styles: klok_tekst
+                                  text: "--:--"
+                              - label:
+                                  id: lbl_z_datum
+                                  x: 54
+                                  y: 190
+                                  text_font: f_midden
+                                  styles: klok_sub
+                                  text: ""
+                              - label:
+                                  id: lbl_z_wekker
+                                  align: TOP_RIGHT
+                                  x: -60
+                                  y: 48
+                                  text_font: f_midden
+                                  styles: klok_accent
+                                  text: ""
+
+                        # ---- 6. Zwevend: dikke ronde cijfers in de klokkleur
+                        - obj:
+                            id: ontwerp_zwevend
+                            width: 1024
+                            height: 600
+                            styles: leeg
+                            hidden: true
+                            widgets:
+                              - label:
+                                  id: lbl_f_uur
+                                  align: CENTER
+                                  x: -215
+                                  y: -45
+                                  text_font: f_zwevend
+                                  text: "--"
+                              - label:
+                                  id: lbl_f_min
+                                  align: CENTER
+                                  x: 215
+                                  y: 45
+                                  text_font: f_zwevend
+                                  text_opa: 90%
+                                  text: "--"
+                              - label:
+                                  id: lbl_f_info
+                                  align: BOTTOM_MID
+                                  y: -40
+                                  text_font: f_midden
+                                  styles: klok_sub
+                                  text: ""
 
                         # Stippen rechts: welk klokontwerp?
                         - label:

@@ -23,7 +23,8 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 | Gebaar | Wat gebeurt er |
 |---|---|
 | **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld of Info. De keuze wordt onthouden. |
+| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon of Zwevend. De keuze wordt onthouden. |
+| **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
 | **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
 
@@ -57,9 +58,18 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 Verder:
 
 - **Nachtstand** ([screenshot](docs/screenshots/11-nachtstand.png)):
-  tussen twee instelbare tijden wordt het scherm gedimd en worden alle cijfers
-  donkerrood. De eerste tik wekt alleen het scherm, zodat je in het donker niet
-  per ongeluk een lamp aanzet.
+  tussen twee instelbare tijden, en desgewenst ook als het donker is in de
+  kamer (lichtsensor uit Home Assistant), wordt het scherm gedimd en kleurt
+  een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
+  ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
+  scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
+- **Klokontwerpen in StandBy-stijl:** *Zon*
+  ([screenshot](docs/screenshots/13-klok-zon.png)) laat de zon (of 's nachts
+  de maan) over een boog lopen tussen zonsopkomst en -ondergang, en de lucht
+  kleurt mee van nachtblauw via ochtendrood naar dagblauw. *Zwevend*
+  ([screenshot](docs/screenshots/14-klok-zwevend.png)) toont dikke ronde
+  cijfers in de klokkleur. Zet je eigen plaats in `instellingen.yaml`
+  (`breedtegraad`, `lengtegraad`) voor de juiste zonstand.
 - **Drie wekkers:** elk met een eigen tijd, aan/uit en dagen: elke dag,
   werkdagen, weekend, één vaste dag (bijvoorbeeld alleen dinsdag) of
   **eenmalig** (gaat één keer af en zet zichzelf daarna uit). Kies op de
@@ -268,9 +278,11 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `number.alarmklok_snooze_duur` | Snooze in minuten |
 | `number.alarmklok_wake_up_light_vooraf` | Minuten voor de wektijd dat het licht begint (0 = uit) |
 | `time.alarmklok_nachtstand_vanaf` / `_tot` | Venster voor de nachtstand |
+| `text.alarmklok_lichtsensor`, `number.alarmklok_nachtstand_onder`, `switch.alarmklok_nachtstand_bij_weinig_licht` | Nachtstand ook bij weinig licht: lux-sensor uit HA en de drempel (standaard 5 lx) |
+| `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
-| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info |
+| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
 | `update.alarmklok_wifi_chip_c6` | Firmware van de wifi-chip (7" en 4B), zie [Stabiliteit](#stabiliteit) |

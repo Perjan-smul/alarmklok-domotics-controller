@@ -46,6 +46,7 @@ esphome:
             state: Wacht
         - lambda: id(ui_klaar) = true;
         - script.execute: tegels_tonen
+        - script.execute: klokkleur_toepassen
         - script.execute: ui_synchroniseren
         - script.execute: scherm_bijwerken
 
@@ -118,6 +119,13 @@ globals:
   - id: overlay_zichtbaar
     type: bool
     initial_value: "false"
+  # Lichtsensor uit Home Assistant (lux, NaN = geen) en of het nu donker is
+  - id: licht_lux
+    type: float
+    initial_value: "NAN"
+  - id: licht_donker
+    type: bool
+    initial_value: "false"
   # Instellingen worden geladen vóór de LVGL-interface bestaat; pas na het
   # opstarten mogen ze widgets bijwerken.
   - id: ui_klaar
@@ -161,6 +169,11 @@ time:
       - seconds: 0
         then:
           - script.execute: controleer_wekker
+          - if:
+              condition:
+                lambda: return id(ui_klaar) && id(klokontwerp).active_index().value_or(0) == 4;
+              then:
+                - script.execute: zon_bijwerken
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
@@ -172,6 +185,13 @@ time:
     on_time_sync:
       - script.execute: scherm_bijwerken
       - script.execute: hw_tijd_gesynchroniseerd
+
+# Zon voor het klokontwerp Zon (plaats: breedtegraad/lengtegraad)
+sun:
+  id: zon
+  time_id: klok
+  latitude: ${breedtegraad}
+  longitude: ${lengtegraad}
 
 interval:
   - interval: 1s
@@ -239,6 +259,8 @@ select:
       - Analoog
       - Gestapeld
       - Info
+      - Zon
+      - Zwevend
     initial_option: Digitaal
     on_value:
       - if:
@@ -246,6 +268,22 @@ select:
             lambda: return id(ui_klaar);
           then:
             - script.execute: toon_klokontwerp
+
+  # Kleur van de klokcijfers en wijzers; ook: lang drukken op de klok
+  - platform: template
+    id: klokkleur
+    name: Klokkleur
+    icon: mdi:palette
+    optimistic: true
+    restore_value: true
+    options: [Wit, Warm, Oranje, Rood, Roze, Paars, Blauw, Groen]
+    initial_option: Wit
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: klokkleur_toepassen
 
 number:
   - platform: template
@@ -345,6 +383,40 @@ number:
     step: 1
     initial_value: 3
 
+  # Nachtstand ook als de lichtsensor (hieronder) minder dan dit meet
+  - platform: template
+    id: nacht_lux
+    name: Nachtstand onder
+    icon: mdi:brightness-4
+    entity_category: config
+    unit_of_measurement: lx
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 5
+
+# Lichtsensor in Home Assistant (bijv. sensor.slaapkamer_lichtsterkte); leeg =
+# alleen het tijdvenster. Een andere entiteit laat de klok even herstarten.
+text:
+  - platform: template
+    id: lichtsensor
+    name: Lichtsensor
+    icon: mdi:brightness-auto
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${lichtsensor}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
 button:
   - platform: template
     name: Wekker stoppen
@@ -388,6 +460,15 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
+
+  # Nachtstand ook bij weinig licht (alleen met een lichtsensor, zie hierboven)
+  - platform: template
+    id: nacht_op_licht
+    name: Nachtstand bij weinig licht
+    icon: mdi:theme-light-dark
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
 
 # Diagnose: helpt bij onverwachte herstarts of geheugenlekken (zie README)
 debug:
@@ -722,6 +803,22 @@ script:
       - script.execute: tegel_scene_4_volgen
       - script.execute: tegel_scene_5_volgen
       - script.execute: tegel_scene_6_volgen
+      - script.execute: lichtsensor_volgen
+
+  - id: lichtsensor_volgen
+    then:
+      - lambda: |-
+          const std::string entiteit = id(lichtsensor).state;
+          if (entiteit.empty())
+            return;
+          api::global_api_server->subscribe_home_assistant_state(
+              entiteit, optional<std::string>(),
+              std::function<void(StringRef)>([](StringRef waarde) {
+                char *eind = nullptr;
+                const std::string tekst = waarde.str();
+                const float lux = std::strtof(tekst.c_str(), &eind);
+                id(licht_lux) = eind == tekst.c_str() ? NAN : lux;
+              }));
 
   - id: tegels_tonen
     then:
@@ -798,7 +895,18 @@ script:
   # ---------------------------------------------------------------------------
   - id: toon_klokontwerp
     then:
-      - lvgl.widget.hide: [ontwerp_digitaal, ontwerp_analoog, ontwerp_gestapeld, ontwerp_info]
+      - lvgl.widget.hide: [ontwerp_digitaal, ontwerp_analoog, ontwerp_gestapeld, ontwerp_info, ontwerp_zon, ontwerp_zwevend]
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 4;
+          then:
+            - lvgl.widget.show: ontwerp_zon
+            - script.execute: zon_bijwerken
+      - if:
+          condition:
+            lambda: return id(klokontwerp).active_index().value_or(0) == 5;
+          then:
+            - lvgl.widget.show: ontwerp_zwevend
       - if:
           condition:
             lambda: return id(klokontwerp).active_index().value_or(0) == 1;
@@ -822,7 +930,47 @@ script:
       - lvgl.label.update:
           id: lbl_ontwerp_stippen
           text: !lambda |-
-            return alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 4, "\n");
+            return alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 6, "\n");
+
+  # Klokkleur op de cijfers (Digitaal, Gestapeld, Info, Zon), de wijzers en Zwevend
+  - id: klokkleur_toepassen
+    then:
+      - lvgl.style.update:
+          id: klok_tekst
+          text_color: !lambda return lv_color_hex(alarmklok::klok_kleur(id(klokkleur).current_option().str()));
+      - lambda: |-
+          const uint32_t kleur = alarmklok::klok_kleur(id(klokkleur).current_option().str());
+          lv_obj_set_style_text_color(id(lbl_f_uur), lv_color_hex(kleur), 0);
+          lv_obj_set_style_text_color(id(lbl_f_min), lv_color_hex(alarmklok::meng(kleur, 0xFFFFFF, 0.45f)), 0);
+          lv_obj_set_style_line_color(id(wijzer_uur)->obj, lv_color_hex(kleur), 0);
+          lv_obj_set_style_line_color(id(wijzer_minuut)->obj, lv_color_hex(kleur), 0);
+
+  # Ontwerp Zon: luchtkleur uit de zonnehoogte, zon of maan op de boog
+  - id: zon_bijwerken
+    then:
+      - lambda: |-
+          auto nu = id(klok).now();
+          if (!nu.is_valid())
+            return;
+          uint32_t boven, onder;
+          alarmklok::lucht_kleur(id(zon).elevation(), boven, onder);
+          lv_obj_set_style_bg_color(id(zon_lucht), lv_color_hex(boven), 0);
+          lv_obj_set_style_bg_grad_color(id(zon_lucht), lv_color_hex(onder), 0);
+          auto op = id(zon).sunrise(-0.833);
+          auto ondergang = id(zon).sunset(-0.833);
+          const int op_min = op.has_value() ? op->hour * 60 + op->minute : 7 * 60;
+          const int onder_min = ondergang.has_value() ? ondergang->hour * 60 + ondergang->minute : 19 * 60;
+          bool dag;
+          const float f = alarmklok::zon_fractie(nu.hour * 60 + nu.minute, op_min, onder_min, dag);
+          const int cx = lv_obj_get_x(id(zon_boog)) + lv_obj_get_width(id(zon_boog)) / 2;
+          const int cy = lv_obj_get_y(id(zon_boog)) + lv_obj_get_height(id(zon_boog)) / 2;
+          const int r = lv_obj_get_width(id(zon_boog)) / 2;
+          int x, y;
+          alarmklok::boog_punt(f, cx, cy, r, x, y);
+          const int d = lv_obj_get_width(id(zon_bol));
+          lv_obj_set_pos(id(zon_bol), x - d / 2, y - d / 2);
+          lv_obj_set_style_bg_color(id(zon_bol), lv_color_hex(dag ? 0xFFD36B : 0xDDE3EE), 0);
+          lv_obj_set_style_shadow_color(id(zon_bol), lv_color_hex(dag ? 0xFFB347 : 0x8FA3C8), 0);
 
   # Stippen onderaan: op welke pagina ben je?
   - id: pagina_indicator_bijwerken
@@ -922,6 +1070,14 @@ script:
           else
             snprintf(wakeup, sizeof(wakeup), "Uit");
           lv_label_set_text(id(lbl_i_wakeup), wakeup);
+          // Zon
+          lv_label_set_text(id(lbl_z_tijd), tijd.c_str());
+          lv_label_set_text(id(lbl_z_datum), datum.c_str());
+          lv_label_set_text(id(lbl_z_wekker), wekker);
+          // Zwevend
+          lv_label_set_text(id(lbl_f_uur), tijd.substr(0, 2).c_str());
+          lv_label_set_text(id(lbl_f_min), tijd.substr(3, 2).c_str());
+          lv_label_set_text(id(lbl_f_info), wekker);
           // Wekker gaat af
           lv_label_set_text(id(lbl_tijd_alarm), tijd.c_str());
       - if:
@@ -1017,6 +1173,9 @@ script:
                 id(nacht_vanaf).hour * 60 + id(nacht_vanaf).minute,
                 id(nacht_tot).hour * 60 + id(nacht_tot).minute);
           }
+          id(licht_donker) = alarmklok::donker(id(licht_lux), id(nacht_lux).state, id(licht_donker));
+          if (id(nacht_op_licht).state && id(licht_donker))
+            nacht = true;
           id(nachtstand) = nacht;
       - if:
           condition:
@@ -1032,15 +1191,8 @@ script:
                   - script.execute: naar_klokscherm
                   - lvgl.widget.hide: [pagina_indicator, lbl_ontwerp_stippen]
                   - lvgl.widget.show: wek_laag
-                  - lvgl.style.update:
-                      id: klok_tekst
-                      text_color: 0x9A2A1A
-                  - lvgl.style.update:
-                      id: klok_sub
-                      text_color: 0x5A1A10
-                  - lvgl.style.update:
-                      id: klok_accent
-                      text_color: 0x5A1A10
+                  # Rood filter over alles, zoals de nachtstand van StandBy
+                  - lvgl.widget.show: nacht_filter
           else:
             - if:
                 condition:
@@ -1049,15 +1201,7 @@ script:
                   - lambda: id(overlay_zichtbaar) = false;
                   - lvgl.widget.hide: wek_laag
                   - lvgl.widget.show: lbl_ontwerp_stippen
-                  - lvgl.style.update:
-                      id: klok_tekst
-                      text_color: 0xFFFFFF
-                  - lvgl.style.update:
-                      id: klok_sub
-                      text_color: 0xB0B6C0
-                  - lvgl.style.update:
-                      id: klok_accent
-                      text_color: 0xF5A623
+                  - lvgl.widget.hide: nacht_filter
                   - if:
                       condition:
                         lambda: return !id(gaat_af);
