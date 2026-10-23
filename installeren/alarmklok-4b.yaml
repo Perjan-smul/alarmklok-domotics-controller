@@ -1,0 +1,39 @@
+# =============================================================================
+#  4B (Waveshare ESP32-P4-WIFI6-Touch-LCD-4B)
+#
+#  Installeren via de ESPHome-add-on in Home Assistant: maak in de add-on een
+#  nieuw apparaat "alarmklok-4b" aan, open het met Edit en vervang de inhoud
+#  door dit bestand. De rest (onderdelen, plaatjes, geluiden) haalt ESPHome
+#  zelf van GitHub, en elke dag de nieuwste versie (refresh: 1d).
+#
+#  In /config/esphome/secrets.yaml (knop Secrets in de add-on) horen:
+#    wifi_ssid, wifi_password, api_encryption_key, fallback_ap_password
+#    github_token: een fine-grained token van GitHub met alleen leesrecht
+#                  (Contents: Read-only) op deze repo; nodig zolang de repo
+#                  privé is
+#
+#  Je eigen lampen, scènes en zenders zet je onder substitutions: alles uit
+#  esphome/instellingen.yaml kan hier, en wat hier staat gaat voor. De tegels
+#  kun je ook later in Home Assistant aanpassen, zonder te flashen.
+# =============================================================================
+
+substitutions:
+  name: alarmklok-4b
+  friendly_name: Alarmklok 4B
+  # Stand van het beeld: "270" = USB-C onderaan (standaard), "90" of "0"
+  # draaiing: "270"
+  # Voorbeelden (haal het hekje weg en vul je eigen entiteiten in):
+  # thermostaat: climate.slaapkamer
+  # rolluik: cover.slaapkamer
+  # dim_lamp: light.slaapkamer
+  # temperatuur_sensor: sensor.buitentemperatuur
+  # weer_entiteit: weather.forecast_home
+
+packages:
+  alarmklok:
+    url: https://github.com/Perjan-smul/alarmklok-domotics-controller
+    ref: claude/alarm-clock-home-assistant-ljscuo
+    username: Perjan-smul
+    password: !secret github_token
+    files: [esphome/alarmklok-4b.yaml]
+    refresh: 1d

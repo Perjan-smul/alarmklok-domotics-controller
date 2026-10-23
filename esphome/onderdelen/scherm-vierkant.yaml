@@ -190,31 +190,31 @@ font:
 # Wijzers en asje van het klokontwerp "Vierkant" (tools/wijzerplaat.py)
 image:
   - platform: file
-    file: afbeeldingen/wijzer_uur.png
+    file: ../afbeeldingen/wijzer_uur.png
     id: img_wijzer_uur
     type: RGB565
     transparency: alpha_channel
     resize: '${(16 * (k | float)) | int}x${(158 * (k | float)) | int}'
   - platform: file
-    file: afbeeldingen/wijzer_uur_schaduw.png
+    file: ../afbeeldingen/wijzer_uur_schaduw.png
     id: img_wijzer_uur_schaduw
     type: RGB565
     transparency: alpha_channel
     resize: '${(40 * (k | float)) | int}x${(182 * (k | float)) | int}'
   - platform: file
-    file: afbeeldingen/wijzer_minuut.png
+    file: ../afbeeldingen/wijzer_minuut.png
     id: img_wijzer_minuut
     type: RGB565
     transparency: alpha_channel
     resize: '${(12 * (k | float)) | int}x${(242 * (k | float)) | int}'
   - platform: file
-    file: afbeeldingen/wijzer_minuut_schaduw.png
+    file: ../afbeeldingen/wijzer_minuut_schaduw.png
     id: img_wijzer_minuut_schaduw
     type: RGB565
     transparency: alpha_channel
     resize: '${(36 * (k | float)) | int}x${(266 * (k | float)) | int}'
   - platform: file
-    file: afbeeldingen/as.png
+    file: ../afbeeldingen/as.png
     id: img_as
     type: RGB565
     transparency: alpha_channel

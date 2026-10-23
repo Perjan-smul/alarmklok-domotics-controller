@@ -32,9 +32,9 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   includes:
-    - alarmklok.h
-    - maan_textuur.h
-    - wijzerplaat_textuur.h
+    - ../alarmklok.h
+    - ../maan_textuur.h
+    - ../wijzerplaat_textuur.h
   on_boot:
     # Vóór de verbinding met Home Assistant: zeg welke entiteiten de tegels
     # volgen. HA vraagt die lijst alleen op bij het verbinden.

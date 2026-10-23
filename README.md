@@ -208,6 +208,7 @@ esphome/
     detail-pagina.yaml           Detailpagina bij lang drukken op een tegel
     klok-vierkant.yaml           Klokontwerp Vierkant: analoge klok over het hele scherm
     radio-knop.yaml              Eén radiozender-knop
+installeren/                     Eén bestand per klok voor de ESPHome-add-on (haalt de rest van GitHub)
 docs/screenshots/                Ontwerpweergaven (7") en in 4inch/ echte afdrukken van de 4"
 homeassistant/
   packages/alarmklok.yaml        Automations: wake-up light, radio, goedemorgen
@@ -219,6 +220,42 @@ tools/                           Maantextuur, wijzerplaat en schermafdrukken (af
 ## Installatie
 
 ### 1. Firmware op de klok zetten
+
+**Makkelijkst: via de ESPHome-add-on, zonder bestanden te kopiëren.** Je
+maakt in de add-on één klein bestand aan; de rest haalt ESPHome zelf van
+GitHub (*remote package*) en houdt het dagelijks bij.
+
+1. Installeer de **ESPHome Device Builder**-add-on in Home Assistant.
+2. Klik rechtsboven op **Secrets** en zet erin (bestaande regels laten staan):
+   ```yaml
+   wifi_ssid: "MijnWifi"
+   wifi_password: "supergeheim"
+   api_encryption_key: "..."     # maak je met de knop of het commando hieronder
+   fallback_ap_password: "alarmklok123"
+   github_token: "github_pat_..."
+   ```
+   Het GitHub-token is nodig zolang de repo privé is: maak op GitHub onder
+   *Settings → Developer settings → Fine-grained tokens* een token met alleen
+   deze repo en *Contents: Read-only*.
+3. **+ New device** → *Continue* → naam `alarmklok-4inch` (4"), `alarmklok-4b`
+   (4B) of `alarmklok` (7") → kies een ESP32-S3 of P4 → *Skip* bij installeren.
+4. Klik bij het nieuwe apparaat op **Edit**, vervang alles door de inhoud van
+   [`installeren/alarmklok-4inch.yaml`](installeren/alarmklok-4inch.yaml)
+   (of [`-4b`](installeren/alarmklok-4b.yaml) /
+   [7"](installeren/alarmklok.yaml)) en vul onder `substitutions:` je eigen
+   entiteiten in. Alles uit `esphome/instellingen.yaml` kan daar, en gaat voor.
+   De tegels pas je later ook in HA aan, zonder te flashen.
+5. **Save → Install → Plug into this computer** (Chrome of Edge, HA via
+   https) voor de eerste keer via USB-C; of *Manual download → Factory format*
+   en flash dat bestand met [web.esphome.io](https://web.esphome.io). Wordt het
+   bord niet herkend: houd **BOOT** ingedrukt bij het insteken. Daarna gaat
+   *Install* draadloos.
+
+Nieuwe versie op GitHub? ESPHome haalt hem binnen een dag op (`refresh: 1d`);
+klik dan *Install*. Wil je hem meteen: zet `refresh: 0s` (dan haalt hij bij
+elke build de nieuwste versie op).
+
+**Of: de bestanden zelf kopiëren** (of `pip install esphome` op je computer):
 
 1. Installeer de **ESPHome Device Builder**-add-on in Home Assistant, of
    `pip install esphome` op je computer.
