@@ -65,7 +65,7 @@ media_player:
   - id: !extend speler
     files:
       - id: luister_geluid
-        file: geluiden/luisteren.wav
+        file: ../geluiden/luisteren.wav
 
 voice_assistant:
   id: assistent

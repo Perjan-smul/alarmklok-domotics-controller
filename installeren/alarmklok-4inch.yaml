@@ -1,0 +1,41 @@
+# =============================================================================
+#  4"-klok (Waveshare ESP32-S3-Touch-LCD-4, Bosun-bord)
+#
+#  Installeren via de ESPHome-add-on in Home Assistant: maak in de add-on een
+#  nieuw apparaat "alarmklok-4inch" aan, open het met Edit en vervang de inhoud
+#  door dit bestand. De rest (onderdelen, plaatjes, geluiden) haalt ESPHome
+#  zelf van GitHub, en elke dag de nieuwste versie (refresh: 1d).
+#
+#  In /config/esphome/secrets.yaml (knop Secrets in de add-on) horen:
+#    wifi_ssid, wifi_password, api_encryption_key, fallback_ap_password
+#    github_token: een fine-grained token van GitHub met alleen leesrecht
+#                  (Contents: Read-only) op deze repo; nodig zolang de repo
+#                  privé is
+#
+#  Je eigen lampen, scènes en zenders zet je onder substitutions: alles uit
+#  esphome/instellingen.yaml kan hier, en wat hier staat gaat voor. De tegels
+#  kun je ook later in Home Assistant aanpassen, zonder te flashen.
+# =============================================================================
+
+substitutions:
+  name: alarmklok-4inch
+  friendly_name: Alarmklok 4 inch
+  # Scherm op z'n kop in de Bosun-behuizing? Haal het hekje weg:
+  # draaiing: "180"
+  # Mediaspeler in HA voor Muziek en de radio (deze klok heeft geen speaker):
+  mediaspeler: media_player.slaapkamer
+  # Voorbeelden (haal het hekje weg en vul je eigen entiteiten in):
+  # thermostaat: climate.slaapkamer
+  # rolluik: cover.slaapkamer
+  # dim_lamp: light.slaapkamer
+  # temperatuur_sensor: sensor.buitentemperatuur
+  # weer_entiteit: weather.forecast_home
+
+packages:
+  alarmklok:
+    url: https://github.com/Perjan-smul/alarmklok-domotics-controller
+    ref: claude/alarm-clock-home-assistant-ljscuo
+    username: Perjan-smul
+    password: !secret github_token
+    files: [esphome/alarmklok-4inch.yaml]
+    refresh: 1d

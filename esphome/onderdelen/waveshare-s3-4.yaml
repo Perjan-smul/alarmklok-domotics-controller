@@ -28,7 +28,7 @@ substitutions:
 
 esphome:
   includes:
-    - onderdelen/waveshare-s3-4.h
+    - waveshare-s3-4.h
   on_boot:
     # Na de I2C-bus (1000), vóór scherm en touch (600): voeding aan, resets los
     - priority: 950
