@@ -77,15 +77,17 @@ Verder:
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
   scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
 - **Vierkant** ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
-  een analoge klok over het hele vierkante scherm, in de stijl van een
-  vierkant horloge: dunne cijfers 12, 2, 4, 8 en 10, streepjes voor de andere
-  uren, een minutenrand langs de rand en slanke wijzers, met een slagschaduw
-  (licht van linksboven) voor diepte. Onder het midden het weericoon met de
+  een realistische analoge klok over het hele vierkante scherm, in de stijl van
+  een vierkant horloge: een geborstelde sunray-plaat met lichtval van
+  linksboven en een vleugje glasglans, opgezette gepolijste uurindexen en
+  facetwijzers met zachte schaduw, een bol asje, gedrukte cijfers 12, 2, 4, 8
+  en 10 en een minutenrand langs de rand. Onder het midden het weericoon met de
   buitentemperatuur en een huisje met de binnentemperatuur; datum en wekker
-  klein bovenin. De kleur van de plaat kies je in HA met *Wijzerplaat*
-  (blauw, zwart, zilver, zalm, groen, bordeaux); op een lichte plaat worden
-  cijfers en wijzers donker. Het weericoon volgt `weer_entiteit` in
-  `instellingen.yaml` (standaard `weather.forecast_home` van Met.no). Op de 7"
+  klein bovenin. De wijzers verspringen per minuut. De kleur van de plaat kies
+  je in HA met *Wijzerplaat* (blauw, zwart, zilver, zalm, groen, bordeaux); op
+  een lichte plaat worden cijfers en wijzers donker (geblauwd staal). Het
+  weericoon volgt `weer_entiteit` in `instellingen.yaml` (standaard
+  `weather.forecast_home`). De beelden maakt `tools/wijzerplaat.py`. Op de 7"
   staat de plaat in het midden.
 - **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
   nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
@@ -177,6 +179,8 @@ esphome/
   instellingen.yaml              Standaardwaarden voor tegels en pagina's (hier pas je dingen aan)
   alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen, maanfase)
   maan_textuur.h                 De maan in grijstinten (gemaakt met tools/maan_textuur.py)
+  wijzerplaat_textuur.h          Plaat van de klok Vierkant (gemaakt met tools/wijzerplaat.py)
+  afbeeldingen/                  Wijzers en asje van de klok Vierkant
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   alarmklok-4b.yaml              De 4B-klok (dit flash je)
   voorbeeld-4inch.yaml           De 4"-schermen op de computer, voor schermafdrukken
@@ -205,7 +209,7 @@ homeassistant/
   packages/alarmklok.yaml        Automations: wake-up light, radio, goedemorgen
   dashboard-kaart.yaml           Kaart voor je HA-dashboard
 espcontrol-port/                 Patch om dit scherm aan EspControl toe te voegen
-tools/                           Maantextuur maken en schermafdrukken (afdrukken.sh)
+tools/                           Maantextuur, wijzerplaat en schermafdrukken (afdrukken.sh)
 ```
 
 ## Installatie
