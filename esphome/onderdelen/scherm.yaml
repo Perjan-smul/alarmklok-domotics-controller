@@ -123,6 +123,11 @@ font:
     size: 30
     glyphsets: [GF_Latin_Core]
     ignore_missing_glyphs: true
+  # Dunne cijfers voor de vierkante wijzerplaat
+  - file: "gfonts://Outfit@300"
+    id: f_wijzerplaat
+    size: '${(46 * (k | float)) | int}'
+    glyphs: "012348"
   # Groot icoon op de detailpagina (alleen de tegeliconen)
   - file: *mdi
     id: f_icoon_groot
@@ -793,6 +798,9 @@ lvgl:
                                   text_font: f_maan_klein
                                   styles: klok_accent
                                   text: ""
+
+                        # ---- 8. Vierkant: analoge klok over het hele scherm
+                        - !include { file: klok-vierkant.yaml, vars: { x0: 212 } }
 
                         # Stippen rechts: welk klokontwerp?
                         - label:

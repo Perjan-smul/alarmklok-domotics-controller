@@ -27,7 +27,7 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 | Gebaar | Wat gebeurt er |
 |---|---|
 | **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend of Maan. De keuze wordt onthouden. |
+| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant. De keuze wordt onthouden. |
 | **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
 | **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
@@ -76,6 +76,12 @@ Verder:
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
   scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
+- **Vierkant** ([screenshot](docs/screenshots/4inch/08-klok-vierkant.png)):
+  een analoge klok over het hele vierkante scherm, in de stijl van een
+  vierkant horloge: diepblauwe wijzerplaat, dunne cijfers 12, 2, 4, 8 en 10,
+  streepjes voor de andere uren, een minutenrand langs de rand, slanke wijzers
+  en een kleine secondeteller; datum en wekker klein bovenin. Op de 7" staat de
+  plaat in het midden.
 - **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
   nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
   grijs) op een sterrenhemel, met de tijd en de volgende wekker in rood en
@@ -187,6 +193,7 @@ esphome/
     tegel.yaml                   Eén bedieningstegel op het scherm
     tegel-instellingen.yaml      Naam, entiteit en icoon van een tegel (in te stellen vanuit HA)
     detail-pagina.yaml           Detailpagina bij lang drukken op een tegel
+    klok-vierkant.yaml           Klokontwerp Vierkant: analoge klok over het hele scherm
     radio-knop.yaml              Eén radiozender-knop
 docs/screenshots/                Ontwerpweergaven (7") en in 4inch/ echte afdrukken van de 4"
 homeassistant/
@@ -308,7 +315,7 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
-| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan |
+| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan / Vierkant |
 | `switch.alarmklok_maan_in_de_nachtstand` | Nachtstand met het maanscherm (aan) of met het rode filter over je eigen ontwerp (uit) |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |

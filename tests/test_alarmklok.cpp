@@ -182,6 +182,19 @@ int main() {
     CONTROLEER(aantal == 9);
   }
 
+  // Vierkante wijzerplaat: 12 uur boven, 3 uur rechts, 1:30 in de hoek
+  {
+    float x, y;
+    vierkant_rand(0, 100, x, y);
+    CONTROLEER(std::fabs(x) < 0.01f && std::fabs(y + 100) < 0.01f);
+    vierkant_rand(90, 100, x, y);
+    CONTROLEER(std::fabs(x - 100) < 0.01f && std::fabs(y) < 0.01f);
+    vierkant_rand(45, 100, x, y);
+    CONTROLEER(std::fabs(x - 100) < 0.01f && std::fabs(y + 100) < 0.01f);
+    vierkant_rand(30, 100, x, y);  // 1 uur: op de bovenrand
+    CONTROLEER(std::fabs(y + 100) < 0.01f && x > 57 && x < 58);
+  }
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

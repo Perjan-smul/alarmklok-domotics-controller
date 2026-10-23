@@ -1,0 +1,169 @@
+# =============================================================================
+#  Klokontwerp "Vierkant": een analoge klok over het hele vierkante scherm, met
+#  een diepblauwe wijzerplaat, dunne cijfers 12, 2, 4, 8 en 10, streepjes voor
+#  de andere uren, een minutenrand langs de vierkante rand, slanke wijzers en
+#  een kleine secondeteller. Maten schalen met k (480x480 = 1); x0 schuift de
+#  plaat opzij (op de 7" staat hij in het midden). De minuutstreepjes en
+#  uurstreepjes tekent het script "vierkant_maken" (kern.yaml) bij het opstarten.
+# =============================================================================
+obj:
+  id: ontwerp_vierkant
+  # Iets groter dan het scherm: de dagelijkse verschuiving (tegen inbranden)
+  # laat dan geen zwarte rand zien. Eén egale kleur: een verloop geeft banden.
+  x: '${x0 - (12 * (k | float)) | int}'
+  y: '${(-12 * (k | float)) | int}'
+  width: '${(504 * (k | float)) | int}'
+  height: '${(504 * (k | float)) | int}'
+  hidden: true
+  border_width: 0
+  radius: 0
+  pad_all: 0
+  bg_opa: COVER
+  bg_color: 0x1D3068
+  scrollable: false
+  widgets:
+    # De eigenlijke wijzerplaat, 480x480 in het midden
+    - obj:
+        align: CENTER
+        width: '${(480 * (k | float)) | int}'
+        height: '${(480 * (k | float)) | int}'
+        styles: leeg
+        scrollable: false
+        widgets:
+          # Minuutrand en uurstreepjes (script vierkant_maken) en de cijfers
+          - obj:
+              id: vierkant_merken
+              width: 100%
+              height: 100%
+              styles: leeg
+              widgets:
+                - label:
+                    align: CENTER
+                    x: '${(0 * (k | float)) | int}'
+                    y: '${(-178 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text_color: 0xEDE9DD
+                    text: "12"
+                - label:
+                    align: CENTER
+                    x: '${(178 * (k | float)) | int}'
+                    y: '${(-103 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text_color: 0xEDE9DD
+                    text: "2"
+                - label:
+                    align: CENTER
+                    x: '${(178 * (k | float)) | int}'
+                    y: '${(103 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text_color: 0xEDE9DD
+                    text: "4"
+                - label:
+                    align: CENTER
+                    x: '${(-178 * (k | float)) | int}'
+                    y: '${(103 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text_color: 0xEDE9DD
+                    text: "8"
+                - label:
+                    align: CENTER
+                    x: '${(-178 * (k | float)) | int}'
+                    y: '${(-103 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text_color: 0xEDE9DD
+                    text: "10"
+          # Datum en wekker, klein, waar op een horloge het merk staat
+          - label:
+              id: lbl_v_datum
+              align: CENTER
+              y: '${(-74 * (k | float)) | int}'
+              text_font: f_maan_klein
+              text_color: 0xDCD7CA
+              text_letter_space: 2
+              text: ""
+          - label:
+              id: lbl_v_wekker
+              align: CENTER
+              y: '${(-48 * (k | float)) | int}'
+              text_font: f_maan_klein
+              text_color: 0x9FB0D8
+              text: ""
+          # Kleine secondeteller onder het midden
+          - meter:
+              id: vierkant_seconden
+              align: CENTER
+              y: '${(108 * (k | float)) | int}'
+              width: '${(86 * (k | float)) | int}'
+              height: '${(86 * (k | float)) | int}'
+              bg_opa: TRANSP
+              border_width: 0
+              pad_all: 0
+              scales:
+                - range_from: 0
+                  range_to: 60
+                  angle_range: 360
+                  rotation: 270
+                  ticks:
+                    count: 61
+                    width: 1
+                    length: '${(5 * (k | float)) | int}'
+                    color: 0xB9C2DA
+                  indicators:
+                    - line:
+                        id: wijzer_v_seconde
+                        width: 2
+                        color: 0xE3B866
+                        length: '${(38 * (k | float)) | int}'
+          - obj:
+              align: CENTER
+              y: '${(108 * (k | float)) | int}'
+              width: '${(8 * (k | float)) | int}'
+              height: '${(8 * (k | float)) | int}'
+              radius: '${(4 * (k | float)) | int}'
+              border_width: 0
+              bg_color: 0xE3B866
+              bg_opa: COVER
+          # Uur- en minutenwijzer over de hele plaat
+          - meter:
+              id: vierkant_wijzers
+              align: CENTER
+              width: '${(480 * (k | float)) | int}'
+              height: '${(480 * (k | float)) | int}'
+              bg_opa: TRANSP
+              border_width: 0
+              pad_all: 0
+              scales:
+                - range_from: 0
+                  range_to: 60
+                  angle_range: 360
+                  rotation: 270
+                  ticks:
+                    count: 61
+                    width: 0
+                    length: 0
+                    color: 0x1D3068
+                  indicators:
+                    - line:
+                        id: wijzer_v_minuut
+                        width: '${(4 * (k | float)) | int}'
+                        color: 0xEDE9DD
+                        length: '${(205 * (k | float)) | int}'
+                - range_from: 0
+                  range_to: 720
+                  angle_range: 360
+                  rotation: 270
+                  indicators:
+                    - line:
+                        id: wijzer_v_uur
+                        width: '${(7 * (k | float)) | int}'
+                        color: 0xEDE9DD
+                        length: '${(132 * (k | float)) | int}'
+          # Asje in het midden
+          - obj:
+              align: CENTER
+              width: '${(14 * (k | float)) | int}'
+              height: '${(14 * (k | float)) | int}'
+              radius: '${(7 * (k | float)) | int}'
+              border_width: 0
+              bg_color: 0xEDE9DD
+              bg_opa: COVER

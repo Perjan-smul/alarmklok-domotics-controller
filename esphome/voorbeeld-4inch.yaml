@@ -133,6 +133,8 @@ script:
       - script.wait: klokontwerp_afdruk
       - script.execute: {id: klokontwerp_afdruk, ontwerp: Maan, naam: 07-klok-maan}
       - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Vierkant, naam: 08-klok-vierkant}
+      - script.wait: klokontwerp_afdruk
       # Zon overdag (10:15)
       - script.execute: {id: demo_tijd_zetten, tijdstip: 1792656900}
       - script.execute: {id: klokontwerp_afdruk, ontwerp: Zon, naam: 05-klok-zon}

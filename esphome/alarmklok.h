@@ -403,6 +403,16 @@ inline void verschuiving(int stap, int max, int &dx, int &dy) {
   dy = (i / 3 - 1) * max;
 }
 
+// Vierkante wijzerplaat: het punt op een vierkant (halve zijde `halve`, rond
+// het middelpunt) in de richting van `hoek` graden (0 = 12 uur, met de klok mee).
+inline void vierkant_rand(float hoek, float halve, float &x, float &y) {
+  const float a = hoek * 3.14159265f / 180.0f;
+  const float dx = std::sin(a), dy = -std::cos(a);
+  const float m = std::fabs(dx) > std::fabs(dy) ? std::fabs(dx) : std::fabs(dy);
+  x = dx * halve / m;
+  y = dy * halve / m;
+}
+
 // Ster i van de vaste sterrenhemel (pseudo-willekeurig, steeds hetzelfde)
 inline void ster(int i, int breedte, int hoogte, int &x, int &y, int &grootte) {
   uint32_t h = 2166136261u ^ (uint32_t) i;
