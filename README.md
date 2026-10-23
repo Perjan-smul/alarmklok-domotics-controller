@@ -75,8 +75,10 @@ Verder:
   kamer (lichtsensor uit Home Assistant), wordt het scherm gedimd en kleurt
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
-  scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
-- **Vierkant** ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
+  scherm, zodat je in het donker niet per ongeluk een lamp aanzet. Welke klok
+  je 's nachts ziet kies je in HA met *Nachtklok*: *Vierkant zwart*
+  (standaard), *Maan* of *Rood filter* over je eigen ontwerp.
+- **Vierkant** (standaard klokscherm) ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
   een realistische analoge klok over het hele vierkante scherm, in de stijl van
   een vierkant horloge: een geborstelde sunray-plaat met lichtval van
   linksboven en een vleugje glasglans, opgezette gepolijste uurindexen en
@@ -88,13 +90,15 @@ Verder:
   een lichte plaat worden cijfers en wijzers donker (geblauwd staal). Het
   weericoon volgt `weer_entiteit` in `instellingen.yaml` (standaard
   `weather.forecast_home`). De beelden maakt `tools/wijzerplaat.py`. Op de 7"
-  staat de plaat in het midden.
+  staat de plaat in het midden. Als nachtklok
+  ([screenshot](docs/screenshots/4inch/20-nachtstand-vierkant.png)) is het
+  dezelfde klok met de zwarte plaat en, als enige verschil, een kleine
+  realistische maan in de fase van vandaag boven de datum.
 - **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
   nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
   grijs) op een sterrenhemel, met de tijd en de volgende wekker in rood en
-  rechtsboven de temperatuur binnen (thermostaat) en buiten. Overdag te kiezen als klokontwerp *Maan*. Met de
-  schakelaar *Maan in de nachtstand* uit krijg je weer je eigen ontwerp onder
-  het rode filter. De maantextuur is gemaakt met `tools/maan_textuur.py` uit de
+  rechtsboven de temperatuur binnen (thermostaat) en buiten. Overdag te kiezen als klokontwerp *Maan*, 's nachts
+  met *Nachtklok* op *Maan*. De maantextuur is gemaakt met `tools/maan_textuur.py` uit de
   maankaart van [NASA's Scientific Visualization Studio](https://svs.gsfc.nasa.gov/4720)
   (Lunar Reconnaissance Orbiter, publiek domein).
 - **Klokontwerpen in StandBy-stijl:** *Zon*
@@ -326,7 +330,7 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
 | `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan / Vierkant |
-| `switch.alarmklok_maan_in_de_nachtstand` | Nachtstand met het maanscherm (aan) of met het rode filter over je eigen ontwerp (uit) |
+| `select.alarmklok_nachtklok` | Klok in de nachtstand: Vierkant zwart (vierkante klok, zwarte plaat, kleine maan) / Maan (maanscherm) / Rood filter (eigen ontwerp onder een rood filter) |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
 | `update.alarmklok_wifi_chip_c6` | Firmware van de wifi-chip (7" en 4B), zie [Stabiliteit](#stabiliteit) |

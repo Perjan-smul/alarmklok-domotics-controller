@@ -104,6 +104,10 @@ globals:
   - id: nachtstand
     type: bool
     initial_value: "false"
+  # De plaat van Vierkant staat op zwart voor de nachtklok
+  - id: plaat_nacht
+    type: bool
+    initial_value: "false"
   - id: overlay_zichtbaar
     type: bool
     initial_value: "false"
@@ -245,7 +249,7 @@ select:
       - Zwevend
       - Maan
       - Vierkant
-    initial_option: Digitaal
+    initial_option: Vierkant
     on_value:
       - if:
           condition:
@@ -284,6 +288,27 @@ select:
             lambda: return id(ui_klaar);
           then:
             - script.execute: plaat_toepassen
+
+  # Klok in de nachtstand:
+  #   Vierkant zwart  de vierkante klok met zwarte plaat en een kleine maan in
+  #                   de fase van vandaag boven de datum
+  #   Maan            het maanscherm: grote grijze maan, rode tekst
+  #   Rood filter     het gekozen klokontwerp onder een rood filter
+  - platform: template
+    id: nachtklok
+    name: Nachtklok
+    icon: mdi:moon-waning-crescent
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: [Vierkant zwart, Maan, Rood filter]
+    initial_option: Vierkant zwart
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar) && id(overlay_zichtbaar);
+          then:
+            - script.execute: nacht_stijl
 
 number:
   - platform: template
@@ -460,22 +485,6 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-
-  # In de nachtstand het maanscherm: grijze maan in de fase van vandaag, rode
-  # tekst. Uit: het gekozen klokontwerp onder een rood filter.
-  - platform: template
-    id: maan_s_nachts
-    name: Maan in de nachtstand
-    icon: mdi:moon-waning-crescent
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-    on_state:
-      - if:
-          condition:
-            lambda: return id(ui_klaar) && id(overlay_zichtbaar);
-          then:
-            - script.execute: nacht_stijl
 
   # Nachtstand ook bij weinig licht (alleen met een lichtsensor, zie hierboven)
   - platform: template
@@ -920,10 +929,22 @@ script:
   - id: toon_klokontwerp
     then:
       - lambda: |-
-          // In de nachtstand (met "Maan in de nachtstand") altijd het maanscherm
+          // In de nachtstand de gekozen nachtklok: Vierkant zwart of het maanscherm
           int keuze = id(klokontwerp).active_index().value_or(0);
-          if (id(overlay_zichtbaar) && id(maan_s_nachts).state)
+          const int nacht = id(overlay_zichtbaar) ? id(nachtklok).active_index().value_or(0) : -1;
+          if (nacht == 0)
+            keuze = 7;
+          else if (nacht == 1)
             keuze = 6;
+          // Vierkant zwart: zwarte plaat en de kleine maan boven de datum
+          if ((nacht == 0) != id(plaat_nacht)) {
+            id(plaat_nacht) = nacht == 0;
+            id(plaat_toepassen).execute();
+          }
+          if (nacht == 0)
+            lv_obj_clear_flag(id(v_maan_canvas), LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_add_flag(id(v_maan_canvas), LV_OBJ_FLAG_HIDDEN);
           lv_obj_t *ontwerpen[] = {id(ontwerp_digitaal), id(ontwerp_analoog), id(ontwerp_gestapeld),
                                    id(ontwerp_info), id(ontwerp_zon), id(ontwerp_zwevend),
                                    id(ontwerp_maan), id(ontwerp_vierkant)};
@@ -940,12 +961,13 @@ script:
           if (keuze == 6)
             id(maan_tekenen).execute();
 
-  # Nachtstand aan of uit: maanscherm met rode tekst, of het rode filter
+  # Nachtstand aan of uit: maanscherm met rode tekst, het rode filter, of
+  # (Vierkant zwart) geen filter
   - id: nacht_stijl
     then:
       - if:
           condition:
-            lambda: return id(overlay_zichtbaar) && id(maan_s_nachts).state;
+            lambda: return id(overlay_zichtbaar) && id(nachtklok).active_index().value_or(0) == 1;
           then:
             - lvgl.widget.hide: nacht_filter
             - lvgl.style.update:
@@ -967,7 +989,7 @@ script:
             - script.execute: klokkleur_toepassen
             - if:
                 condition:
-                  lambda: return id(overlay_zichtbaar);
+                  lambda: return id(overlay_zichtbaar) && id(nachtklok).active_index().value_or(0) == 2;
                 then:
                   - lvgl.widget.show: nacht_filter
                 else:
@@ -1008,41 +1030,59 @@ script:
           if (nu.is_valid())
             alarmklok::verschuiving(nu.hour, (int) (14 * ${k}), dx, dy);
           lv_obj_set_pos(id(maan_canvas), id(maan_basis_x) + dx, id(maan_basis_y) + dy);
-          lv_draw_buf_t *buf = lv_canvas_get_draw_buf(id(maan_canvas));
-          if (buf == nullptr || buf->header.cf != LV_COLOR_FORMAT_RGB565)
-            return;
-          const int d = buf->header.w;
-          const int T = alarmklok::MAAN_TEXTUUR_MAAT;
-          const float schaal = (float) T / d;
-          for (int y = 0; y < d; y++) {
-            uint16_t *rij = (uint16_t *) (buf->data + y * buf->header.stride);
-            const float ny = (2.0f * y + 1) / d - 1.0f;
-            for (int x = 0; x < d; x++) {
-              const float nx = (2.0f * x + 1) / d - 1.0f;
-              const float r = std::sqrt(nx * nx + ny * ny);
-              // Zachte rand (1 pixel), daarbuiten zwart
-              float rand = (1.0f - r) * d * 0.5f + 0.5f;
-              if (rand <= 0) {
-                rij[x] = 0;
-                continue;
+          // Het maanscherm (RGB565, zwart rondom) en de kleine maan van Vierkant
+          // zwart (ARGB8888, doorzichtig rondom, meer monsters per pixel)
+          auto tekenen = [fase](lv_obj_t *canvas) {
+            lv_draw_buf_t *buf = lv_canvas_get_draw_buf(canvas);
+            if (buf == nullptr)
+              return;
+            const bool argb = buf->header.cf == LV_COLOR_FORMAT_ARGB8888;
+            if (!argb && buf->header.cf != LV_COLOR_FORMAT_RGB565)
+              return;
+            const int d = buf->header.w;
+            const int T = alarmklok::MAAN_TEXTUUR_MAAT;
+            const float schaal = (float) T / d;
+            const int n = d < 100 ? 4 : 1;
+            for (int y = 0; y < d; y++) {
+              uint8_t *rij = buf->data + y * buf->header.stride;
+              const float ny = (2.0f * y + 1) / d - 1.0f;
+              for (int x = 0; x < d; x++) {
+                const float nx = (2.0f * x + 1) / d - 1.0f;
+                const float r = std::sqrt(nx * nx + ny * ny);
+                // Zachte rand (1 pixel), daarbuiten zwart of doorzichtig
+                float rand = (1.0f - r) * d * 0.5f + 0.5f;
+                if (rand > 1)
+                  rand = 1;
+                int g = 0;
+                if (rand > 0) {
+                  float som = 0;
+                  for (int j = 0; j < n; j++)
+                    for (int i = 0; i < n; i++) {
+                      // Bilineair uit de textuur
+                      float u = (x + (i + 0.5f) / n) * schaal - 0.5f, v = (y + (j + 0.5f) / n) * schaal - 0.5f;
+                      u = u < 0 ? 0 : (u > T - 1.001f ? T - 1.001f : u);
+                      v = v < 0 ? 0 : (v > T - 1.001f ? T - 1.001f : v);
+                      const int u0 = (int) u, v0 = (int) v;
+                      const float fu = u - u0, fv = v - v0;
+                      const uint8_t *t0 = alarmklok::MAAN_TEXTUUR + v0 * T + u0;
+                      som += (t0[0] * (1 - fu) + t0[1] * fu) * (1 - fv) + (t0[T] * (1 - fu) + t0[T + 1] * fu) * fv;
+                    }
+                  const float licht = alarmklok::maan_licht(fase, nx, ny);
+                  g = (int) (som / (n * n) * (licht < 0.06f ? 0.06f : licht) * 0.92f * (argb ? 1.0f : rand));
+                }
+                if (argb) {
+                  uint8_t *p = rij + x * 4;
+                  p[0] = p[1] = p[2] = g;
+                  p[3] = rand > 0 ? (uint8_t) (rand * 255) : 0;
+                } else {
+                  ((uint16_t *) rij)[x] = lv_color_to_u16(lv_color_make(g, g, g));
+                }
               }
-              if (rand > 1)
-                rand = 1;
-              // Bilineair uit de textuur
-              float u = (x + 0.5f) * schaal - 0.5f, v = (y + 0.5f) * schaal - 0.5f;
-              u = u < 0 ? 0 : (u > T - 1.001f ? T - 1.001f : u);
-              v = v < 0 ? 0 : (v > T - 1.001f ? T - 1.001f : v);
-              const int u0 = (int) u, v0 = (int) v;
-              const float fu = u - u0, fv = v - v0;
-              const uint8_t *t0 = alarmklok::MAAN_TEXTUUR + v0 * T + u0;
-              const float tex = (t0[0] * (1 - fu) + t0[1] * fu) * (1 - fv) +
-                                (t0[T] * (1 - fu) + t0[T + 1] * fu) * fv;
-              const float licht = alarmklok::maan_licht(fase, nx, ny);
-              const int g = (int) (tex * (licht < 0.06f ? 0.06f : licht) * rand * 0.92f);
-              rij[x] = lv_color_to_u16(lv_color_make(g, g, g));
             }
-          }
-          lv_obj_invalidate(id(maan_canvas));
+            lv_obj_invalidate(canvas);
+          };
+          tekenen(id(maan_canvas));
+          tekenen(id(v_maan_canvas));
 
   # Vierkante wijzerplaat: minuutrand langs de vierkante rand en streepjes
   # voor de uren zonder cijfer (eenmalig bij het opstarten)
@@ -1096,7 +1136,8 @@ script:
   - id: plaat_toepassen
     then:
       - lambda: |-
-          const auto w = alarmklok::wijzerplaat(id(wijzerplaat).current_option().str());
+          // In de nachtstand met Vierkant zwart altijd de zwarte plaat
+          const auto w = alarmklok::wijzerplaat(id(plaat_nacht) ? "Zwart" : id(wijzerplaat).current_option().str());
           const lv_color_t merk = lv_color_hex(w.merk), sub = lv_color_hex(w.sub);
           const bool licht = ((w.plaat >> 16) & 0xFF) + ((w.plaat >> 8) & 0xFF) + (w.plaat & 0xFF) > 450;
           lv_obj_set_style_bg_color(id(ontwerp_vierkant), lv_color_hex(w.plaat), 0);

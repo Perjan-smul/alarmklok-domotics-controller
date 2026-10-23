@@ -173,12 +173,15 @@ script:
       - script.wait: afdruk
       - script.execute: detail_sluiten
 
-      # ---- Nachtstand met het maanscherm (23:41) ----
+      # ---- Nachtstand: Vierkant zwart en het maanscherm (23:41) ----
       - script.execute: naar_klokscherm
       - script.execute: {id: demo_tijd_zetten, tijdstip: 1792705260}
       - lambda: id(laatste_aanraking_ms) = millis() - 60000;
       - delay: 2s
-      - script.execute: {id: afdruk, naam: 20-nachtstand-maan}
+      - script.execute: {id: afdruk, naam: 20-nachtstand-vierkant}
+      - script.wait: afdruk
+      - select.set: {id: nachtklok, option: Maan}
+      - script.execute: {id: afdruk, naam: 21-nachtstand-maan}
       - script.wait: afdruk
 
       - logger.log: "Alle schermafdrukken gemaakt"

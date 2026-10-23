@@ -82,6 +82,15 @@ obj:
                     text_font: f_wijzerplaat
                     text: "10"
           # Datum en wekker, klein, waar op een horloge het merk staat
+          # Nachtklok (Vierkant zwart): kleine maan in de fase van vandaag
+          - canvas:
+              id: v_maan_canvas
+              align: CENTER
+              y: '${(-110 * (k | float)) | int}'
+              width: '${(32 * (k | float)) | int}'
+              height: '${(32 * (k | float)) | int}'
+              transparent: true
+              hidden: true
           - label:
               id: lbl_v_datum
               align: CENTER
