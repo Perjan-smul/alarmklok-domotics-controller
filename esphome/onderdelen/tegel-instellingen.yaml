@@ -5,6 +5,8 @@
 #  - Een andere entiteit laat de klok na 5 s even herstarten, zodat hij de
 #    status (aan/uit) van de nieuwe entiteit volgt.
 #  - Een lege entiteit verbergt de tegel.
+#  - Schakelaar: true voor verlichting (status en lang drukken), false voor
+#    scènes.
 text:
   - platform: template
     id: tegel_${nr}_naam
@@ -88,6 +90,14 @@ select:
           then:
             - script.execute: tegel_${nr}_tonen
 
+globals:
+  # Laatste status en percentage (0-100, -1 = geen) uit Home Assistant
+  - id: tegel_${nr}_status
+    type: std::string
+  - id: tegel_${nr}_procent
+    type: int
+    initial_value: "-1"
+
 script:
   - id: tegel_${nr}_tonen
     then:
@@ -99,9 +109,50 @@ script:
             lv_obj_add_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
           else
             lv_obj_clear_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: tegel_${nr}_status_tonen
 
-  # Volgt de status van de entiteit in Home Assistant en kleurt de tegel als
-  # die "aan" is. Draait bij het opstarten (zie on_boot in alarmklok.yaml).
+  # Statusregel, schakelaartje en "aan"-kleur; ook de detailpagina als die
+  # deze tegel toont
+  - id: tegel_${nr}_status_tonen
+    then:
+      - lambda: |-
+          const std::string entiteit = id(tegel_${nr}_entiteit).state;
+          const std::string dom = alarmklok::domein(entiteit);
+          const std::string &status = id(tegel_${nr}_status);
+          const bool aan = ${schakelaar} && alarmklok::status_aan(status);
+          lv_label_set_text(id(tegel_${nr}_status_tekst),
+                            alarmklok::tegel_status(dom, status, id(tegel_${nr}_procent), ${schakelaar}).c_str());
+          if (!${schakelaar})
+            lv_obj_add_flag(id(tegel_${nr}_schakelaar), LV_OBJ_FLAG_HIDDEN);
+          // Aan: lichtere kaart, warm geel icoon
+          lv_obj_set_style_text_color(id(tegel_${nr}_icoon_tekst),
+                                      lv_color_hex(aan ? 0xF5C35A : 0xE8EAED), 0);
+          if (aan) {
+            lv_obj_add_state(id(tegel_${nr}), LV_STATE_CHECKED);
+            lv_obj_add_state(id(tegel_${nr}_schakelaar), LV_STATE_CHECKED);
+          } else {
+            lv_obj_clear_state(id(tegel_${nr}), LV_STATE_CHECKED);
+            lv_obj_clear_state(id(tegel_${nr}_schakelaar), LV_STATE_CHECKED);
+          }
+          if (${schakelaar} && !entiteit.empty() && id(detail_entiteit) == entiteit) {
+            id(detail_status) = status;
+            id(detail_procent) = id(tegel_${nr}_procent);
+            id(detail_tonen).execute();
+          }
+
+  # Lang drukken: detailpagina voor deze tegel
+  - id: tegel_${nr}_detail
+    then:
+      - lambda: |-
+          id(detail_entiteit) = id(tegel_${nr}_entiteit).state;
+          id(detail_naam) = id(tegel_${nr}_naam).state;
+          id(detail_icoon) = id(tegel_${nr}_icoon).current_option().str();
+          id(detail_status) = id(tegel_${nr}_status);
+          id(detail_procent) = id(tegel_${nr}_procent);
+      - script.execute: detail_openen
+
+  # Volgt de status (en het percentage) van de entiteit in Home Assistant.
+  # Draait bij het opstarten (zie on_boot in kern.yaml).
   - id: tegel_${nr}_volgen
     then:
       - lambda: |-
@@ -111,9 +162,16 @@ script:
           api::global_api_server->subscribe_home_assistant_state(
               entiteit, optional<std::string>(),
               std::function<void(StringRef)>([](StringRef status) {
-                const std::string x = status.str();
-                if (x == "on" || x == "open" || x == "opening" || x == "playing")
-                  lv_obj_add_state(id(tegel_${nr}), LV_STATE_CHECKED);
-                else
-                  lv_obj_clear_state(id(tegel_${nr}), LV_STATE_CHECKED);
+                id(tegel_${nr}_status) = status.str();
+                id(tegel_${nr}_status_tonen).execute();
               }));
+          const std::string dom = alarmklok::domein(entiteit);
+          const char *attribuut = alarmklok::waarde_attribuut(dom);
+          if (${schakelaar} && attribuut[0] != '\0') {
+            api::global_api_server->subscribe_home_assistant_state(
+                entiteit, optional<std::string>(attribuut),
+                std::function<void(StringRef)>([dom](StringRef waarde) {
+                  id(tegel_${nr}_procent) = alarmklok::waarde_procent(dom, waarde.str());
+                  id(tegel_${nr}_status_tonen).execute();
+                }));
+          }

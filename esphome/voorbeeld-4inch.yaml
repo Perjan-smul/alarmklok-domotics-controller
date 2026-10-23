@@ -1,0 +1,189 @@
+# =============================================================================
+#  Schermafdrukken van de 4"-klok (480x480), gemaakt op de computer
+#
+#  Dezelfde kern en schermindeling als alarmklok-4inch.yaml, maar getekend in
+#  het geheugen (snapshot-display, ESPHome 2026.10) in plaats van op het bord.
+#  Na het opstarten vult een demoscript voorbeelddata in, loopt alle pagina's
+#  en klokontwerpen langs, slaat van elk een plaatje op en stopt.
+#
+#    tools/afdrukken.sh            (bouwen, draaien, omzetten naar PNG)
+#
+#  Geen wifi of internettijd (esp.yaml blijft weg), geen touch en geen geluid.
+#  ESPHOME_PCH_ENABLE=0: met de precompiled header bouwt ESPHome 2026.10 niet
+#  voor de computer zodra er een tijdzone is (logger_host.cpp: time() botst met
+#  de namespace esphome::time).
+# =============================================================================
+
+substitutions:
+  name: alarmklok-voorbeeld
+  friendly_name: Alarmklok voorbeeld
+  mediaspeler: media_player.slaapkamer
+
+packages:
+  instellingen: !include instellingen.yaml
+  kern: !include onderdelen/kern.yaml
+  hardware: !include onderdelen/voorbeeld-host.yaml
+  scherm: !include onderdelen/scherm-vierkant.yaml
+  detail: !include onderdelen/detail-pagina.yaml
+
+# Geen touch op de computer
+lvgl:
+  touchscreens: !remove
+
+esphome:
+  on_boot:
+    - priority: -200
+      then:
+        - script.execute: demo
+
+script:
+  # Tijd voor de volgende afdruk (in Nederland, 22 oktober 2026)
+  - id: demo_tijd_zetten
+    parameters:
+      tijdstip: int64_t
+    then:
+      - lambda: |-
+          id(demo_tijd) = tijdstip;
+          id(demo_start_ms) = millis();
+      - script.execute: scherm_bijwerken
+
+  - id: afdruk
+    parameters:
+      naam: string
+    then:
+      - delay: 1500ms
+      - snapshot.take:
+          id: scherm
+          filename: !lambda return naam;
+
+  - id: klokontwerp_afdruk
+    parameters:
+      ontwerp: string
+      naam: string
+    then:
+      - select.set:
+          id: klokontwerp
+          option: !lambda return ontwerp;
+      - script.execute:
+          id: afdruk
+          naam: !lambda return naam;
+      - script.wait: afdruk
+
+  - id: pagina_afdruk
+    parameters:
+      kolom: int
+      naam: string
+    then:
+      - lvgl.tileview.select:
+          id: tv_hoofd
+          row: 0
+          column: !lambda return kolom;
+          animated: false
+      - script.execute: pagina_indicator_bijwerken
+      - script.execute:
+          id: afdruk
+          naam: !lambda return naam;
+      - script.wait: afdruk
+
+  - id: demo
+    then:
+      - delay: 2s
+      # Voorbeelddata zoals Home Assistant die zou sturen
+      - lambda: |-
+          id(buitentemperatuur).publish_state(8.4f);
+          id(klimaat_huidig).publish_state(20.3f);
+          id(klimaat_doel).publish_state(21.5f);
+          id(klimaat_actie).publish_state("heating");
+          id(dim_lamp_helderheid).publish_state(204.0f);
+          id(rolluik_positie).publish_state(60.0f);
+          id(media_status).publish_state("playing");
+          id(media_titel).publish_state("Ochtendshow");
+          id(media_artiest).publish_state("NPO Radio 2");
+          id(media_volume).publish_state(0.4f);
+          id(weer_toestand).publish_state("partlycloudy");
+          const char *status[] = {"on", "off", "on", "off", "on", "on"};
+          const int procent[] = {80, -1, 35, -1, 50, -1};
+          std::string *statussen[] = {&id(tegel_licht_1_status), &id(tegel_licht_2_status),
+                                      &id(tegel_licht_3_status), &id(tegel_licht_4_status),
+                                      &id(tegel_licht_5_status), &id(tegel_licht_6_status)};
+          int *procenten[] = {&id(tegel_licht_1_procent), &id(tegel_licht_2_procent),
+                              &id(tegel_licht_3_procent), &id(tegel_licht_4_procent),
+                              &id(tegel_licht_5_procent), &id(tegel_licht_6_procent)};
+          for (int i = 0; i < 6; i++) {
+            *statussen[i] = status[i];
+            *procenten[i] = procent[i];
+          }
+      - script.execute: tegel_licht_1_status_tonen
+      - script.execute: tegel_licht_2_status_tonen
+      - script.execute: tegel_licht_3_status_tonen
+      - script.execute: tegel_licht_4_status_tonen
+      - script.execute: tegel_licht_5_status_tonen
+      - script.execute: tegel_licht_6_status_tonen
+      - script.execute: scherm_bijwerken
+
+      # ---- Klokontwerpen, 's avonds (21:15) ----
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Digitaal, naam: 01-klok-digitaal}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Analoog, naam: 02-klok-analoog}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Gestapeld, naam: 03-klok-gestapeld}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Info, naam: 04-klok-info}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Zwevend, naam: 06-klok-zwevend}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Maan, naam: 07-klok-maan}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Vierkant, naam: 08-klok-vierkant}
+      - script.wait: klokontwerp_afdruk
+      # Andere wijzerplaten
+      - select.set: {id: wijzerplaat, option: Zilver}
+      - script.execute: {id: afdruk, naam: 08b-klok-vierkant-zilver}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Zwart}
+      - script.execute: {id: afdruk, naam: 08c-klok-vierkant-zwart}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Zalm}
+      - script.execute: {id: afdruk, naam: 08d-klok-vierkant-zalm}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Blauw}
+      # Zon overdag (10:15)
+      - script.execute: {id: demo_tijd_zetten, tijdstip: 1792656900}
+      - script.execute: {id: klokontwerp_afdruk, ontwerp: Zon, naam: 05-klok-zon}
+      - script.wait: klokontwerp_afdruk
+      - script.execute: {id: demo_tijd_zetten, tijdstip: 1792696500}
+      - select.set: {id: klokontwerp, option: Digitaal}
+
+      # ---- Bedieningspagina's ----
+      - script.execute: {id: pagina_afdruk, kolom: 1, naam: 10-verlichting}
+      - script.wait: pagina_afdruk
+      - script.execute: {id: pagina_afdruk, kolom: 2, naam: 11-klimaat}
+      - script.wait: pagina_afdruk
+      - script.execute: {id: pagina_afdruk, kolom: 3, naam: 12-muziek}
+      - script.wait: pagina_afdruk
+      - script.execute: {id: pagina_afdruk, kolom: 4, naam: 13-scenes}
+      - script.wait: pagina_afdruk
+      - script.execute: {id: pagina_afdruk, kolom: 5, naam: 14-wekker}
+      - script.wait: pagina_afdruk
+
+      # ---- Detailpagina (lang drukken op de eerste tegel) ----
+      - lvgl.tileview.select: {id: tv_hoofd, row: 0, column: 1, animated: false}
+      - script.execute: tegel_licht_1_detail
+      - script.execute: {id: afdruk, naam: 15-detail}
+      - script.wait: afdruk
+      - script.execute: detail_sluiten
+
+      # ---- Nachtstand: Vierkant zwart en het maanscherm (23:41) ----
+      - script.execute: naar_klokscherm
+      - script.execute: {id: demo_tijd_zetten, tijdstip: 1792705260}
+      - lambda: id(laatste_aanraking_ms) = millis() - 60000;
+      - delay: 2s
+      - script.execute: {id: afdruk, naam: 20-nachtstand-vierkant}
+      - script.wait: afdruk
+      - select.set: {id: nachtklok, option: Maan}
+      - script.execute: {id: afdruk, naam: 21-nachtstand-maan}
+      - script.wait: afdruk
+
+      - logger.log: "Alle schermafdrukken gemaakt"
+      - delay: 500ms
+      - lambda: exit(0);

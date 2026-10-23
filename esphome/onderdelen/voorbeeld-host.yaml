@@ -1,0 +1,72 @@
+# =============================================================================
+#  "Hardware" voor de computer-build (voorbeeld-4inch.yaml): het scherm wordt
+#  in het geheugen getekend (snapshot-display, ESPHome 2026.10) en als plaatje
+#  opgeslagen. Levert wat kern.yaml van een hardwarebestand verwacht, zonder
+#  echte hardware: geen touch, geen geluid, een vaste demotijd.
+# =============================================================================
+
+substitutions:
+  # 4"-klok: 480x480 (zie scherm-vierkant.yaml)
+  k: "1.0"
+  draaiing: "0"
+  lvgl_buffer: 100%
+  radio_terugval: 20s
+
+host:
+
+globals:
+  # Demotijd (Unix, UTC); het demoscript zet hem per schermafdruk
+  - id: demo_tijd
+    type: int64_t
+    initial_value: "1792696500"  # 22 oktober 2026, 21:15 in Nederland
+  - id: demo_start_ms
+    type: uint32_t
+    initial_value: "0"
+
+time:
+  - platform: template
+    id: klok
+    timezone: ${tijdzone}
+    lambda: return id(demo_tijd) + (int64_t) ((millis() - id(demo_start_ms)) / 1000);
+
+display:
+  - platform: snapshot
+    id: scherm
+    dimensions: 480x480
+    update_interval: never
+
+output:
+  - platform: template
+    id: backlight_uitgang
+    type: float
+    write_action:
+      - lambda: (void) state;
+
+light:
+  - platform: monochromatic
+    id: backlight
+    output: backlight_uitgang
+    initial_state:
+      state: ON
+    restore_state: NONE
+
+binary_sensor:
+  - platform: template
+    id: radio_speelt
+    lambda: return false;
+
+script:
+  - id: speel_wekgeluid
+    then:
+      - logger.log: "Wekgeluid (computer-build: stil)"
+  - id: hw_geluid_stoppen
+    then:
+      - logger.log: "Geluid stoppen"
+  - id: hw_volume
+    parameters:
+      niveau: float
+    then:
+      - lambda: (void) niveau;
+  - id: hw_tijd_gesynchroniseerd
+    then:
+      - logger.log: "Tijd gesynchroniseerd"

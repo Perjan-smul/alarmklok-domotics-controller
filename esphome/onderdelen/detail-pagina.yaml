@@ -1,0 +1,233 @@
+# =============================================================================
+#  Detailpagina: lang drukken op een verlichtingstegel
+#
+#  Groot icoon, de status, een schuifkaart (helderheid voor lampen, positie
+#  voor rolluiken, snelheid voor ventilatoren) en twee knoppen Aan/Uit.
+#  Eén pagina voor alle tegels: de tegel zet bij lang drukken welke entiteit
+#  hij toont (tegel-instellingen.yaml) en werkt hem bij als de status in Home
+#  Assistant verandert. Terug met de pijl, of na 30 s naar de klok.
+#
+#  Maten schalen met "k" (480x480 = 1; de 7" zet k in scherm.yaml).
+# =============================================================================
+
+globals:
+  - id: detail_entiteit
+    type: std::string
+  - id: detail_naam
+    type: std::string
+  - id: detail_icoon
+    type: std::string
+  - id: detail_status
+    type: std::string
+  - id: detail_procent
+    type: int
+    initial_value: "-1"
+  # Na een lange druk mag de tik bij het loslaten niet ook nog schakelen
+  - id: lang_gedrukt
+    type: bool
+    initial_value: "false"
+
+script:
+  - id: detail_openen
+    then:
+      - lvgl.widget.hide: pagina_indicator
+      - lvgl.page.show:
+          id: pagina_detail
+          animation: FADE_IN
+          time: 150ms
+      - script.execute: detail_tonen
+
+  - id: detail_sluiten
+    then:
+      - lambda: id(detail_entiteit) = "";
+      - lvgl.page.show:
+          id: pagina_hoofd
+          animation: FADE_IN
+          time: 150ms
+      - lvgl.widget.show: pagina_indicator
+
+  - id: detail_tonen
+    then:
+      - lambda: |-
+          const std::string dom = alarmklok::domein(id(detail_entiteit));
+          const bool aan = alarmklok::status_aan(id(detail_status));
+          const int procent = id(detail_procent);
+          lv_label_set_text(id(detail_naam_tekst), id(detail_naam).c_str());
+          lv_label_set_text(id(detail_icoon_tekst), alarmklok::icoon(id(detail_icoon)));
+          lv_obj_set_style_text_color(id(detail_icoon_tekst),
+                                      lv_color_hex(aan ? 0xF5C35A : 0x9AA4B2), 0);
+          lv_label_set_text(id(detail_status_tekst),
+                            alarmklok::tegel_status(dom, id(detail_status), procent).c_str());
+          // Schuifkaart alleen als er een percentage te regelen valt
+          const bool schuif = alarmklok::waarde_attribuut(dom)[0] != '\0';
+          if (schuif) {
+            lv_obj_clear_flag(id(detail_schuif_vak), LV_OBJ_FLAG_HIDDEN);
+            const int waarde = aan ? (procent >= 0 ? procent : 100) : 0;
+            lv_slider_set_value(id(detail_schuif), waarde, LV_ANIM_OFF);
+            lv_label_set_text(id(detail_schuif_tekst),
+                              (std::to_string(waarde) + "%").c_str());
+            lv_label_set_text(id(detail_schuif_naam),
+                              dom == "light" ? "Helderheid" : dom == "cover" ? "Positie" : "Snelheid");
+          } else {
+            lv_obj_add_flag(id(detail_schuif_vak), LV_OBJ_FLAG_HIDDEN);
+          }
+          const bool rolluik = dom == "cover";
+          lv_label_set_text(id(detail_aan_tekst), rolluik ? "Open" : "Aan");
+          lv_label_set_text(id(detail_uit_tekst), rolluik ? "Dicht" : "Uit");
+          if (aan) {
+            lv_obj_add_state(id(detail_knop_aan), LV_STATE_CHECKED);
+            lv_obj_clear_state(id(detail_knop_uit), LV_STATE_CHECKED);
+          } else {
+            lv_obj_clear_state(id(detail_knop_aan), LV_STATE_CHECKED);
+            lv_obj_add_state(id(detail_knop_uit), LV_STATE_CHECKED);
+          }
+
+lvgl:
+  pages:
+    - id: pagina_detail
+      styles: pagina_stijl
+      widgets:
+        # ---- Terug + naam ----
+        - button:
+            x: '${(8 * (k | float)) | int}'
+            y: '${(8 * (k | float)) | int}'
+            width: '${(64 * (k | float)) | int}'
+            height: '${(64 * (k | float)) | int}'
+            bg_opa: TRANSP
+            on_click:
+              - script.execute: detail_sluiten
+            widgets:
+              - label: { text: "\U000F004D", text_font: f_icoon, align: CENTER }
+        - label:
+            id: detail_naam_tekst
+            x: '${(80 * (k | float)) | int}'
+            y: '${(20 * (k | float)) | int}'
+            width: '${(380 * (k | float)) | int}'
+            long_mode: DOT
+            text_font: f_groot
+            text: ""
+        # ---- Groot icoon met de status eronder ----
+        - label:
+            id: detail_icoon_tekst
+            align: TOP_MID
+            y: '${(84 * (k | float)) | int}'
+            text_font: f_icoon_groot
+            text: ""
+        - label:
+            id: detail_status_tekst
+            align: TOP_MID
+            y: '${(196 * (k | float)) | int}'
+            text_font: f_midden
+            text_color: 0x9AA4B2
+            text: ""
+        # ---- Schuifkaart: de hele kaart is de schuif ----
+        - obj:
+            id: detail_schuif_vak
+            align: TOP_MID
+            y: '${(246 * (k | float)) | int}'
+            width: '${(440 * (k | float)) | int}'
+            height: '${(80 * (k | float)) | int}'
+            styles: leeg
+            widgets:
+              - slider:
+                  id: detail_schuif
+                  width: 100%
+                  height: 100%
+                  min_value: 0
+                  max_value: 100
+                  bg_color: 0x2B3340
+                  bg_opa: COVER
+                  radius: '${(18 * (k | float)) | int}'
+                  pad_all: 0
+                  indicator:
+                    bg_color: 0xF5A623
+                    bg_grad_color: 0xF5C35A
+                    bg_grad_dir: HOR
+                    radius: '${(18 * (k | float)) | int}'
+                  knob:
+                    bg_opa: TRANSP
+                    shadow_width: 0
+                    pad_all: 0
+                  on_value:
+                    - lvgl.label.update:
+                        id: detail_schuif_tekst
+                        text: !lambda return std::to_string((int) x) + "%";
+                  on_release:
+                    - lambda: id(detail_procent) = (int) x;
+                    - if:
+                        condition:
+                          lambda: return alarmklok::domein(id(detail_entiteit)) == "light";
+                        then:
+                          - homeassistant.action:
+                              action: light.turn_on
+                              data:
+                                entity_id: !lambda return id(detail_entiteit);
+                                brightness_pct: !lambda return std::to_string((int) x);
+                    - if:
+                        condition:
+                          lambda: return alarmklok::domein(id(detail_entiteit)) == "cover";
+                        then:
+                          - homeassistant.action:
+                              action: cover.set_cover_position
+                              data:
+                                entity_id: !lambda return id(detail_entiteit);
+                                position: !lambda return std::to_string((int) x);
+                    - if:
+                        condition:
+                          lambda: return alarmklok::domein(id(detail_entiteit)) == "fan";
+                        then:
+                          - homeassistant.action:
+                              action: fan.set_percentage
+                              data:
+                                entity_id: !lambda return id(detail_entiteit);
+                                percentage: !lambda return std::to_string((int) x);
+              - label:
+                  id: detail_schuif_naam
+                  align: LEFT_MID
+                  x: '${(20 * (k | float)) | int}'
+                  clickable: false
+                  text_font: f_midden
+                  text: ""
+              - label:
+                  id: detail_schuif_tekst
+                  align: RIGHT_MID
+                  x: '${(-20 * (k | float)) | int}'
+                  clickable: false
+                  text_font: f_midden
+                  text: ""
+        # ---- Aan / Uit ----
+        - obj:
+            align: TOP_MID
+            y: '${(346 * (k | float)) | int}'
+            width: '${(440 * (k | float)) | int}'
+            height: '${(84 * (k | float)) | int}'
+            styles: leeg
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: SPACE_BETWEEN
+            widgets:
+              - button:
+                  id: detail_knop_aan
+                  width: '${(212 * (k | float)) | int}'
+                  height: 100%
+                  styles: tegel_stijl
+                  on_click:
+                    - homeassistant.action:
+                        action: homeassistant.turn_on
+                        data:
+                          entity_id: !lambda return id(detail_entiteit);
+                  widgets:
+                    - label: { id: detail_aan_tekst, text: "Aan", text_font: f_midden, align: CENTER }
+              - button:
+                  id: detail_knop_uit
+                  width: '${(212 * (k | float)) | int}'
+                  height: 100%
+                  styles: tegel_stijl
+                  on_click:
+                    - homeassistant.action:
+                        action: homeassistant.turn_off
+                        data:
+                          entity_id: !lambda return id(detail_entiteit);
+                  widgets:
+                    - label: { id: detail_uit_tekst, text: "Uit", text_font: f_midden, align: CENTER }

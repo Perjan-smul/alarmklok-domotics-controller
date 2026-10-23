@@ -23,10 +23,12 @@ substitutions:
 packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
+  esp: !include onderdelen/esp.yaml
   hardware: !include onderdelen/waveshare-p4-4b.yaml
   audio: !include onderdelen/audio-p4.yaml
   # Met echo-onderdrukking (experimenteel); zonder: onderdelen/audio-p4-i2s.yaml
   audio_transport: !include onderdelen/audio-p4-aec.yaml
   c6_update: !include onderdelen/c6-update.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
+  detail: !include onderdelen/detail-pagina.yaml
   spraak: !include onderdelen/spraak.yaml

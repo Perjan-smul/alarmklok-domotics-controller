@@ -15,6 +15,15 @@ substitutions:
   # Workday-sensor uit HA voor "Niet op feestdagen" (aan = werkdag). Maak hem
   # aan via Instellingen -> Apparaten & diensten -> Integratie toevoegen -> Workday.
   werkdag_sensor: binary_sensor.workday_sensor
+  # Plaats voor het klokontwerp Zon (zonsopkomst en -ondergang).
+  breedtegraad: "52.09"
+  lengtegraad: "5.12"
+  # Lichtsensor (lux) uit HA: nachtstand ook als het donker is. Leeg = alleen
+  # het tijdvenster. Later aan te passen in HA (Configuratie -> Lichtsensor).
+  lichtsensor: ""
+  # Weerentiteit uit HA voor het weericoon op de klok "Vierkant" (Met.no maakt
+  # standaard weather.forecast_home aan).
+  weer_entiteit: weather.forecast_home
 
   # ===========================================================================
   #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)
@@ -27,7 +36,9 @@ substitutions:
 
   # ---- Pagina "Verlichting": 6 tegels + dimschuif ---------------------------
   # Een tik doet "homeassistant.toggle" (lamp, schakelaar, ventilator, ...).
+  # Dimmerkaart onder de tegels: welke lamp, en de naam op de kaart
   dim_lamp: light.slaapkamer
+  dim_lamp_naam: Bedlamp
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
   licht_1_icoon: desk-lamp

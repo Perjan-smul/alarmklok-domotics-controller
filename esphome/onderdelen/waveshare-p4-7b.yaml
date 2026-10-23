@@ -21,6 +21,9 @@ esp32:
   cpu_frequency: 360MHz
   framework:
     type: esp-idf
+    advanced:
+      # Instellingenbuffer (NVS) in PSRAM: ~10 kB meer intern geheugen (2026.10)
+      nvs_cache_in_psram: true
     sdkconfig_options:
       # Uit EspControl, getest op echte P4-panelen (zie README, "Stabiliteit"):
       # meer stack voor de hoofdtaak (HTTPS, o.a. de C6-update) ...
@@ -37,6 +40,8 @@ esp32:
 psram:
   mode: hex
   speed: 200MHz
+  # Het bord heeft altijd PSRAM; nodig voor nvs_cache_in_psram
+  ignore_not_found: false
 
 esp32_hosted:
   variant: ESP32C6
@@ -94,7 +99,10 @@ light:
     name: Schermhelderheid
     icon: mdi:brightness-6
     output: backlight_pwm
-    restore_mode: ALWAYS_ON
+    # Na het opstarten altijd aan; niets bewaren (ESPHome 2026.10: restore_state)
+    initial_state:
+      state: ON
+    restore_state: NONE
     default_transition_length: 500ms
 
 # Audio (speaker en microfoons): zie audio-p4.yaml

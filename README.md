@@ -13,6 +13,10 @@ Gebouwd met [ESPHome](https://esphome.io) en LVGL. Er zijn drie versies:
 | Extra | | Twee relais | |
 | Configuratie | `esphome/alarmklok.yaml` | `esphome/alarmklok-4b.yaml` | `esphome/alarmklok-4inch.yaml` |
 
+**De 4"-klok is het primaire scherm** (nu het Bosun-bord, later de 4B): nieuwe
+functies worden eerst voor het vierkante scherm ontworpen en getest, de 7"
+volgt. Zie [Ontwikkelen](#ontwikkelen).
+
 Alle versies hebben dezelfde pagina's, wekkers en instellingen. Ze compileren,
 maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](#bekende-aandachtspunten).
 
@@ -23,7 +27,9 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 | Gebaar | Wat gebeurt er |
 |---|---|
 | **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld of Info. De keuze wordt onthouden. |
+| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant. De keuze wordt onthouden. |
+| **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
+| **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
 
 De stippen onderaan geven aan op welke pagina je bent; de stippen rechts op de
@@ -32,6 +38,15 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 
 ## Wat kan hij?
 
+**Echte schermafdrukken van de 4"-klok** (480×480), rechtstreeks uit de
+LVGL-configuratie op de computer gemaakt (`tools/afdrukken.sh`, zie
+[Ontwikkelen](#ontwikkelen)); GitHub Actions maakt ze bij elke push opnieuw:
+
+![Alle schermen van de 4"-klok](docs/screenshots/4inch/overzicht.png)
+
+De losse afdrukken staan in `docs/screenshots/4inch/`. De tabel hieronder
+toont oudere ontwerpweergaven van de 7".
+
 | | |
 |---|---|
 | ![Digitaal](docs/screenshots/01-klok-digitaal.png) | ![Analoog](docs/screenshots/02-klok-analoog.png) |
@@ -39,11 +54,13 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 | ![Gestapeld](docs/screenshots/03-klok-gestapeld.png) | ![Info](docs/screenshots/04-klok-info.png) |
 | **Gestapeld:** uren boven minuten, zoals StandBy | **Info:** tijd met kaarten voor weer, wekker en wake-up light |
 | ![Verlichting](docs/screenshots/05-verlichting.png) | ![Klimaat](docs/screenshots/06-klimaat.png) |
-| **Verlichting:** 6 tegels (oranje = aan) en een dimschuif | **Klimaat & rolluik:** thermostaat ± 0,5° en rolluik open/stop/dicht/positie |
+| **Verlichting:** 6 tegels met status ("Aan · 80%") en schakelaartje, plus een dimmerkaart | **Klimaat & rolluik:** thermostaatkaart met − / + en rolluikkaart (vulling = positie) |
 | ![Muziek](docs/screenshots/07-muziek.png) | ![Scènes](docs/screenshots/08-scenes.png) |
 | **Muziek:** wat er speelt, bediening, volume en 3 radiozenders | **Scènes:** 6 knoppen voor scènes en scripts |
 | ![Wekker](docs/screenshots/09-wekker.png) | ![Wekker gaat af](docs/screenshots/10-wekker-gaat-af.png) |
 | **Wekker:** drie wekkers (1/2/3) met elk een eigen tijd, aan/uit en dagen; geluid, volume, langzaam luider, wake-up light | **Wekker gaat af:** grote Snooze-knop; Stop moet je lang indrukken |
+| ![Detailpagina](docs/screenshots/12-detail.png) | |
+| **Detailpagina:** lang drukken op een tegel; helderheid, aan en uit | |
 
 > De screenshots zijn **ontwerpweergaven**, nagebouwd met dezelfde maten,
 > lettertypen, iconen en kleuren als de LVGL-configuratie, met voorbeelddata.
@@ -54,9 +71,43 @@ Assistant kiezen met `select.alarmklok_klokontwerp`.
 Verder:
 
 - **Nachtstand** ([screenshot](docs/screenshots/11-nachtstand.png)):
-  tussen twee instelbare tijden wordt het scherm gedimd en worden alle cijfers
-  donkerrood. De eerste tik wekt alleen het scherm, zodat je in het donker niet
-  per ongeluk een lamp aanzet.
+  tussen twee instelbare tijden, en desgewenst ook als het donker is in de
+  kamer (lichtsensor uit Home Assistant), wordt het scherm gedimd en kleurt
+  een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
+  ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
+  scherm, zodat je in het donker niet per ongeluk een lamp aanzet. Welke klok
+  je 's nachts ziet kies je in HA met *Nachtklok*: *Vierkant zwart*
+  (standaard), *Maan* of *Rood filter* over je eigen ontwerp.
+- **Vierkant** (standaard klokscherm) ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
+  een realistische analoge klok over het hele vierkante scherm, in de stijl van
+  een vierkant horloge: een geborstelde sunray-plaat met lichtval van
+  linksboven en een vleugje glasglans, opgezette gepolijste uurindexen en
+  facetwijzers met zachte schaduw, een bol asje, gedrukte cijfers 12, 2, 4,
+  6, 8 en 10 en een minutenrand langs de rand. Onder het midden het weericoon met de
+  buitentemperatuur en een huisje met de binnentemperatuur; datum en wekker
+  klein bovenin. De wijzers verspringen per minuut. De kleur van de plaat kies
+  je in HA met *Wijzerplaat* (blauw, zwart, zilver, zalm, groen, bordeaux); op
+  een lichte plaat worden cijfers en wijzers donker (geblauwd staal). Het
+  weericoon volgt `weer_entiteit` in `instellingen.yaml` (standaard
+  `weather.forecast_home`). De beelden maakt `tools/wijzerplaat.py`. Op de 7"
+  staat de plaat in het midden. Als nachtklok
+  ([screenshot](docs/screenshots/4inch/20-nachtstand-vierkant.png)) is het
+  dezelfde klok met de zwarte plaat en, als enige verschil, een kleine
+  realistische maan in de fase van vandaag boven de datum.
+- **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
+  nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
+  grijs) op een sterrenhemel, met de tijd en de volgende wekker in rood en
+  rechtsboven de temperatuur binnen (thermostaat) en buiten. Overdag te kiezen als klokontwerp *Maan*, 's nachts
+  met *Nachtklok* op *Maan*. De maantextuur is gemaakt met `tools/maan_textuur.py` uit de
+  maankaart van [NASA's Scientific Visualization Studio](https://svs.gsfc.nasa.gov/4720)
+  (Lunar Reconnaissance Orbiter, publiek domein).
+- **Klokontwerpen in StandBy-stijl:** *Zon*
+  ([screenshot](docs/screenshots/13-klok-zon.png)) laat de zon (of 's nachts
+  de maan) over een boog lopen tussen zonsopkomst en -ondergang, en de lucht
+  kleurt mee van nachtblauw via ochtendrood naar dagblauw. *Zwevend*
+  ([screenshot](docs/screenshots/14-klok-zwevend.png)) toont dikke ronde
+  cijfers in de klokkleur. Zet je eigen plaats in `instellingen.yaml`
+  (`breedtegraad`, `lengtegraad`) voor de juiste zonstand.
 - **Drie wekkers:** elk met een eigen tijd, aan/uit en dagen: elke dag,
   werkdagen, weekend, één vaste dag (bijvoorbeeld alleen dinsdag) of
   **eenmalig** (gaat één keer af en zet zichzelf daarna uit). Kies op de
@@ -130,11 +181,17 @@ esphome/
   alarmklok.yaml                 De 7"-klok (dit flash je)
   alarmklok-4inch.yaml           De 4"-klok (dit flash je)
   instellingen.yaml              Standaardwaarden voor tegels en pagina's (hier pas je dingen aan)
-  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen)
+  alarmklok.h                    Hulpfuncties in C++ (datum, wekdagen, volgende wekker, iconen, maanfase)
+  maan_textuur.h                 De maan in grijstinten (gemaakt met tools/maan_textuur.py)
+  wijzerplaat_textuur.h          Plaat van de klok Vierkant (gemaakt met tools/wijzerplaat.py)
+  afbeeldingen/                  Wijzers en asje van de klok Vierkant
   secrets.yaml.example           Voorbeeld voor je wifi-gegevens en sleutels
   alarmklok-4b.yaml              De 4B-klok (dit flash je)
+  voorbeeld-4inch.yaml           De 4"-schermen op de computer, voor schermafdrukken
   onderdelen/
     kern.yaml                    Wekkers, instellingen en logica (gedeeld door alle klokken)
+    esp.yaml                     Wifi, internettijd, updates en diagnose (alleen op de ESP32)
+    voorbeeld-host.yaml          "Hardware" voor de computer-build: geheugenscherm, demotijd
     waveshare-p4-7b.yaml         Hardware 7": scherm, touch, backlight, wifi
     waveshare-p4-4b.yaml         Hardware 4B: scherm, touch, backlight, wifi, relais
     audio-p4.yaml                Speaker, mixer, mediaspeler en wekgeluid van de 7" en de 4B
@@ -148,12 +205,15 @@ esphome/
     wekker.yaml                  Eén wekker: tijd, aan/uit en dagen
     tegel.yaml                   Eén bedieningstegel op het scherm
     tegel-instellingen.yaml      Naam, entiteit en icoon van een tegel (in te stellen vanuit HA)
+    detail-pagina.yaml           Detailpagina bij lang drukken op een tegel
+    klok-vierkant.yaml           Klokontwerp Vierkant: analoge klok over het hele scherm
     radio-knop.yaml              Eén radiozender-knop
-docs/screenshots/                Ontwerpweergaven van alle schermen
+docs/screenshots/                Ontwerpweergaven (7") en in 4inch/ echte afdrukken van de 4"
 homeassistant/
   packages/alarmklok.yaml        Automations: wake-up light, radio, goedemorgen
   dashboard-kaart.yaml           Kaart voor je HA-dashboard
 espcontrol-port/                 Patch om dit scherm aan EspControl toe te voegen
+tools/                           Maantextuur, wijzerplaat en schermafdrukken (afdrukken.sh)
 ```
 
 ## Installatie
@@ -264,9 +324,13 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `number.alarmklok_snooze_duur` | Snooze in minuten |
 | `number.alarmklok_wake_up_light_vooraf` | Minuten voor de wektijd dat het licht begint (0 = uit) |
 | `time.alarmklok_nachtstand_vanaf` / `_tot` | Venster voor de nachtstand |
+| `text.alarmklok_lichtsensor`, `number.alarmklok_nachtstand_onder`, `switch.alarmklok_nachtstand_bij_weinig_licht` | Nachtstand ook bij weinig licht: lux-sensor uit HA en de drempel (standaard 5 lx) |
+| `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
+| `select.alarmklok_wijzerplaat` | Kleur van de plaat van de klok Vierkant |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
-| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info |
+| `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan / Vierkant |
+| `select.alarmklok_nachtklok` | Klok in de nachtstand: Vierkant zwart (vierkante klok, zwarte plaat, kleine maan) / Maan (maanscherm) / Rood filter (eigen ontwerp onder een rood filter) |
 | `sensor.alarmklok_wekker_status` | Wacht / Gaat af / Snooze |
 | `button.alarmklok_snooze`, `button.alarmklok_wekker_stoppen`, `button.alarmklok_wekker_testen` | Bediening op afstand |
 | `update.alarmklok_wifi_chip_c6` | Firmware van de wifi-chip (7" en 4B), zie [Stabiliteit](#stabiliteit) |
@@ -312,6 +376,11 @@ Tegels op de pagina Verlichting doen een `toggle` (werkt met `light`,
 `switch`, `fan`, `cover`, `input_boolean` en dergelijke). Scèneknoppen doen
 `turn_on` (werkt met `scene`, `script` en `automation`).
 
+Elke verlichtingstegel toont de status uit Home Assistant: "Aan · 80%" voor
+een gedimde lamp, "Open 50%" voor een rolluik, "Uit", of "Niet beschikbaar".
+Lang drukken opent de detailpagina van die entiteit, met een schuif voor
+helderheid (`light`), positie (`cover`) of snelheid (`fan`).
+
 ### Overige pagina's en standaardwaarden
 
 De rest staat bovenin `esphome/alarmklok.yaml`. Daar staan ook de
@@ -323,7 +392,8 @@ verandert:
   licht_1_naam: Bedlamp
   licht_1_entity: light.slaapkamer
   licht_1_icoon: desk-lamp
-  dim_lamp: light.slaapkamer     # voor de dimschuif
+  dim_lamp: light.slaapkamer     # voor de dimmerkaart
+  dim_lamp_naam: Bedlamp         # naam op de dimmerkaart
 
   # Klimaat & rolluik
   thermostaat: climate.slaapkamer
@@ -363,6 +433,8 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
 | 4B: touch-reset GPIO23, backlight aan via GPIO33 | Volgens het schema; zonder BL_EN mogelijk een zwart scherm | Waveshare-schema, [Tessera](https://github.com/MaxGramser/homeassistant_espscreen) |
 | 7" en 4B: update **Wifi-chip (C6)** in HA | Een oude C6-firmware gaf wegvallende wifi of herstarts elke ~10 minuten. Installeren doe je zelf, met de knop in HA. | #13636, [ESPHome #14313](https://github.com/esphome/esphome/issues/14313) |
 | 4" (Bosun-bord): beeldinstellingen voor het RGB-scherm, wifi eerst starten | Verschoven of flikkerend beeld en wifi-geheugentekort op hetzelfde type paneel | EspControl (4848S040) |
+| Instellingenbuffer in PSRAM (`nvs_cache_in_psram`, ESPHome 2026.10) | Ca. 10 kB meer intern geheugen voor scherm, wifi en audio; vooral fijn op de S3 | [ESPHome 2026.10](https://esphome.io/blog/2026/10/21/esphome-2026-10/) |
+| Wifi: na 3 minuten zwak signaal (< -75 dBm) zelf een sterker access point zoeken (`wifi.roam`), en de knop *Sterker access point zoeken* | Handig met mesh of meerdere access points; niet als de wekker afgaat | ESPHome 2026.10 |
 | Diagnose-entiteiten: *Vrij geheugen*, *Grootste vrije blok*, *Minst vrije geheugen*, *Vrij PSRAM*, *Uptime*, *Laatste herstart oorzaak* | Herstart de klok onverwacht, of daalt het vrije geheugen over dagen? Dan zie je dat hier. | [ESPHome debug](https://esphome.io/components/debug/) |
 
 **Als het toch misgaat:**
@@ -374,8 +446,46 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
   `engineering_sample` op de andere waarde; dat hangt af van de chiprevisie.
 - **Flikkerend of verschoven beeld (4" Bosun-bord):** zet bij `display:` in
   `onderdelen/waveshare-s3-4.yaml` `pclk_frequency: 10MHz`.
-- **Gebruik ESPHome 2026.9.1:** met 2026.5.3 werkte wifi op het P4-86-paneel niet
-  meer (HA-forum), en `micro_wake_word` heeft minstens 2026.7 nodig.
+- **Gebruik ESPHome 2026.10 of nieuwer** (de versie van de ESPHome-add-on in
+  HA). De backlight gebruikt `restore_state`, dat pas sinds 2026.10 bestaat; met
+  2026.5.3 werkte wifi op het P4-86-paneel niet meer (HA-forum), en
+  `micro_wake_word` heeft minstens 2026.7 nodig.
+
+## Inbranden
+
+Alle borden hebben een **IPS-LCD**-scherm, geen OLED. Echt inbranden zoals bij
+OLED gebeurt daar vrijwel niet, maar een beeld dat maandenlang dag en nacht
+hetzelfde is kan een zwakke schaduw achterlaten (*beeldretentie*), en de
+achtergrondverlichting slijt sneller naarmate hij feller staat. Wat de klok
+daartegen doet:
+
+| Wat | Hoe |
+|---|---|
+| Klok verschuift elke dag | Het hele klokvlak (alle ontwerpen, ook de stippen) staat elke dag een paar pixels anders: een vaste ronde langs 9 posities, max. 8 px op 480×480 (12 px op 720×720). Om middernacht en na het opstarten. |
+| Maan zwerft | Op het maanscherm schuift de maan elk uur naar een andere plek in een klein gebied (max. 14 px op 480×480). |
+| Dimmen | *Helderheid overdag* en *'s nachts*; een lagere stand overdag rekt de levensduur van de verlichting. |
+| Nachtstand | Donkere achtergrond met weinig, gedimd rood licht. |
+
+Tip: wissel af en toe van klokontwerp. Zie je toch een schaduw, laat dan een
+paar uur wisselend beeld zien; bij LCD trekt dat meestal weg.
+
+## Ontwikkelen
+
+- **4" eerst:** nieuwe functies en indelingen eerst voor het vierkante scherm
+  (`onderdelen/scherm-vierkant.yaml`, 480×480 en via `k` 720×720) ontwerpen en
+  testen; daarna de 7" (`onderdelen/scherm.yaml`) bijwerken.
+- **Schermafdrukken:** `tools/afdrukken.sh` bouwt `esphome/voorbeeld-4inch.yaml`
+  voor de computer (ESPHome `host` met de snapshot-display), loopt met
+  voorbeelddata alle klokontwerpen en pagina's langs en zet de afdrukken als PNG
+  in `docs/screenshots/4inch/` (met `overzicht.png`). Nodig: ESPHome 2026.10 en
+  Pillow. Controleer na een wijziging in de indeling altijd de afdrukken.
+- Alles wat alleen op een ESP32 werkt (wifi, internettijd, updates, diagnose)
+  staat in `onderdelen/esp.yaml`; zo kan de rest ook op de computer draaien.
+- Let op in de vierkante indeling: schrijf negatieve maten als
+  `'${(-44 * (k | float)) | int}'`. De vorm `'${-(44 * …)}'` wordt in ESPHome
+  2026.10 positief.
+- Voor elke commit: de test hieronder en `esphome compile` voor alle drie de
+  klokken (de 4" eerst).
 
 ## Automatische controle
 
@@ -393,7 +503,7 @@ scherm goed werkt.
 
 ## Bekende aandachtspunten
 
-- Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.9.1),
+- Deze configuratie compileert volledig met `esphome compile` (ESPHome 2026.10.0),
   **nog niet op echte hardware getest**. Bij de eerste keer flashen kan er nog
   iets bijgesteld moeten worden.
 - **Touch omgekeerd of gespiegeld?** Voeg in `onderdelen/waveshare-p4-7b.yaml`
@@ -407,7 +517,7 @@ scherm goed werkt.
 
 ### 4"-klok (Waveshare ESP32-S3-Touch-LCD-4)
 
-- Compileert met ESPHome 2026.9.1, maar is **nog niet op het bord getest**.
+- Compileert met ESPHome 2026.10.0, maar is **nog niet op het bord getest**.
   Scherm, touch, hulpchip en klokchip volgen de pinnen en registers die in de
   Bosun-bootmonitor op hetzelfde bord werken.
 - **Board V3 (TCA9554):** de backlight kan daar alleen aan of uit. Dimmen en
@@ -422,7 +532,7 @@ scherm goed werkt.
 
 ### 4B (Waveshare ESP32-P4-WIFI6-Touch-LCD-4B)
 
-- Compileert met ESPHome 2026.9.1, **niet op het bord getest**. Scherm, touch,
+- Compileert met ESPHome 2026.10.0, **niet op het bord getest**. Scherm, touch,
   backlight en wifi volgen de werkende instellingen van
   [EspControl](https://github.com/jtenniswood/espcontrol) voor dit paneel; de
   microfoon volgt [esphome-p4-86-panel-eth-2ro-lvgl](https://github.com/chrisdunnname/esphome-p4-86-panel-eth-2ro-lvgl),
@@ -442,7 +552,8 @@ scherm goed werkt.
   interrupt-lijn niet is aangesloten.
 - **Echo-onderdrukking (experimenteel):** de 4B gebruikt het externe component
   [esphome-audio-stack](https://github.com/n-IA-hane/esphome-audio-stack)
-  (MIT, release 2026.10.2, dezelfde versie als Tessera). Speaker en microfoon
+  (MIT, commit d5aa6bc = voorlopige versie 2026.10.3-dev; de stabiele 2026.10.2
+  bouwt niet met ESPHome 2026.10). Speaker en microfoon
   lopen dan tegelijk, en het wekwoord werkt ook tijdens muziek. Problemen met
   geluid of wekwoord? Neem dan in `alarmklok-4b.yaml` bij `audio_transport`
   het bestand `onderdelen/audio-p4-i2s.yaml`: dan werkt de 4B net als de 7".

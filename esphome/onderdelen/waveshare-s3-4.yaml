@@ -50,6 +50,8 @@ esp32:
       # Het RGB-scherm leest continu uit PSRAM; zo blijft het beeld rustig als
       # er naar het flashgeheugen wordt geschreven (OTA, instellingen)
       execute_from_psram: true
+      # Instellingenbuffer (NVS) in PSRAM: ~10 kB meer intern geheugen (2026.10)
+      nvs_cache_in_psram: true
     # Uit EspControl, voor hun 480x480 ST7701-paneel op een ESP32-S3 (zelfde
     # opzet als dit bord; zie README, "Stabiliteit")
     sdkconfig_options:
@@ -74,6 +76,8 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+  # Het bord heeft altijd PSRAM; nodig voor nvs_cache_in_psram
+  ignore_not_found: false
 
 i2c:
   - id: i2c_bus
@@ -121,7 +125,10 @@ light:
     name: Schermhelderheid
     icon: mdi:brightness-6
     output: backlight_uitgang
-    restore_mode: ALWAYS_ON
+    # Na het opstarten altijd aan; niets bewaren (ESPHome 2026.10: restore_state)
+    initial_state:
+      state: ON
+    restore_state: NONE
     default_transition_length: 500ms
 
 # ---- Klokchip ------------------------------------------------------------------

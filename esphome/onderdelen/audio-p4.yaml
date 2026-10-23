@@ -131,8 +131,9 @@ script:
           then:
             # Elke herhaling opnieuw aan: een wekker zonder geluid mag niet
             - switch.turn_on: speaker_versterker
-            - rtttl.play:
-                rtttl: !lambda return alarmklok::melodie(id(wekgeluid).current_option().str());
+            # Als lambda: sinds ESPHome 2026.10 komt een !lambda in een actie
+            # vóór alarmklok.h in de code, en dan is alarmklok::melodie onbekend
+            - lambda: id(zoemer_rtttl).play(alarmklok::melodie(id(wekgeluid).current_option().str()));
             - wait_until:
                 condition:
                   not:

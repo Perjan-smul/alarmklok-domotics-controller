@@ -14,6 +14,11 @@ sensor:
       - lvgl.slider.update:
           id: sl_dimmer
           value: !lambda "return std::isnan(x) ? 0 : x;"
+      - lvgl.label.update:
+          id: lbl_dimmer
+          text: !lambda |-
+            if (std::isnan(x) || x < 3) return std::string("Uit");
+            return std::to_string((int) (x * 100.0f / 255.0f + 0.5f)) + "%";
 
   - platform: homeassistant
     id: klimaat_huidig
@@ -21,11 +26,7 @@ sensor:
     attribute: current_temperature
     internal: true
     on_value:
-      - lvgl.label.update:
-          id: lbl_klimaat_huidig
-          text:
-            format: "Nu %.1f°"
-            args: [x]
+      - script.execute: klimaat_status_tonen
 
   - platform: homeassistant
     id: klimaat_doel
@@ -50,9 +51,11 @@ sensor:
           value: !lambda "return std::isnan(x) ? 0 : x;"
       - lvgl.label.update:
           id: lbl_rolluik
-          text:
-            format: "Open: %.0f%%"
-            args: [x]
+          text: !lambda |-
+            if (std::isnan(x)) return std::string("--");
+            if (x < 1) return std::string("Dicht");
+            if (x > 99) return std::string("Open");
+            return "Open " + std::to_string((int) (x + 0.5f)) + "%";
 
   # volume_level is 0..1
   - platform: homeassistant
@@ -66,6 +69,24 @@ sensor:
           value: !lambda "return std::isnan(x) ? 0 : x * 100.0f;"
 
 text_sensor:
+  # Toestand van de weerentiteit (sunny, cloudy, rainy, ...), voor het
+  # weericoon op de klok "Vierkant"
+  - platform: homeassistant
+    id: weer_toestand
+    entity_id: ${weer_entiteit}
+    internal: true
+    on_value:
+      - lambda: lv_label_set_text(id(lbl_v_weer), alarmklok::weer_icoon(x));
+
+  # Wat de thermostaat nu doet: heating, cooling, idle, off, ...
+  - platform: homeassistant
+    id: klimaat_actie
+    entity_id: ${thermostaat}
+    attribute: hvac_action
+    internal: true
+    on_value:
+      - script.execute: klimaat_status_tonen
+
   - platform: homeassistant
     id: media_status
     entity_id: ${mediaspeler}
@@ -95,3 +116,22 @@ text_sensor:
       - lvgl.label.update:
           id: lbl_media_artiest
           text: !lambda return x;
+
+script:
+  # "Nu 20.3° · Verwarmen" onder de titel van de thermostaatkaart
+  - id: klimaat_status_tonen
+    then:
+      - lambda: |-
+          std::string tekst;
+          if (!std::isnan(id(klimaat_huidig).state)) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "Nu %.1f\u00B0", id(klimaat_huidig).state);
+            tekst = buf;
+          }
+          const std::string actie = id(klimaat_actie).state;
+          const char *nl = actie == "heating" ? "Verwarmen" : actie == "cooling" ? "Koelen"
+                         : actie == "drying" ? "Drogen" : actie == "fan" ? "Ventileren"
+                         : actie == "idle" ? "Rust" : actie == "off" ? "Uit" : "";
+          if (nl[0] != '\0')
+            tekst += tekst.empty() ? nl : std::string(" \u00B7 ") + nl;
+          lv_label_set_text(id(lbl_klimaat_huidig), tekst.c_str());

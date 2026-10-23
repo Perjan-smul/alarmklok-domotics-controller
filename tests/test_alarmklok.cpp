@@ -2,6 +2,7 @@
 // Draaien:  g++ -std=c++17 -Wall -Werror -o /tmp/test_alarmklok tests/test_alarmklok.cpp && /tmp/test_alarmklok
 #include "../esphome/alarmklok.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -93,6 +94,113 @@ int main() {
   CONTROLEER(std::strcmp(icoon("bestaat-niet", "\U000F009A"), "\U000F009A") == 0);
   CONTROLEER(std::strncmp(melodie("Mario"), "mario:", 6) == 0);
   CONTROLEER(std::strncmp(melodie("iets anders"), "klassiek:", 9) == 0);
+
+  // Tegels met status
+  CONTROLEER(domein("light.bedlamp") == "light" && domein("geen_punt") == "");
+  CONTROLEER(std::strcmp(waarde_attribuut("cover"), "current_position") == 0);
+  CONTROLEER(std::strcmp(waarde_attribuut("switch"), "") == 0);
+  CONTROLEER(waarde_procent("light", "255") == 100 && waarde_procent("light", "128") == 50);
+  CONTROLEER(waarde_procent("light", "None") == -1 && waarde_procent("light", "") == -1);
+  CONTROLEER(waarde_procent("cover", "37") == 37 && waarde_procent("fan", "150") == 100);
+  CONTROLEER(status_aan("on") && status_aan("open") && !status_aan("off") && !status_aan("closed"));
+  CONTROLEER(tegel_status("light", "on", 80) == "Aan · 80%");
+  CONTROLEER(tegel_status("light", "on", -1) == "Aan" && tegel_status("switch", "off", -1) == "Uit");
+  CONTROLEER(tegel_status("cover", "open", 50) == "Open 50%" && tegel_status("cover", "open", 100) == "Open");
+  CONTROLEER(tegel_status("cover", "closed", 0) == "Dicht");
+  CONTROLEER(tegel_status("media_player", "playing", -1) == "Speelt");
+  CONTROLEER(tegel_status("light", "unavailable", -1) == "Niet beschikbaar");
+  CONTROLEER(tegel_status("scene", "2026-10-22T10:00:00", -1, false) == "Scène");
+  CONTROLEER(tegel_status("light", "", -1) == "");
+
+  // StandBy-klokken
+  CONTROLEER(!donker(NAN, 5, false) && donker(3, 5, false) && !donker(6, 5, false));
+  CONTROLEER(donker(7, 5, true) && !donker(9, 5, true));  // hysterese: uit pas boven 8.5
+  CONTROLEER(klok_kleur("Oranje") == 0xF5A623 && klok_kleur("onbekend") == 0xFFFFFF);
+  CONTROLEER(meng(0x000000, 0xFFFFFF, 0.5f) == 0x808080 && meng(0x102030, 0x102030, 0.3f) == 0x102030);
+  {
+    uint32_t b, o;
+    lucht_kleur(-30, b, o);
+    CONTROLEER(b == 0x03050B && o == 0x0A0F1E);
+    lucht_kleur(60, b, o);
+    CONTROLEER(b == 0x1E6FD0);
+    lucht_kleur(-3, b, o);
+    CONTROLEER(b == meng(0x0B1230, 0x1F2A5A, 0.5f));
+    bool dag;
+    CONTROLEER(zon_fractie(12 * 60, 6 * 60, 18 * 60, dag) == 0.5f && dag);
+    CONTROLEER(zon_fractie(0, 6 * 60, 18 * 60, dag) == 0.5f && !dag);
+    CONTROLEER(zon_fractie(18 * 60, 6 * 60, 18 * 60, dag) == 0.0f && !dag);
+    int x, y;
+    boog_punt(0.0f, 100, 100, 50, x, y);
+    CONTROLEER(x == 50 && y == 100);
+    boog_punt(0.5f, 100, 100, 50, x, y);
+    CONTROLEER(x == 100 && y == 50);
+    boog_punt(1.0f, 100, 100, 50, x, y);
+    CONTROLEER(x == 150 && y == 100);
+  }
+
+  // Maan
+  {
+    // Volle maan 26 oktober 2026 ~05:12 UTC, nieuwe maan 10 oktober 2026 ~16:50 UTC
+    const float vol = maan_fase(1792991520.0);
+    const float nieuw = maan_fase(1791651000.0);
+    CONTROLEER(std::fabs(vol - 0.5f) < 0.02f);
+    CONTROLEER(nieuw < 0.03f || nieuw > 0.97f);  // gemiddelde maand: tot ~1 dag verschil
+    CONTROLEER(std::strcmp(maan_fase_naam(0.5f), "Volle maan") == 0);
+    CONTROLEER(std::strcmp(maan_fase_naam(0.26f), "Eerste kwartier") == 0);
+    CONTROLEER(std::strcmp(maan_fase_naam(0.97f), "Nieuwe maan") == 0);
+    CONTROLEER(std::fabs(maan_verlicht(0.5f) - 1.0f) < 1e-4f && maan_verlicht(0.0f) < 1e-4f);
+    // Eerste kwartier: rechts licht, links donker; buiten de schijf niets
+    CONTROLEER(maan_licht(0.25f, 0.5f, 0.0f) > 0.9f && maan_licht(0.25f, -0.5f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.75f, -0.5f, 0.0f) > 0.9f && maan_licht(0.75f, 0.5f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.5f, 0.0f, 0.0f) > 0.9f && maan_licht(0.0f, 0.0f, 0.0f) < 0.1f);
+    CONTROLEER(maan_licht(0.5f, 0.9f, 0.9f) == 0.0f);
+    int x, y, g, x2, y2, g2;
+    ster(3, 100, 50, x, y, g);
+    ster(3, 100, 50, x2, y2, g2);
+    CONTROLEER(x == x2 && y == y2 && x < 100 && y < 50 && g >= 1 && g <= 3);
+  }
+
+  // Verschuiving tegen inbranden: binnen het raster, 9 verschillende punten,
+  // nooit twee keer achter elkaar hetzelfde (ook niet over de rand van 9)
+  {
+    bool gezien[3][3] = {};
+    int vx = 0, vy = 0;
+    verschuiving(-1, 8, vx, vy);
+    for (int n = 0; n < 9; n++) {
+      int dx, dy;
+      verschuiving(n, 8, dx, dy);
+      CONTROLEER(dx >= -8 && dx <= 8 && dy >= -8 && dy <= 8 && dx % 8 == 0 && dy % 8 == 0);
+      CONTROLEER(dx != vx || dy != vy);
+      gezien[dy / 8 + 1][dx / 8 + 1] = true;
+      vx = dx;
+      vy = dy;
+    }
+    int aantal = 0;
+    for (auto &rij : gezien)
+      for (bool g : rij)
+        aantal += g;
+    CONTROLEER(aantal == 9);
+  }
+
+  // Vierkante wijzerplaat: 12 uur boven, 3 uur rechts, 1:30 in de hoek
+  {
+    float x, y;
+    vierkant_rand(0, 100, x, y);
+    CONTROLEER(std::fabs(x) < 0.01f && std::fabs(y + 100) < 0.01f);
+    vierkant_rand(90, 100, x, y);
+    CONTROLEER(std::fabs(x - 100) < 0.01f && std::fabs(y) < 0.01f);
+    vierkant_rand(45, 100, x, y);
+    CONTROLEER(std::fabs(x - 100) < 0.01f && std::fabs(y + 100) < 0.01f);
+    vierkant_rand(30, 100, x, y);  // 1 uur: op de bovenrand
+    CONTROLEER(std::fabs(y + 100) < 0.01f && x > 57 && x < 58);
+  }
+
+  // Wijzerplaat en weer
+  CONTROLEER(wijzerplaat("Blauw").plaat == 0x1D3068 && wijzerplaat("onbekend").plaat == 0x1D3068);
+  CONTROLEER(wijzerplaat("Zilver").merk == 0x23324F);  // lichte plaat: donkere wijzers
+  CONTROLEER(std::strcmp(weer_icoon("sunny"), "\U000F0599") == 0);
+  CONTROLEER(std::strcmp(weer_icoon("rainy"), "\U000F0597") == 0);
+  CONTROLEER(std::strcmp(weer_icoon("iets"), "\U000F0590") == 0);
 
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");

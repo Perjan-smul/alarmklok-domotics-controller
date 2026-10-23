@@ -14,6 +14,7 @@
 #    alarmklok-4b.yaml                <- de 4"-klok met speaker en microfoons (4B)
 #    instellingen.yaml                <- tegels, pagina's enz.: hier pas je dingen aan
 #    onderdelen/kern.yaml             <- wekkers, instellingen en logica (gedeeld)
+#    onderdelen/esp.yaml              <- wifi, internettijd, updates, diagnose
 #    onderdelen/waveshare-p4-7b.yaml  <- hardware 7" (scherm, touch, wifi)
 #    onderdelen/waveshare-p4-4b.yaml  <- hardware 4B (scherm, touch, wifi, relais)
 #    onderdelen/audio-p4.yaml         <- speaker en microfoons van 7" en 4B
@@ -34,9 +35,11 @@ substitutions:
 packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
+  esp: !include onderdelen/esp.yaml
   hardware: !include onderdelen/waveshare-p4-7b.yaml
   audio: !include onderdelen/audio-p4.yaml
   audio_transport: !include onderdelen/audio-p4-i2s.yaml
   c6_update: !include onderdelen/c6-update.yaml
   spraak: !include onderdelen/spraak.yaml
   scherm: !include onderdelen/scherm.yaml
+  detail: !include onderdelen/detail-pagina.yaml
