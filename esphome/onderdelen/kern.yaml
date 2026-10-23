@@ -268,6 +268,22 @@ select:
           then:
             - script.execute: klokkleur_toepassen
 
+  # Kleur van de plaat van het klokontwerp "Vierkant"
+  - platform: template
+    id: wijzerplaat
+    name: Wijzerplaat
+    icon: mdi:watch-variant
+    optimistic: true
+    restore_value: true
+    options: [Blauw, Zwart, Zilver, Zalm, Groen, Bordeaux]
+    initial_option: Blauw
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: plaat_toepassen
+
 number:
   - platform: template
     id: snooze_minuten
@@ -1051,9 +1067,55 @@ script:
             lv_obj_t *lijn = lv_line_create(vlak);
             lv_line_set_points(lijn, p, 2);
             lv_obj_set_style_line_width(lijn, uur ? (int) (4 * s) : 1, 0);
-            lv_obj_set_style_line_color(lijn, lv_color_hex(uur ? 0xEDE9DD : 0x9FB0D8), 0);
             lv_obj_set_style_line_rounded(lijn, true, 0);
+            // Uurstreepjes krijgen een slagschaduw (licht van linksboven)
+            if (uur) {
+              lv_obj_t *schaduw = lv_line_create(id(vierkant_schaduwen));
+              lv_line_set_points(schaduw, p, 2);
+              lv_obj_set_pos(schaduw, (int) (2 * s), (int) (3 * s));
+              lv_obj_set_style_line_width(schaduw, (int) (5 * s), 0);
+              lv_obj_set_style_line_color(schaduw, lv_color_hex(0x000000), 0);
+              lv_obj_set_style_line_rounded(schaduw, true, 0);
+            }
           }
+      - script.execute: plaat_toepassen
+
+  # Kleuren van de plaat "Vierkant" (select Wijzerplaat): plaat, cijfers,
+  # streepjes, wijzers, tekst en hoe donker de schaduwen zijn
+  - id: plaat_toepassen
+    then:
+      - lambda: |-
+          const auto w = alarmklok::wijzerplaat(id(wijzerplaat).current_option().str());
+          const lv_color_t merk = lv_color_hex(w.merk), sub = lv_color_hex(w.sub);
+          lv_obj_set_style_bg_color(id(ontwerp_vierkant), lv_color_hex(w.plaat), 0);
+          // Cijfers en uurstreepjes in de merkkleur, minuutstreepjes lichter
+          lv_obj_t *merken = id(vierkant_merken);
+          for (uint32_t i = 0; i < lv_obj_get_child_count(merken); i++) {
+            lv_obj_t *o = lv_obj_get_child(merken, i);
+            if (lv_obj_check_type(o, &lv_label_class)) {
+              lv_obj_set_style_text_color(o, merk, 0);
+            } else {
+              const bool uur = lv_obj_get_style_line_width(o, LV_PART_MAIN) > 1;
+              lv_obj_set_style_line_color(o, uur ? merk : sub, 0);
+            }
+          }
+          // Schaduwen: zwart, dekking per plaat
+          lv_obj_t *schaduwen = id(vierkant_schaduwen);
+          for (uint32_t i = 0; i < lv_obj_get_child_count(schaduwen); i++) {
+            lv_obj_t *o = lv_obj_get_child(schaduwen, i);
+            lv_obj_set_style_text_opa(o, w.schaduw, 0);
+            lv_obj_set_style_line_opa(o, w.schaduw, 0);
+          }
+          lv_obj_set_style_line_opa(id(wijzer_vs_uur)->obj, w.schaduw, 0);
+          lv_obj_set_style_line_opa(id(wijzer_vs_minuut)->obj, w.schaduw, 0);
+          lv_obj_set_style_line_color(id(wijzer_v_uur)->obj, merk, 0);
+          lv_obj_set_style_line_color(id(wijzer_v_minuut)->obj, merk, 0);
+          lv_obj_set_style_bg_color(id(vierkant_as), merk, 0);
+          lv_obj_set_style_text_color(id(lbl_v_datum), merk, 0);
+          lv_obj_t *klein[] = {id(lbl_v_wekker), id(lbl_v_weer), id(lbl_v_buiten), id(lbl_v_huis),
+                               id(lbl_v_binnen)};
+          for (auto *o : klein)
+            lv_obj_set_style_text_color(o, sub, 0);
 
   # Sterren achter de maan (eenmalig bij het opstarten), niet achter de maan zelf
   - id: sterren_maken
@@ -1257,6 +1319,18 @@ script:
               c = toupper((unsigned char) c);
             lv_label_set_text(id(lbl_v_datum), kort.c_str());
             lv_label_set_text(id(lbl_v_wekker), wekker);
+            // Buiten en binnen, zonder tekst (weericoon en huisje ervoor)
+            char t[12];
+            if (std::isnan(id(buitentemperatuur).state))
+              snprintf(t, sizeof(t), "--");
+            else
+              snprintf(t, sizeof(t), "%.0f\u00B0", id(buitentemperatuur).state);
+            lv_label_set_text(id(lbl_v_buiten), t);
+            if (std::isnan(id(klimaat_huidig).state))
+              snprintf(t, sizeof(t), "--");
+            else
+              snprintf(t, sizeof(t), "%.0f\u00B0", id(klimaat_huidig).state);
+            lv_label_set_text(id(lbl_v_binnen), t);
           }
           // Wekker gaat af
           lv_label_set_text(id(lbl_tijd_alarm), tijd.c_str());
@@ -1286,8 +1360,15 @@ script:
                   auto nu = id(klok).now();
                   return nu.minute + nu.second / 60.0f;
             - lvgl.indicator.update:
-                id: wijzer_v_seconde
-                value: !lambda return id(klok).now().second;
+                id: wijzer_vs_uur
+                value: !lambda |-
+                  auto nu = id(klok).now();
+                  return (nu.hour % 12) * 60 + nu.minute;
+            - lvgl.indicator.update:
+                id: wijzer_vs_minuut
+                value: !lambda |-
+                  auto nu = id(klok).now();
+                  return nu.minute + nu.second / 60.0f;
 
   # Alle widgets gelijkzetten met de huidige instellingen
   - id: ui_synchroniseren

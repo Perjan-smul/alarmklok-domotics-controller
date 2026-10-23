@@ -100,6 +100,7 @@ script:
           id(media_titel).publish_state("Ochtendshow");
           id(media_artiest).publish_state("NPO Radio 2");
           id(media_volume).publish_state(0.4f);
+          id(weer_toestand).publish_state("partlycloudy");
           const char *status[] = {"on", "off", "on", "off", "on", "on"};
           const int procent[] = {80, -1, 35, -1, 50, -1};
           std::string *statussen[] = {&id(tegel_licht_1_status), &id(tegel_licht_2_status),
@@ -135,6 +136,17 @@ script:
       - script.wait: klokontwerp_afdruk
       - script.execute: {id: klokontwerp_afdruk, ontwerp: Vierkant, naam: 08-klok-vierkant}
       - script.wait: klokontwerp_afdruk
+      # Andere wijzerplaten
+      - select.set: {id: wijzerplaat, option: Zilver}
+      - script.execute: {id: afdruk, naam: 08b-klok-vierkant-zilver}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Zwart}
+      - script.execute: {id: afdruk, naam: 08c-klok-vierkant-zwart}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Zalm}
+      - script.execute: {id: afdruk, naam: 08d-klok-vierkant-zalm}
+      - script.wait: afdruk
+      - select.set: {id: wijzerplaat, option: Blauw}
       # Zon overdag (10:15)
       - script.execute: {id: demo_tijd_zetten, tijdstip: 1792656900}
       - script.execute: {id: klokontwerp_afdruk, ontwerp: Zon, naam: 05-klok-zon}

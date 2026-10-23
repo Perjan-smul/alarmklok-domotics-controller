@@ -128,6 +128,31 @@ font:
     id: f_wijzerplaat
     size: '${(46 * (k | float)) | int}'
     glyphs: "012348"
+  # Kleine cijfers (temperaturen) en weericonen op de vierkante wijzerplaat
+  - file: "gfonts://Outfit@300"
+    id: f_wijzer_klein
+    size: '${(26 * (k | float)) | int}'
+    glyphs: "0123456789-.°"
+  - file: *mdi
+    id: f_weer
+    size: '${(30 * (k | float)) | int}'
+    glyphs:
+      - "\U000F0599"  # weather-sunny
+      - "\U000F0594"  # weather-night
+      - "\U000F0595"  # weather-partly-cloudy
+      - "\U000F0590"  # weather-cloudy
+      - "\U000F0597"  # weather-rainy
+      - "\U000F0596"  # weather-pouring
+      - "\U000F0598"  # weather-snowy
+      - "\U000F067F"  # weather-snowy-rainy
+      - "\U000F0592"  # weather-hail
+      - "\U000F0591"  # weather-fog
+      - "\U000F0593"  # weather-lightning
+      - "\U000F067E"  # weather-lightning-rainy
+      - "\U000F059D"  # weather-windy
+      - "\U000F059E"  # weather-windy-variant
+      - "\U000F0026"  # alert
+      - "\U000F02DC"  # home (binnen)
   # Groot icoon op de detailpagina (alleen de tegeliconen)
   - file: *mdi
     id: f_icoon_groot

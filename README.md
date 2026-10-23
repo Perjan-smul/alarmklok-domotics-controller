@@ -76,12 +76,17 @@ Verder:
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
   scherm, zodat je in het donker niet per ongeluk een lamp aanzet.
-- **Vierkant** ([screenshot](docs/screenshots/4inch/08-klok-vierkant.png)):
+- **Vierkant** ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
   een analoge klok over het hele vierkante scherm, in de stijl van een
-  vierkant horloge: diepblauwe wijzerplaat, dunne cijfers 12, 2, 4, 8 en 10,
-  streepjes voor de andere uren, een minutenrand langs de rand, slanke wijzers
-  en een kleine secondeteller; datum en wekker klein bovenin. Op de 7" staat de
-  plaat in het midden.
+  vierkant horloge: dunne cijfers 12, 2, 4, 8 en 10, streepjes voor de andere
+  uren, een minutenrand langs de rand en slanke wijzers, met een slagschaduw
+  (licht van linksboven) voor diepte. Onder het midden het weericoon met de
+  buitentemperatuur en een huisje met de binnentemperatuur; datum en wekker
+  klein bovenin. De kleur van de plaat kies je in HA met *Wijzerplaat*
+  (blauw, zwart, zilver, zalm, groen, bordeaux); op een lichte plaat worden
+  cijfers en wijzers donker. Het weericoon volgt `weer_entiteit` in
+  `instellingen.yaml` (standaard `weather.forecast_home` van Met.no). Op de 7"
+  staat de plaat in het midden.
 - **Maanscherm** ([screenshot](docs/screenshots/15-maan-nacht.png)): in de
   nachtstand toont de klok een realistische maan in de fase van vandaag (gedimd
   grijs) op een sterrenhemel, met de tijd en de volgende wekker in rood en
@@ -313,6 +318,7 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 | `time.alarmklok_nachtstand_vanaf` / `_tot` | Venster voor de nachtstand |
 | `text.alarmklok_lichtsensor`, `number.alarmklok_nachtstand_onder`, `switch.alarmklok_nachtstand_bij_weinig_licht` | Nachtstand ook bij weinig licht: lux-sensor uit HA en de drempel (standaard 5 lx) |
 | `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
+| `select.alarmklok_wijzerplaat` | Kleur van de plaat van de klok Vierkant |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
 | `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan / Vierkant |

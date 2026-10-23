@@ -403,6 +403,47 @@ inline void verschuiving(int stap, int max, int &dx, int &dy) {
   dy = (i / 3 - 1) * max;
 }
 
+// Kleuren van de vierkante wijzerplaat (select "Wijzerplaat"): de plaat, de
+// cijfers/streepjes/wijzers, de kleine tekst en hoe donker de schaduw is.
+// Op een lichte plaat zijn cijfers en wijzers donker (zoals geblauwde wijzers).
+struct Wijzerplaat {
+  uint32_t plaat, merk, sub;
+  uint8_t schaduw;  // dekking van de slagschaduw, 0-255
+};
+
+inline Wijzerplaat wijzerplaat(const std::string &naam) {
+  if (naam == "Zwart")
+    return {0x15171B, 0xE8E6E0, 0x8C93A3, 150};
+  if (naam == "Zilver")
+    return {0xC9CCD1, 0x23324F, 0x4A5163, 70};
+  if (naam == "Zalm")
+    return {0xE4B49E, 0x2C2A35, 0x6A4A42, 70};
+  if (naam == "Groen")
+    return {0x1F4A3A, 0xECE7DA, 0xA9C4B5, 130};
+  if (naam == "Bordeaux")
+    return {0x5A1F2B, 0xEFE6DA, 0xD2A9A9, 130};
+  return {0x1D3068, 0xEDE9DD, 0x9FB0D8, 130};  // "Blauw"
+}
+
+// Weericoon (MDI) voor de toestand van een weerentiteit in Home Assistant
+inline const char *weer_icoon(const std::string &toestand) {
+  static const char *const ICONEN[][2] = {
+      {"sunny", "\U000F0599"},          {"clear-night", "\U000F0594"},
+      {"partlycloudy", "\U000F0595"},   {"cloudy", "\U000F0590"},
+      {"rainy", "\U000F0597"},          {"pouring", "\U000F0596"},
+      {"snowy", "\U000F0598"},          {"snowy-rainy", "\U000F067F"},
+      {"hail", "\U000F0592"},           {"fog", "\U000F0591"},
+      {"lightning", "\U000F0593"},      {"lightning-rainy", "\U000F067E"},
+      {"windy", "\U000F059D"},          {"windy-variant", "\U000F059E"},
+      {"exceptional", "\U000F0026"},
+  };
+  for (const auto &paar : ICONEN) {
+    if (toestand == paar[0])
+      return paar[1];
+  }
+  return "\U000F0590";  // onbekend: bewolkt
+}
+
 // Vierkante wijzerplaat: het punt op een vierkant (halve zijde `halve`, rond
 // het middelpunt) in de richting van `hoek` graden (0 = 12 uur, met de klok mee).
 inline void vierkant_rand(float hoek, float halve, float &x, float &y) {

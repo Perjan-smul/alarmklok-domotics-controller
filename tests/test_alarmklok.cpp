@@ -195,6 +195,13 @@ int main() {
     CONTROLEER(std::fabs(y + 100) < 0.01f && x > 57 && x < 58);
   }
 
+  // Wijzerplaat en weer
+  CONTROLEER(wijzerplaat("Blauw").plaat == 0x1D3068 && wijzerplaat("onbekend").plaat == 0x1D3068);
+  CONTROLEER(wijzerplaat("Zilver").merk == 0x23324F);  // lichte plaat: donkere wijzers
+  CONTROLEER(std::strcmp(weer_icoon("sunny"), "\U000F0599") == 0);
+  CONTROLEER(std::strcmp(weer_icoon("rainy"), "\U000F0597") == 0);
+  CONTROLEER(std::strcmp(weer_icoon("iets"), "\U000F0590") == 0);
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

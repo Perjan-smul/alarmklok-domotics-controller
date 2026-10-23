@@ -21,6 +21,9 @@ substitutions:
   # Lichtsensor (lux) uit HA: nachtstand ook als het donker is. Leeg = alleen
   # het tijdvenster. Later aan te passen in HA (Configuratie -> Lichtsensor).
   lichtsensor: ""
+  # Weerentiteit uit HA voor het weericoon op de klok "Vierkant" (Met.no maakt
+  # standaard weather.forecast_home aan).
+  weer_entiteit: weather.forecast_home
 
   # ===========================================================================
   #  Home Assistant-pagina's (swipe links/rechts vanaf de klok)

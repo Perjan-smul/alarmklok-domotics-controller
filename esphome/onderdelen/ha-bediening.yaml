@@ -69,6 +69,15 @@ sensor:
           value: !lambda "return std::isnan(x) ? 0 : x * 100.0f;"
 
 text_sensor:
+  # Toestand van de weerentiteit (sunny, cloudy, rainy, ...), voor het
+  # weericoon op de klok "Vierkant"
+  - platform: homeassistant
+    id: weer_toestand
+    entity_id: ${weer_entiteit}
+    internal: true
+    on_value:
+      - lambda: lv_label_set_text(id(lbl_v_weer), alarmklok::weer_icoon(x));
+
   # Wat de thermostaat nu doet: heating, cooling, idle, off, ...
   - platform: homeassistant
     id: klimaat_actie
