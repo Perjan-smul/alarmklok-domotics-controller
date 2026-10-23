@@ -127,7 +127,7 @@ font:
   - file: "gfonts://Outfit@300"
     id: f_wijzerplaat
     size: '${(46 * (k | float)) | int}'
-    glyphs: "012348"
+    glyphs: "0123468"
   # Kleine cijfers (temperaturen) en weericonen op de vierkante wijzerplaat
   - file: "gfonts://Outfit@300"
     id: f_wijzer_klein

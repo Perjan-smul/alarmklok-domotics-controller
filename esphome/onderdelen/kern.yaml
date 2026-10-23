@@ -1055,7 +1055,7 @@ script:
           const float s = h / 240.0f;  // schaal t.o.v. 480x480
           for (int i = 0; i < 60; i++) {
             const bool uur = i % 5 == 0;
-            // Cijfers op 12, 2, 4, 8 en 10; op 6 staan het weer en de temperaturen
+            // Cijfers op 12, 2, 4, 6, 8 en 10
             if (uur && (i == 0 || i == 10 || i == 20 || i == 30 || i == 40 || i == 50))
               continue;
             float x, y;

@@ -80,8 +80,8 @@ Verder:
   een realistische analoge klok over het hele vierkante scherm, in de stijl van
   een vierkant horloge: een geborstelde sunray-plaat met lichtval van
   linksboven en een vleugje glasglans, opgezette gepolijste uurindexen en
-  facetwijzers met zachte schaduw, een bol asje, gedrukte cijfers 12, 2, 4, 8
-  en 10 en een minutenrand langs de rand. Onder het midden het weericoon met de
+  facetwijzers met zachte schaduw, een bol asje, gedrukte cijfers 12, 2, 4,
+  6, 8 en 10 en een minutenrand langs de rand. Onder het midden het weericoon met de
   buitentemperatuur en een huisje met de binnentemperatuur; datum en wekker
   klein bovenin. De wijzers verspringen per minuut. De kleur van de plaat kies
   je in HA met *Wijzerplaat* (blauw, zwart, zilver, zalm, groen, bordeaux); op

@@ -65,6 +65,12 @@ obj:
                     text: "4"
                 - label:
                     align: CENTER
+                    x: 0
+                    y: '${(178 * (k | float)) | int}'
+                    text_font: f_wijzerplaat
+                    text: "6"
+                - label:
+                    align: CENTER
                     x: '${(-178 * (k | float)) | int}'
                     y: '${(103 * (k | float)) | int}'
                     text_font: f_wijzerplaat
