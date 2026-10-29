@@ -168,7 +168,7 @@ inline const char *icoon(const std::string &naam, const char *standaard = "\U000
       // Vooral voor meldingen
       {"bell", "\U000F009A"},             {"information", "\U000F02FC"},
       {"alert", "\U000F0026"},            {"door-open", "\U000F081C"},
-      {"washing-machine", "\U000F072A"},
+      {"washing-machine", "\U000F072A"}, {"battery-alert", "\U000F0083"},
   };
   for (const auto &paar : ICONEN) {
     if (naam == paar[0])
@@ -442,6 +442,18 @@ inline const char *weer_icoon(const std::string &toestand) {
       return paar[1];
   }
   return "\U000F0590";  // onbekend: bewolkt
+}
+
+// Batterij-icoon (MDI) bij een percentage: alarm onder de 20%, anders in
+// stappen leeg/half/vol. Zelfde glyphs als het lettertype f_batterij.
+inline const char *batterij_icoon(float procent) {
+  if (procent < 20)
+    return "\U000F0083";  // battery-alert
+  if (procent < 45)
+    return "\U000F007C";  // battery-30
+  if (procent < 75)
+    return "\U000F007F";  // battery-60
+  return "\U000F0079";    // battery
 }
 
 // Vierkante wijzerplaat: het punt op een vierkant (halve zijde `halve`, rond

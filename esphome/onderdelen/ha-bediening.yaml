@@ -57,6 +57,26 @@ sensor:
             if (x > 99) return std::string("Open");
             return "Open " + std::to_string((int) (x + 0.5f)) + "%";
 
+  # Batterij van het rolluik/gordijn: icoon en percentage op de rolluikkaart,
+  # rood onder de 20%. Geen waarde (sensor bestaat niet): niets tonen.
+  - platform: homeassistant
+    id: rolluik_batterij_procent
+    entity_id: ${rolluik_batterij}
+    internal: true
+    on_value:
+      - lambda: |-
+          lv_obj_t *rij = id(rolluik_batterij_rij);
+          if (std::isnan(x)) {
+            lv_obj_add_flag(rij, LV_OBJ_FLAG_HIDDEN);
+            return;
+          }
+          const lv_color_t kleur = lv_color_hex(x < 20 ? 0xFF6B5A : 0xFFFFFF);
+          lv_label_set_text(id(lbl_rolluik_batterij_icoon), alarmklok::batterij_icoon(x));
+          lv_label_set_text_fmt(id(lbl_rolluik_batterij), "%d%%", (int) (x + 0.5f));
+          lv_obj_set_style_text_color(id(lbl_rolluik_batterij_icoon), kleur, 0);
+          lv_obj_set_style_text_color(id(lbl_rolluik_batterij), kleur, 0);
+          lv_obj_clear_flag(rij, LV_OBJ_FLAG_HIDDEN);
+
   # volume_level is 0..1
   - platform: homeassistant
     id: media_volume

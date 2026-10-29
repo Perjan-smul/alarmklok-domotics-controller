@@ -96,6 +96,7 @@ script:
           id(klimaat_actie).publish_state("heating");
           id(dim_lamp_helderheid).publish_state(204.0f);
           id(rolluik_positie).publish_state(60.0f);
+          id(rolluik_batterij_procent).publish_state(15.0f);
           id(media_status).publish_state("playing");
           id(media_titel).publish_state("Ochtendshow");
           id(media_artiest).publish_state("NPO Radio 2");
@@ -172,6 +173,13 @@ script:
       - script.execute: {id: afdruk, naam: 15-detail}
       - script.wait: afdruk
       - script.execute: detail_sluiten
+
+      # ---- Melding van HA: batterij bijna leeg ----
+      - script.execute: naar_klokscherm
+      - script.execute: {id: melding_tonen, titel: Batterij bijna leeg, tekst: "Gordijn slaapkamer: 15%", icoon: battery-alert}
+      - script.execute: {id: afdruk, naam: 16-melding-batterij}
+      - script.wait: afdruk
+      - script.execute: melding_sluiten
 
       # ---- Nachtstand: Vierkant zwart en het maanscherm (23:41) ----
       - script.execute: naar_klokscherm

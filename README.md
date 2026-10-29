@@ -359,6 +359,19 @@ Curtain 3**, zonder SwitchBot-hub:
    ontdekken). Het gordijn wordt een `cover.` in HA.
 3. Zet het gordijn op een tegel of gebruik het als `rolluik` in
    `instellingen.yaml`; de wekker-automations kunnen het ook openen.
+4. Zet bij `rolluik_batterij` in `instellingen.yaml` de batterijsensor van het
+   gordijn (`sensor.<naam>_battery`). De rolluikkaart toont dan rechtsboven
+   een batterij-icoon met het percentage, rood onder de 20%
+   ([screenshot](docs/screenshots/4inch/11-klimaat.png)).
+5. De automation *Alarmklok: batterij bijna leeg* in het HA-pakket geeft een
+   melding op de klok zodra een batterij onder de 20% komt, en daarna elke
+   ochtend om 8:00 tot hij weer geladen is
+   ([screenshot](docs/screenshots/4inch/16-melding-batterij.png)). Zet je
+   batterijsensoren in de lijst `batterijen` (bij de trigger en bij de
+   variabelen); dat mogen er meer zijn dan alleen het gordijn.
+
+In HA zelf krijg je van de SwitchBot-integratie ook de batterijstand, het
+lichtniveau en de signaalsterkte van het gordijn.
 
 HA kiest zelf de proxy die het gordijn het best hoort; met meerdere proxies in
 huis werkt het dus ook als de klok iets verder weg staat. Op de P4-borden (7"
