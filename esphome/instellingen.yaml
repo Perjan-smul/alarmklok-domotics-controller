@@ -61,6 +61,10 @@ substitutions:
   # ---- Pagina "Klimaat & rolluik" -------------------------------------------
   thermostaat: climate.slaapkamer
   rolluik: cover.slaapkamer
+  # Batterij van het rolluik of gordijn (bv. SwitchBot Curtain 3:
+  # sensor.<naam>_battery). Staat op de rolluikkaart; bestaat hij niet, dan
+  # blijft hij weg.
+  rolluik_batterij: sensor.slaapkamer_gordijn_battery
 
   # ---- Pagina "Muziek" --------------------------------------------------------
   mediaspeler: media_player.alarmklok_speaker

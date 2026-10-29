@@ -201,6 +201,12 @@ int main() {
   CONTROLEER(std::strcmp(weer_icoon("sunny"), "\U000F0599") == 0);
   CONTROLEER(std::strcmp(weer_icoon("rainy"), "\U000F0597") == 0);
   CONTROLEER(std::strcmp(weer_icoon("iets"), "\U000F0590") == 0);
+  CONTROLEER(std::strcmp(batterij_icoon(5), "\U000F0083") == 0);
+  CONTROLEER(std::strcmp(icoon("battery-alert"), "\U000F0083") == 0);
+  CONTROLEER(std::strcmp(batterij_icoon(19.9f), "\U000F0083") == 0);
+  CONTROLEER(std::strcmp(batterij_icoon(20), "\U000F007C") == 0);
+  CONTROLEER(std::strcmp(batterij_icoon(60), "\U000F007F") == 0);
+  CONTROLEER(std::strcmp(batterij_icoon(100), "\U000F0079") == 0);
 
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");

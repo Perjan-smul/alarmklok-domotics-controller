@@ -95,6 +95,7 @@ font:
       - "\U000F0026"  # alert
       - "\U000F081C"  # door-open
       - "\U000F072A"  # washing-machine
+      - "\U000F0083"  # battery-alert (melding)
       - "\U000F036C"  # microphone (spraakassistent)
       - "\U000F036D"  # microphone-off
       - "\U000F01D8"  # dots-horizontal
@@ -187,6 +188,11 @@ font:
       - "\U000F0A70"  # silverware-fork-knife
       - "\U000F140B"  # lightning-bolt
       - "\U000F0140"  # chevron-down (keuzelijsten)
+  # Batterij-iconen op de rolluikkaart (alarmklok::batterij_icoon)
+  - file: *mdi
+    id: f_batterij
+    size: 32
+    glyphs: ["\U000F0083", "\U000F007C", "\U000F007F", "\U000F0079"]
 
   # Kleiner icoon (o.a. het pijltje van de keuzelijsten)
   - file: *mdi
@@ -1070,6 +1076,25 @@ lvgl:
                                     entity_id: ${rolluik}
                                     position: !lambda return std::to_string((int) x);
                         - label: { text: "\U000F111C", x: 18, y: 18, clickable: false, text_font: f_icoon }
+                        # Batterij van het rolluik/gordijn (ha-bediening.yaml)
+                        - obj:
+                            id: rolluik_batterij_rij
+                            align: TOP_RIGHT
+                            x: -24
+                            y: 92
+                            width: SIZE_CONTENT
+                            height: SIZE_CONTENT
+                            styles: leeg
+                            clickable: false
+                            hidden: true
+                            layout:
+                              type: FLEX
+                              flex_flow: ROW
+                              flex_align_cross: CENTER
+                              pad_column: 6
+                            widgets:
+                              - label: { id: lbl_rolluik_batterij_icoon, text: "\U000F0079", text_font: f_batterij, clickable: false }
+                              - label: { id: lbl_rolluik_batterij, text: "", text_font: f_klein, clickable: false }
                         - label: { text: "Rolluik", x: 96, y: 34, clickable: false, text_font: f_midden }
                         - label:
                             id: lbl_rolluik

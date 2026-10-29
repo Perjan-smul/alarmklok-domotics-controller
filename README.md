@@ -198,6 +198,7 @@ esphome/
     audio-p4-i2s.yaml            Audiotransport zonder echo-onderdrukking (7")
     audio-p4-aec.yaml            Audiotransport met echo-onderdrukking (4B, experimenteel)
     spraak.yaml                  Spraakassistent: wekwoord, Assist, balk op het scherm
+    bluetooth-proxy.yaml         Bluetooth-proxy voor HA (o.a. SwitchBot Curtain 3)
     waveshare-s3-4.yaml/.h       Hardware 4": scherm, touch, hulpchip, zoemer, klokchip
     scherm.yaml                  De touch-interface voor 7" (swipe-pagina's, klokontwerpen)
     scherm-vierkant.yaml         De touch-interface voor vierkante schermen (schaalt met k)
@@ -344,6 +345,40 @@ Het wekwoord luistert niet als de wekker afgaat, als er geen verbinding met HA
 is, en nooit terwijl de klok zelf iets uitspreekt. De versterker staat alleen
 aan als er geluid is, zodat de speaker 's nachts niet ruist. Werkt het wekwoord niet, kijk dan in het log of de microfoonchip (ES7210)
 gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
+
+## Bluetooth-proxy (SwitchBot Curtain 3 en meer)
+
+Elke klok is ook een **Bluetooth-proxy** voor Home Assistant
+(`onderdelen/bluetooth-proxy.yaml`). HA hoort via de klok Bluetooth-apparaten
+in de slaapkamer en kan er verbinding mee maken, bijvoorbeeld een **SwitchBot
+Curtain 3**, zonder SwitchBot-hub:
+
+1. Flash de klok met deze firmware. In HA verschijnt de proxy vanzelf bij de
+   Bluetooth-integratie.
+2. Voeg de **SwitchBot Bluetooth**-integratie toe (of laat HA het gordijn
+   ontdekken). Het gordijn wordt een `cover.` in HA.
+3. Zet het gordijn op een tegel of gebruik het als `rolluik` in
+   `instellingen.yaml`; de wekker-automations kunnen het ook openen.
+4. Zet bij `rolluik_batterij` in `instellingen.yaml` de batterijsensor van het
+   gordijn (`sensor.<naam>_battery`). De rolluikkaart toont dan rechtsboven
+   een batterij-icoon met het percentage, rood onder de 20%
+   ([screenshot](docs/screenshots/4inch/11-klimaat.png)).
+5. De automation *Alarmklok: batterij bijna leeg* in het HA-pakket geeft een
+   melding op de klok zodra een batterij onder de 20% komt, en daarna elke
+   ochtend om 8:00 tot hij weer geladen is
+   ([screenshot](docs/screenshots/4inch/16-melding-batterij.png)). Zet je
+   batterijsensoren in de lijst `batterijen` (bij de trigger en bij de
+   variabelen); dat mogen er meer zijn dan alleen het gordijn.
+
+In HA zelf krijg je van de SwitchBot-integratie ook de batterijstand, het
+lichtniveau en de signaalsterkte van het gordijn.
+
+HA kiest zelf de proxy die het gordijn het best hoort; met meerdere proxies in
+huis werkt het dus ook als de klok iets verder weg staat. Op de P4-borden (7"
+en 4B) loopt Bluetooth via de ESP32-C6, net als wifi: houd de **Wifi-chip
+(C6)** bijgewerkt. De scan gebruikt korte vensters (30 ms per 320 ms) zodat er
+genoeg tijd overblijft voor wifi. Niet nodig? Zet in `alarmklok*.yaml` een `#`
+voor de regel `bluetooth: !include onderdelen/bluetooth-proxy.yaml`.
 
 ## Entiteiten in Home Assistant
 
