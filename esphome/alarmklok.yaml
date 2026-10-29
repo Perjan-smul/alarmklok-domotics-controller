@@ -36,6 +36,8 @@ packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
   esp: !include onderdelen/esp.yaml
+  # Bluetooth-proxy voor HA (o.a. SwitchBot Curtain 3); niet nodig: zet er een # voor
+  bluetooth: !include onderdelen/bluetooth-proxy.yaml
   hardware: !include onderdelen/waveshare-p4-7b.yaml
   audio: !include onderdelen/audio-p4.yaml
   audio_transport: !include onderdelen/audio-p4-i2s.yaml
