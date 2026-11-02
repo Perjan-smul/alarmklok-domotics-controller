@@ -13,8 +13,8 @@ constexpr uint8_t CH32_ADRES = 0x24;
 constexpr uint8_t CH32_REG_RICHTING = 0x02, CH32_REG_UIT = 0x03, CH32_REG_PWM = 0x05;
 constexpr uint8_t CH32_TP_RST = 1 << 1, CH32_TP_INT = 1 << 2, CH32_LCD_RST = 1 << 3,
                   CH32_SYS_EN = 1 << 5, CH32_ZOEMER = 1 << 6;
-// Richting: 1 = uitgang. TP_INT is alleen tijdens de touch-reset een uitgang (laag: de GT911
-// kiest dan adres 0x5D); daarna moet hij los, anders reageert de GT911 niet.
+// Richting: 1 = uitgang. TP_INT blijft een ingang: de GT911 stuurt hem zelf en kiest bij de
+// reset zelf zijn adres (0x5D of 0x14; ESPHome probeert beide). Laag gedreven reageert hij niet.
 constexpr uint8_t CH32_RICHTING = CH32_TP_RST | CH32_LCD_RST | CH32_SYS_EN | CH32_ZOEMER;
 // De backlight van V4 is omgekeerd: PWM 0 = vol aan. Boven 247 kan hij flikkeren
 // (zoals ESPHome's waveshare_io_ch32v003: inverted, max 247); 247 = uit.
@@ -48,19 +48,17 @@ inline void schrijf_uitgangen(esphome::i2c::I2CBus *bus) {
 inline void begin(esphome::i2c::I2CBus *bus) {
   if (aanwezig(bus, CH32_ADRES)) {
     chip = Chip::CH32;
-    // Backlight uit tot het scherm draait (de light zet hem daarna aan)
+    // Zoals Waveshare's eigen BSP (esp32_s3_touch_lcd_4.c): TP_INT niet aansturen (ingang),
+    // scherm en touch 200 ms in reset, daarna 200 ms opstarttijd. Systeemvoeding blijft aan.
+    // Backlight uit tot het scherm draait (de light zet hem daarna aan).
     schrijf(bus, CH32_ADRES, CH32_REG_PWM, CH32_PWM_UIT);
-    // Systeemvoeding blijft aan; scherm en touch in reset, TP_INT laag, zoemer uit
+    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING);
     uitgangen = CH32_SYS_EN;
     schrijf_uitgangen(bus);
-    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING | CH32_TP_INT);
-    esphome::delay(20);
-    // Resets los, TP_INT nog even laag (adres 0x5D), dan als ingang vrijgeven aan de GT911
+    esphome::delay(200);
     uitgangen = CH32_SYS_EN | CH32_LCD_RST | CH32_TP_RST;
     schrijf_uitgangen(bus);
-    esphome::delay(10);
-    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING);
-    esphome::delay(120);  // opstarttijd van GT911 en ST7701
+    esphome::delay(200);
     ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4)");
   } else if (aanwezig(bus, TCA_ADRES)) {
     chip = Chip::TCA9554;
