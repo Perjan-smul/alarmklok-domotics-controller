@@ -1,0 +1,99 @@
+# =============================================================================
+#  Bluetooth-proxy voor de 4"-klok (ESP32-S3), veilige variant
+#
+#  Naast het RGB-scherm heeft de S3 weinig intern geheugen over (± 79 kB vrij,
+#  grootste blok ± 31 kB). Bluetooth meteen bij het opstarten aanzetten gaf op
+#  een V4-bord een crash in een lus (BTU_StartUp, list_begin) en daarna safe
+#  mode. Daarom:
+#   - Bluetooth-buffers zoveel mogelijk in PSRAM (use_psram);
+#   - één verbinding (genoeg voor bv. een SwitchBot Curtain 3);
+#   - Bluetooth pas 20 s na het opstarten aan, als scherm en wifi draaien;
+#   - crasht het toch, dan blijft Bluetooth daarna uit (geen lus). In HA:
+#     "Bluetooth opnieuw proberen" om het nog eens te proberen.
+#  In het log staat hoeveel geheugen er vóór en na het aanzetten vrij is.
+# =============================================================================
+
+esp32_ble:
+  id: ble_stack
+  enable_on_boot: false
+  use_psram: true
+  max_connections: 1
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+    interval: 320ms
+    window: 30ms
+
+bluetooth_proxy:
+  active: true
+  connection_slots: 1
+
+globals:
+  # Staat aan terwijl Bluetooth voor het eerst start; na een crash weet de klok
+  # zo dat het mislukte. Wordt meteen naar flash geschreven (sync).
+  - id: bt_proef_bezig
+    type: bool
+    restore_value: true
+    initial_value: "false"
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - delay: 20s
+        - script.execute: bluetooth_starten
+
+script:
+  - id: bluetooth_starten
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: return id(bt_proef_bezig);
+          then:
+            - logger.log:
+                level: WARN
+                format: "Bluetooth: de vorige poging liep vast; Bluetooth blijft uit (HA: 'Bluetooth opnieuw proberen')"
+            - text_sensor.template.publish:
+                id: bt_status
+                state: "Uit (vorige poging liep vast)"
+          else:
+            - lambda: |-
+                ESP_LOGI("bluetooth", "Bluetooth aanzetten; intern vrij %u B, grootste blok %u B",
+                         (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+                id(bt_proef_bezig) = true;
+                global_preferences->sync();
+            - text_sensor.template.publish:
+                id: bt_status
+                state: "Starten..."
+            - ble.enable:
+            - delay: 30s
+            - lambda: |-
+                id(bt_proef_bezig) = false;
+                global_preferences->sync();
+                ESP_LOGI("bluetooth", "Bluetooth draait; intern vrij %u B, grootste blok %u B",
+                         (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+            - text_sensor.template.publish:
+                id: bt_status
+                state: "Aan"
+
+text_sensor:
+  - platform: template
+    id: bt_status
+    name: Bluetooth-proxy
+    icon: mdi:bluetooth
+    entity_category: diagnostic
+
+button:
+  - platform: template
+    name: Bluetooth opnieuw proberen
+    icon: mdi:bluetooth-connect
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(bt_proef_bezig) = false;
+          global_preferences->sync();
+      - script.execute: bluetooth_starten

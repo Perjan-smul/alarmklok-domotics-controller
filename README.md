@@ -348,10 +348,13 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 
 ## Bluetooth-proxy (SwitchBot Curtain 3 en meer)
 
-De 7" en de 4B zijn ook een **Bluetooth-proxy** voor Home Assistant
-(`onderdelen/bluetooth-proxy.yaml`). Op de 4" staat hij **uit**: naast het
-RGB-scherm heeft de ESP32-S3 te weinig intern geheugen, en het starten van
-Bluetooth gaf op een V4-bord een bootloop. HA hoort via de klok Bluetooth-apparaten
+Elke klok is ook een **Bluetooth-proxy** voor Home Assistant
+(`onderdelen/bluetooth-proxy.yaml`). De 4" (ESP32-S3) heeft naast het
+RGB-scherm weinig intern geheugen; daar staat een veilige variant
+(`onderdelen/bluetooth-proxy-s3.yaml`): buffers in PSRAM, één verbinding,
+Bluetooth pas 20 s na het opstarten aan, en liep het de vorige keer vast, dan
+blijft het uit (sensor *Bluetooth-proxy* in HA; knop *Bluetooth opnieuw
+proberen*). HA hoort via de klok Bluetooth-apparaten
 in de slaapkamer en kan er verbinding mee maken, bijvoorbeeld een **SwitchBot
 Curtain 3**, zonder SwitchBot-hub:
 
@@ -607,7 +610,10 @@ scherm goed werkt.
     10 s alle stroom van het bord;
   - het scherm krijgt de init-sequentie uit Waveshare's BSP voor dit bord
     (zie het HA-forumtopic "Waveshare ESP32-S3-LCD-Touch-4");
-  - Bluetooth (proxy) staat uit: daarvoor is te weinig intern geheugen.
+  - Bluetooth (proxy): veilige variant, zie Bluetooth-proxy hierboven.
+  - **Acties naar HA komen niet aan** (`action ... dropped; client has not
+    subscribed to actions`)? Zet in HA bij het ESPHome-apparaat (Configureren)
+    *Allow the device to perform Home Assistant actions* aan.
 - **RTC staat stil** (`RTC halted`, 2000-01-01) na de eerste keer flashen: normaal.
   De klokchip loopt weer zodra de tijd via internet binnen is.
 - **Zwart scherm?** Dan heeft de hulpchip scherm of touch niet uit reset
