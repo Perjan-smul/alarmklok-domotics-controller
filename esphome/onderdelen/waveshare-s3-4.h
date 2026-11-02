@@ -45,6 +45,35 @@ inline void schrijf_uitgangen(esphome::i2c::I2CBus *bus) {
     schrijf(bus, TCA_ADRES, TCA_REG_UIT, uitgangen);
 }
 
+// Touchchip (GT911, 0x5D of 0x14): geldige configuratie geladen? Na een eerdere start kan hij
+// blijven hangen (0x14, lege configuratie, meldt geen aanrakingen); zo werkte het op de bootmonitor.
+inline bool touch_ok(esphome::i2c::I2CBus *bus, uint8_t &adres) {
+  for (uint8_t a : {(uint8_t) 0x5D, (uint8_t) 0x14}) {
+    const uint8_t reg[2] = {0x80, 0x47};
+    uint8_t cfg[5] = {0};
+    for (int poging = 0; poging < 5; poging++) {
+      if (bus->write_readv(a, reg, 2, cfg, 5) == esphome::i2c::ERROR_OK) {
+        adres = a;
+        return cfg[0] != 0 && (cfg[1] | (cfg[2] << 8)) != 0 && (cfg[3] | (cfg[4] << 8)) != 0;
+      }
+      esphome::delay(20);
+    }
+  }
+  adres = 0;
+  return false;
+}
+
+// Scherm en touch low_ms in reset (ook de systeemvoeding even uit, zoals bij het starten)
+inline void reset_paneel(esphome::i2c::I2CBus *bus, uint32_t low_ms) {
+  schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, 0xFF);
+  uitgangen = 0;
+  schrijf_uitgangen(bus);
+  esphome::delay(low_ms);
+  uitgangen = CH32_SYS_EN | CH32_LCD_RST | CH32_TP_RST;
+  schrijf_uitgangen(bus);
+  esphome::delay(200);
+}
+
 // Chip zoeken, voeding aan en scherm en touch uit reset halen. Moet vóór het
 // scherm en de touch starten (zie on_boot in waveshare-s3-4.yaml).
 inline void begin(esphome::i2c::I2CBus *bus) {
@@ -80,8 +109,16 @@ inline void begin(esphome::i2c::I2CBus *bus) {
         break;
       ESP_LOGW("waveshare_s3_4", "Hulpchip niet goed ingesteld (richting 0x%02X, uitgangen 0x%02X), opnieuw", r, u);
     }
-    ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4) na %u ms",
-             (unsigned) (esphome::millis() - t0));
+    // Hangt de touchchip nog van een eerdere start, dan scherm en touch nog eens langer resetten
+    // (1 s, dan 2 s). Kan hier, want scherm en touch starten pas hierna (on_boot 950).
+    uint8_t adres = 0;
+    for (int poging = 1; !touch_ok(bus, adres) && poging <= 2; poging++) {
+      ESP_LOGW("waveshare_s3_4", "Touchchip (0x%02X) zonder geldige configuratie: opnieuw resetten (%d)", adres,
+               poging);
+      reset_paneel(bus, poging * 1000);
+    }
+    ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4) na %u ms, touchchip op 0x%02X",
+             (unsigned) (esphome::millis() - t0), adres);
   } else if (tca) {
     chip = Chip::TCA9554;
     uitgangen = 0;
