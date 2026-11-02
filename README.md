@@ -601,9 +601,10 @@ scherm goed werkt.
     scherm bij 100% helderheid juist uit;
   - de hulpchip start precies zoals in Waveshare's eigen voorbeelden; bij koud
     opstarten wordt tot 3 s naar hem gezocht (anders: zoemer aan, zwart scherm);
-  - **touch reageert niet** (`touchscreen ... Calibration error`, GT911 op 0x14)?
-    Haal alle stroom van het bord (USB eruit, 10 s wachten). Een herstart van
-    alleen de ESP32 reset de touchchip niet; zo werkte het op de bootmonitor;
+  - hangt de touchchip nog van een eerdere start (GT911 op 0x14 zonder
+    configuratie, geen aanrakingen), dan reset de klok scherm en touch zelf nog
+    eens langer (log: `Touchchip ... opnieuw resetten`). Helpt dat niet: haal
+    10 s alle stroom van het bord;
   - het scherm krijgt de init-sequentie uit Waveshare's BSP voor dit bord
     (zie het HA-forumtopic "Waveshare ESP32-S3-LCD-Touch-4");
   - Bluetooth (proxy) staat uit: daarvoor is te weinig intern geheugen.
