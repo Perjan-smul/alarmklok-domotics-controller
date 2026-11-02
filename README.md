@@ -599,9 +599,11 @@ scherm goed werkt.
 - **Board V4 (CH32V003), lessen van het eerste echte bord:**
   - de backlight-PWM is omgekeerd (0 = vol aan, 247 = uit); eerder ging het
     scherm bij 100% helderheid juist uit;
-  - de touch-INT-lijn (bit 2) mag alleen tijdens de touch-reset laag gehouden
-    worden, anders antwoordt de GT911 niet (`touchscreen ... Calibration error`);
-  - de systeemvoeding (SYS_EN) blijft aan tijdens de reset;
+  - de hulpchip start precies zoals in Waveshare's eigen voorbeelden; bij koud
+    opstarten wordt tot 3 s naar hem gezocht (anders: zoemer aan, zwart scherm);
+  - **touch reageert niet** (`touchscreen ... Calibration error`, GT911 op 0x14)?
+    Haal alle stroom van het bord (USB eruit, 10 s wachten). Een herstart van
+    alleen de ESP32 reset de touchchip niet; zo werkte het op de bootmonitor;
   - het scherm krijgt de init-sequentie uit Waveshare's BSP voor dit bord
     (zie het HA-forumtopic "Waveshare ESP32-S3-LCD-Touch-4");
   - Bluetooth (proxy) staat uit: daarvoor is te weinig intern geheugen.

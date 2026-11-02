@@ -13,9 +13,7 @@ constexpr uint8_t CH32_ADRES = 0x24;
 constexpr uint8_t CH32_REG_RICHTING = 0x02, CH32_REG_UIT = 0x03, CH32_REG_PWM = 0x05;
 constexpr uint8_t CH32_TP_RST = 1 << 1, CH32_TP_INT = 1 << 2, CH32_LCD_RST = 1 << 3,
                   CH32_SYS_EN = 1 << 5, CH32_ZOEMER = 1 << 6;
-// Richting: 1 = uitgang. TP_INT blijft een ingang: de GT911 stuurt hem zelf en kiest bij de
-// reset zelf zijn adres (0x5D of 0x14; ESPHome probeert beide). Laag gedreven reageert hij niet.
-constexpr uint8_t CH32_RICHTING = CH32_TP_RST | CH32_LCD_RST | CH32_SYS_EN | CH32_ZOEMER;
+// Richting: 1 = uitgang. Zoals Waveshare: alle pinnen uitgang (0xFF), ook TP_INT (laag: GT911 op 0x5D).
 // De backlight van V4 is omgekeerd: PWM 0 = vol aan. Boven 247 kan hij flikkeren
 // (zoals ESPHome's waveshare_io_ch32v003: inverted, max 247); 247 = uit.
 constexpr uint8_t CH32_PWM_UIT = 247;
@@ -29,6 +27,10 @@ inline uint8_t uitgangen = 0;  // beide chips schrijven de hele poort in één k
 
 inline bool aanwezig(esphome::i2c::I2CBus *bus, uint8_t adres) {
   return bus->write_readv(adres, nullptr, 0, nullptr, 0) == esphome::i2c::ERROR_OK;
+}
+
+inline bool lees(esphome::i2c::I2CBus *bus, uint8_t adres, uint8_t reg, uint8_t &waarde) {
+  return bus->write_readv(adres, &reg, 1, &waarde, 1) == esphome::i2c::ERROR_OK;
 }
 
 inline void schrijf(esphome::i2c::I2CBus *bus, uint8_t adres, uint8_t reg, uint8_t waarde) {
@@ -46,21 +48,41 @@ inline void schrijf_uitgangen(esphome::i2c::I2CBus *bus) {
 // Chip zoeken, voeding aan en scherm en touch uit reset halen. Moet vóór het
 // scherm en de touch starten (zie on_boot in waveshare-s3-4.yaml).
 inline void begin(esphome::i2c::I2CBus *bus) {
-  if (aanwezig(bus, CH32_ADRES)) {
+  // Bij koud opstarten is de CH32V003 (een eigen microcontroller) soms later klaar dan de ESP32.
+  // Niet gevonden = scherm in reset en zoemer aan (begintoestand), dus tot 3 s blijven zoeken.
+  bool ch32 = false, tca = false;
+  const uint32_t t0 = esphome::millis();
+  while (esphome::millis() - t0 < 3000) {
+    if ((ch32 = aanwezig(bus, CH32_ADRES)) || (tca = aanwezig(bus, TCA_ADRES)))
+      break;
+    esphome::delay(50);
+  }
+  if (ch32) {
     chip = Chip::CH32;
-    // Zoals Waveshare's eigen BSP (esp32_s3_touch_lcd_4.c): TP_INT niet aansturen (ingang),
-    // scherm en touch 200 ms in reset, daarna 200 ms opstarttijd. Systeemvoeding blijft aan.
-    // Backlight uit tot het scherm draait (de light zet hem daarna aan).
-    schrijf(bus, CH32_ADRES, CH32_REG_PWM, CH32_PWM_UIT);
-    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING);
-    uitgangen = CH32_SYS_EN;
-    schrijf_uitgangen(bus);
-    esphome::delay(200);
-    uitgangen = CH32_SYS_EN | CH32_LCD_RST | CH32_TP_RST;
-    schrijf_uitgangen(bus);
-    esphome::delay(200);
-    ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4)");
-  } else if (aanwezig(bus, TCA_ADRES)) {
+    // Precies zoals Waveshare's eigen voorbeelden voor dit bord (WS_CH32_IO.cpp): alle pinnen
+    // uitgang en laag (ook SYS_EN en TP_INT), 200 ms, dan voeding en resets hoog; TP_INT blijft
+    // laag (GT911 op 0x5D), 200 ms opstarttijd. Tot 3 keer, met teruglezen.
+    // Let op: hangt de touch toch (GT911 op 0x14, lege configuratie), haal dan alle stroom
+    // van het bord; een herstart van alleen de ESP32 reset de touchchip niet.
+    for (int poging = 0; poging < 3; poging++) {
+      schrijf(bus, CH32_ADRES, CH32_REG_PWM, CH32_PWM_UIT);  // backlight uit tot het scherm draait
+      schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, 0xFF);
+      uitgangen = 0;
+      schrijf_uitgangen(bus);
+      esphome::delay(200);
+      schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, 0xFF);
+      uitgangen = CH32_SYS_EN | CH32_LCD_RST | CH32_TP_RST;
+      schrijf_uitgangen(bus);
+      esphome::delay(200);
+      uint8_t r = 0, u = 0;
+      if (lees(bus, CH32_ADRES, CH32_REG_RICHTING, r) && lees(bus, CH32_ADRES, CH32_REG_UIT, u) && r == 0xFF &&
+          u == uitgangen)
+        break;
+      ESP_LOGW("waveshare_s3_4", "Hulpchip niet goed ingesteld (richting 0x%02X, uitgangen 0x%02X), opnieuw", r, u);
+    }
+    ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4) na %u ms",
+             (unsigned) (esphome::millis() - t0));
+  } else if (tca) {
     chip = Chip::TCA9554;
     uitgangen = 0;
     schrijf_uitgangen(bus);
