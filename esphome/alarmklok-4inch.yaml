@@ -25,8 +25,11 @@ packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
   esp: !include onderdelen/esp.yaml
-  # Bluetooth-proxy voor HA (o.a. SwitchBot Curtain 3); niet nodig: zet er een # voor
-  bluetooth: !include onderdelen/bluetooth-proxy.yaml
+  # Bluetooth-proxy: staat op de 4" UIT. Naast het RGB-scherm heeft de S3 te
+  # weinig intern geheugen; Bluetooth starten mislukte op een V4-bord en gaf
+  # een bootloop (assert in list_begin / BTU_StartUp, daarna safe mode).
+  # Gebruik de 7" of 4B als proxy (Bluetooth via de C6), of een losse ESP32.
+  # bluetooth: !include onderdelen/bluetooth-proxy.yaml
   hardware: !include onderdelen/waveshare-s3-4.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
   detail: !include onderdelen/detail-pagina.yaml
