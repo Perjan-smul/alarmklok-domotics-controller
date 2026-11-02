@@ -11,8 +11,14 @@ enum class Chip : uint8_t { GEEN, CH32, TCA9554 };
 
 constexpr uint8_t CH32_ADRES = 0x24;
 constexpr uint8_t CH32_REG_RICHTING = 0x02, CH32_REG_UIT = 0x03, CH32_REG_PWM = 0x05;
-constexpr uint8_t CH32_TP_RST = 1 << 1, CH32_LCD_RST = 1 << 3, CH32_SYS_EN = 1 << 5,
-                  CH32_ZOEMER = 1 << 6;
+constexpr uint8_t CH32_TP_RST = 1 << 1, CH32_TP_INT = 1 << 2, CH32_LCD_RST = 1 << 3,
+                  CH32_SYS_EN = 1 << 5, CH32_ZOEMER = 1 << 6;
+// Richting: 1 = uitgang. TP_INT is alleen tijdens de touch-reset een uitgang (laag: de GT911
+// kiest dan adres 0x5D); daarna moet hij los, anders reageert de GT911 niet.
+constexpr uint8_t CH32_RICHTING = CH32_TP_RST | CH32_LCD_RST | CH32_SYS_EN | CH32_ZOEMER;
+// De backlight van V4 is omgekeerd: PWM 0 = vol aan. Boven 247 kan hij flikkeren
+// (zoals ESPHome's waveshare_io_ch32v003: inverted, max 247); 247 = uit.
+constexpr uint8_t CH32_PWM_UIT = 247;
 
 constexpr uint8_t TCA_ADRES = 0x20;
 constexpr uint8_t TCA_REG_UIT = 0x01, TCA_REG_CONFIG = 0x03;  // configuratie: 1 = ingang
@@ -42,14 +48,19 @@ inline void schrijf_uitgangen(esphome::i2c::I2CBus *bus) {
 inline void begin(esphome::i2c::I2CBus *bus) {
   if (aanwezig(bus, CH32_ADRES)) {
     chip = Chip::CH32;
-    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, 0xFF);
-    uitgangen = 0;  // alles laag: scherm en touch in reset
+    // Backlight uit tot het scherm draait (de light zet hem daarna aan)
+    schrijf(bus, CH32_ADRES, CH32_REG_PWM, CH32_PWM_UIT);
+    // Systeemvoeding blijft aan; scherm en touch in reset, TP_INT laag, zoemer uit
+    uitgangen = CH32_SYS_EN;
     schrijf_uitgangen(bus);
-    esphome::delay(200);
+    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING | CH32_TP_INT);
+    esphome::delay(20);
+    // Resets los, TP_INT nog even laag (adres 0x5D), dan als ingang vrijgeven aan de GT911
     uitgangen = CH32_SYS_EN | CH32_LCD_RST | CH32_TP_RST;
     schrijf_uitgangen(bus);
-    schrijf(bus, CH32_ADRES, CH32_REG_PWM, 0);
-    esphome::delay(200);
+    esphome::delay(10);
+    schrijf(bus, CH32_ADRES, CH32_REG_RICHTING, CH32_RICHTING);
+    esphome::delay(120);  // opstarttijd van GT911 en ST7701
     ESP_LOGI("waveshare_s3_4", "Hulpchip CH32V003 gevonden (board V4)");
   } else if (aanwezig(bus, TCA_ADRES)) {
     chip = Chip::TCA9554;
@@ -70,7 +81,9 @@ inline void begin(esphome::i2c::I2CBus *bus) {
 // Achtergrondverlichting 0-1. De TCA9554 (V3) kan alleen aan of uit.
 inline void backlight(esphome::i2c::I2CBus *bus, float niveau) {
   if (chip == Chip::CH32) {
-    schrijf(bus, CH32_ADRES, CH32_REG_PWM, (uint8_t) (niveau * 255.0f + 0.5f));
+    // 0-1 omzetten naar de omgekeerde PWM van V4 (247 = uit, 0 = vol aan)
+    const float n = niveau < 0.0f ? 0.0f : (niveau > 1.0f ? 1.0f : niveau);
+    schrijf(bus, CH32_ADRES, CH32_REG_PWM, (uint8_t) (CH32_PWM_UIT * (1.0f - n) + 0.5f));
   } else if (chip == Chip::TCA9554) {
     const uint8_t nieuw = niveau > 0.0f ? (uitgangen | TCA_BL) : (uitgangen & ~TCA_BL);
     if (nieuw != uitgangen) {

@@ -348,8 +348,10 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 
 ## Bluetooth-proxy (SwitchBot Curtain 3 en meer)
 
-Elke klok is ook een **Bluetooth-proxy** voor Home Assistant
-(`onderdelen/bluetooth-proxy.yaml`). HA hoort via de klok Bluetooth-apparaten
+De 7" en de 4B zijn ook een **Bluetooth-proxy** voor Home Assistant
+(`onderdelen/bluetooth-proxy.yaml`). Op de 4" staat hij **uit**: naast het
+RGB-scherm heeft de ESP32-S3 te weinig intern geheugen, en het starten van
+Bluetooth gaf op een V4-bord een bootloop. HA hoort via de klok Bluetooth-apparaten
 in de slaapkamer en kan er verbinding mee maken, bijvoorbeeld een **SwitchBot
 Curtain 3**, zonder SwitchBot-hub:
 
@@ -594,6 +596,17 @@ scherm goed werkt.
   Bosun-bootmonitor op hetzelfde bord werken.
 - **Board V3 (TCA9554):** de backlight kan daar alleen aan of uit. Dimmen en
   de nachtstand-helderheid werken alleen op board V4 (CH32V003).
+- **Board V4 (CH32V003), lessen van het eerste echte bord:**
+  - de backlight-PWM is omgekeerd (0 = vol aan, 247 = uit); eerder ging het
+    scherm bij 100% helderheid juist uit;
+  - de touch-INT-lijn (bit 2) mag alleen tijdens de touch-reset laag gehouden
+    worden, anders antwoordt de GT911 niet (`touchscreen ... Calibration error`);
+  - de systeemvoeding (SYS_EN) blijft aan tijdens de reset;
+  - het scherm krijgt de init-sequentie uit Waveshare's BSP voor dit bord
+    (zie het HA-forumtopic "Waveshare ESP32-S3-LCD-Touch-4");
+  - Bluetooth (proxy) staat uit: daarvoor is te weinig intern geheugen.
+- **RTC staat stil** (`RTC halted`, 2000-01-01) na de eerste keer flashen: normaal.
+  De klokchip loopt weer zodra de tijd via internet binnen is.
 - **Zwart scherm?** Dan heeft de hulpchip scherm of touch niet uit reset
   gehaald. Het log zegt bij het opstarten welke hulpchip gevonden is.
 - **Wekgeluid:** de zoemer piept in een ritme per wekgeluid (Klassiek,
