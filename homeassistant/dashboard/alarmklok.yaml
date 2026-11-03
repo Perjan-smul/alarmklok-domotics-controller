@@ -54,6 +54,7 @@ views:
               - entity: text.alarmklok_lichtsensor
               - entity: number.alarmklok_helderheid_overdag
               - entity: number.alarmklok_helderheid_s_nachts
+              - entity: number.alarmklok_fel_na_aanraken
               - entity: light.alarmklok_schermhelderheid
       - type: grid
         cards:

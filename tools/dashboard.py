@@ -71,7 +71,7 @@ def maak(friendly, camera):
         (e("switch", "Nachtstand vanaf zonsondergang"), None), (e("time", "Nachtstand vanaf"), None),
         (e("time", "Nachtstand tot"), None), (e("switch", "Nachtstand bij weinig licht"), None),
         (e("number", "Nachtstand onder"), None), (e("text", "Lichtsensor"), None),
-        (e("number", "Helderheid overdag"), None), (e("number", "Helderheid 's nachts"), None),
+        (e("number", "Helderheid overdag"), None), (e("number", "Helderheid 's nachts"), None), (e("number", "Fel na aanraken"), None),
         (e("light", "Schermhelderheid"), None),
     ]
     bediening = [

@@ -87,7 +87,9 @@ Verder:
   kamer (lichtsensor uit Home Assistant), wordt het scherm gedimd en kleurt
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het
-  scherm, zodat je in het donker niet per ongeluk een lamp aanzet. Welke klok
+  scherm, zodat je in het donker niet per ongeluk een lamp aanzet. Na een
+  aanraking blijft het scherm *Fel na aanraken* minuten fel en bedienbaar
+  (standaard 30; 0 = nooit dimmen). Welke klok
   je 's nachts ziet kies je in HA met *Nachtklok*: *Vierkant zwart*
   (standaard), *Maan* of *Rood filter* over je eigen ontwerp.
 - **Vierkant** (standaard klokscherm) ([screenshot](docs/screenshots/4inch/08-wijzerplaten.png)):
@@ -444,6 +446,7 @@ voor de regel `bluetooth: !include onderdelen/bluetooth-proxy.yaml`.
 | `select.alarmklok_klokkleur` | Kleur van de klokcijfers en wijzers |
 | `select.alarmklok_wijzerplaat` | Kleur van de plaat van de klok Vierkant |
 | `number.alarmklok_helderheid_overdag` / `_s_nachts` | Schermhelderheid |
+| `number.alarmklok_fel_na_aanraken` | Nachtstand: zoveel minuten na een aanraking fel (standaard 30, substitution `fel_na_aanraken`; 0 = nooit dimmen) |
 | `light.alarmklok_schermhelderheid` | Backlight rechtstreeks |
 | `select.alarmklok_klokontwerp` | Digitaal / Analoog / Gestapeld / Info / Zon / Zwevend / Maan / Vierkant |
 | `select.alarmklok_nachtklok` | Klok in de nachtstand: Vierkant zwart (vierkante klok, zwarte plaat, kleine maan) / Maan (maanscherm) / Rood filter (eigen ontwerp onder een rood filter) |
