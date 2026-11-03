@@ -282,11 +282,10 @@ elke build de nieuwste versie op).
 > het bootlog `chip revision: v1.x`? Zet dan in
 > `onderdelen/waveshare-p4-7b.yaml` de optie `engineering_sample: true`.
 
-> **4": beeld op z'n kop?** Het beeld staat standaard 180° gedraaid, zoals de
-> Bosun-bootmonitor (in de Bosun-behuizing zit het paneel op z'n kop). Zonder
-> die behuizing zet je in `alarmklok-4inch.yaml` onder `substitutions:` de regel
-> `draaiing: "0"`. De touch draait mee. ESPHome draait het beeld in software;
-> `"0"` is daardoor iets sneller.
+> **4": beeld op z'n kop?** In de Bosun-behuizing zit het scherm 180° gedraaid.
+> Zet dan in `alarmklok-4inch.yaml` onder `substitutions:` de regel
+> `draaiing: "180"`. De touch draait mee. ESPHome draait het beeld in software
+> (een extra kopie per schermupdate); `"0"` (standaard) is het snelst.
 
 > **4B: USB-C onderaan.** Het beeld van de 4B staat standaard een kwartslag
 > gedraaid (`draaiing: "270"` in `alarmklok-4b.yaml`), zodat de USB-C-aansluiting

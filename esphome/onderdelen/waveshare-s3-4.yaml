@@ -24,11 +24,10 @@ substitutions:
   # De klok kan niet horen of de radio speelt: na zoveel tijd piept hij ook
   # nog, als vangnet. Stop of snooze zet de radio in HA weer uit.
   radio_terugval: 60s
-  # Beeld 180° gedraaid, zoals de Bosun-bootmonitor op hetzelfde bord (het
-  # paneel zit in de behuizing op z'n kop). Zonder behuizing of andersom: "0".
-  # Let op: ESPHome draait het beeld in software (een extra kopie per
-  # schermupdate); "0" is daardoor iets sneller.
-  draaiing: "180"
+  # Draai het beeld (0, 90, 180 of 270). Standaard 0: dat is het snelst, want
+  # ESPHome draait in software (een extra kopie per schermupdate). In de
+  # Bosun-behuizing zit het paneel op z'n kop: zet dan "180" in je klokbestand.
+  draaiing: "0"
   # Schermindeling (scherm-vierkant.yaml): 1.0 = 480x480
   k: "1.0"
   lvgl_buffer: 25%
