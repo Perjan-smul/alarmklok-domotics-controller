@@ -255,9 +255,9 @@ GitHub (*remote package*) en houdt het dagelijks bij.
 4. Klik bij het nieuwe apparaat op **Edit**, vervang alles door de inhoud van
    [`installeren/alarmklok-4inch.yaml`](installeren/alarmklok-4inch.yaml)
    (of [`-4b`](installeren/alarmklok-4b.yaml) /
-   [7"](installeren/alarmklok.yaml)) en vul onder `substitutions:` je eigen
-   entiteiten in. Alles uit `esphome/instellingen.yaml` kan daar, en gaat voor.
-   De tegels pas je later ook in HA aan, zonder te flashen.
+   [7"](installeren/alarmklok.yaml)). Pas alleen `name`/`friendly_name` aan
+   (en eventueel de draaiing); de rest stel je na de installatie in HA in, zie
+   [Substitutions of Home Assistant?](#substitutions-of-home-assistant).
 5. **Save → Install → Plug into this computer** (Chrome of Edge, HA via
    https) voor de eerste keer via USB-C; of *Manual download → Factory format*
    en flash dat bestand met [web.esphome.io](https://web.esphome.io). Wordt het
@@ -267,6 +267,20 @@ GitHub (*remote package*) en houdt het dagelijks bij.
 Nieuwe versie op GitHub? ESPHome haalt hem binnen een dag op (`refresh: 1d`);
 klik dan *Install*. Wil je hem meteen: zet `refresh: 0s` (dan haalt hij bij
 elke build de nieuwste versie op).
+
+### Substitutions of Home Assistant?
+
+| Wat | Waar | Flashen? |
+|---|---|---|
+| Tegels (naam, entiteit, icoon, soort), Thermostaat/airco, Rolluik/gordijn, Mediaspeler, Dimlamp, Lichtsensor | HA: *Apparaten → klok → Configuratie* of het dashboard | Nee |
+| Pagina's, indeling, klokontwerpen, kleuren, nachtstand, wekkers | HA | Nee |
+| `name`, `friendly_name`, `draaiing` | substitutions in je klokbestand | Ja |
+| `temperatuur_sensor`, `weer_entiteit`, `werkdag_sensor`, `tijdzone`, `breedtegraad`/`lengtegraad` | substitutions | Ja |
+
+Staat iets op beide plekken (zoals `thermostaat` of `licht_1_entity`), dan is
+de substitution alleen de **beginwaarde** bij de allereerste start. Daarna
+onthoudt de klok wat in HA staat, en doet een gewijzigde substitution niets
+meer. Pas die dingen dus altijd in HA aan.
 
 **Of: de bestanden zelf kopiëren** (of `pip install esphome` op je computer):
 
@@ -279,8 +293,9 @@ elke build de nieuwste versie op).
    ```
    python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())"
    ```
-4. Pas in `instellingen.yaml` het blok `substitutions:` aan: lampen,
-   thermostaat, rolluik, mediaspeler, radiozenders, scènes en de
+4. Pas in `instellingen.yaml` het blok `substitutions:` aan (beginwaarden,
+   zie [Substitutions of Home Assistant?](#substitutions-of-home-assistant)):
+   lampen, thermostaat, rolluik, mediaspeler, radiozenders, scènes en de
    temperatuursensor. Dit geldt voor beide klokken; iets alleen voor één klok
    zet je in de `substitutions:` van `alarmklok.yaml` of `alarmklok-4inch.yaml`.
 5. De eerste keer flash je via USB-C:
