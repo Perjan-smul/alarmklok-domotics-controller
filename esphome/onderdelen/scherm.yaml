@@ -448,14 +448,6 @@ lvgl:
                       width: 1024
                       height: 600
                       styles: leeg
-                      on_swipe_down:
-                        - script.execute:
-                            id: ontwerp_wisselen
-                            richting: 1
-                      on_swipe_up:
-                        - script.execute:
-                            id: ontwerp_wisselen
-                            richting: -1
                       # Lang drukken: volgende klokkleur (zoals StandBy)
                       on_long_press:
                         - select.next:
