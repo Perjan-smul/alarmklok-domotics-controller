@@ -21,6 +21,10 @@
 # =============================================================================
 
 substitutions:
+  # Camerapagina (camera.yaml, alleen P4) en swipe-animatie standaard aan/uit
+  # (in HA te wijzigen; de S3 is te traag voor een vloeiende animatie)
+  heeft_camera: "true"
+  swipe_animatie: RESTORE_DEFAULT_ON
   # Schermindeling (scherm-vierkant.yaml): 1.5 = 720x720
   k: "1.5"
   draaiing: "0"

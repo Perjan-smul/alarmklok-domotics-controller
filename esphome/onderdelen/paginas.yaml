@@ -1,0 +1,421 @@
+# =============================================================================
+#  Instelbare pagina's (allemaal in Home Assistant, zonder te flashen)
+#
+#   - Pagina 1-6: welke pagina na de klok komt bij links/rechts swipen
+#     (Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera of Uit). Camera
+#     alleen op borden met een camera (P4, zie camera.yaml).
+#   - Indeling van Verlichting en Scènes: 4, 6 of 9 tegels.
+#   - Kleurthema en accentkleur.
+#   - Welke klokontwerpen meedoen bij omhoog/omlaag swipen op de klok.
+#   - Swipe-animatie: aan = de pagina schuift mee (vloeiend, kost rekenwerk);
+#     uit = de nieuwe pagina staat er meteen (snel, standaard op de 4").
+#
+#  Navigatie: de tileview scrolt zelf niet meer; een veeg naar links/rechts
+#  (LVGL-gebaar, niet op schuiven en draaiknoppen) gaat naar de volgende/vorige
+#  pagina in de gekozen volgorde.
+#
+#  Het schermbestand levert: tileview tv_hoofd met de tegels vak_klok,
+#  vak_verlichting, vak_klimaat, vak_muziek, vak_scenes en vak_wekker; de
+#  rasters raster_verlichting en raster_scenes met tegel_licht_1-9 en
+#  tegel_scene_1-9; dimmer_kaart; de stijlen pagina_stijl, kaart, tegel_stijl,
+#  titel en klok_accent; substitutions liggend ("true"/"false") en
+#  dimmer_basis (hoogte van de dimmerkaart bij k = 1). Het hardwarebestand
+#  levert heeft_camera ("true"/"false") en swipe_animatie (RESTORE_DEFAULT_ON/OFF).
+# =============================================================================
+
+esphome:
+  on_boot:
+    - priority: -110
+      then:
+        - lambda: |-
+            // Swipen links/rechts zelf afhandelen (zie boven)
+            lv_obj_remove_flag(id(tv_hoofd), LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_add_event_cb(id(tv_hoofd), [](lv_event_t *e) {
+              lv_indev_t *indev = lv_indev_active();
+              if (indev == nullptr)
+                return;
+              // Vegen op een schuif of draaiknop is bedienen, geen pagina wisselen
+              for (lv_obj_t *o = lv_indev_get_active_obj(); o != nullptr; o = lv_obj_get_parent(o)) {
+                if (lv_obj_check_type(o, &lv_slider_class) || lv_obj_check_type(o, &lv_arc_class) ||
+                    lv_obj_check_type(o, &lv_roller_class))
+                  return;
+              }
+              const lv_dir_t richting = lv_indev_get_gesture_dir(indev);
+              if (richting == LV_DIR_LEFT)
+                id(pagina_stap).execute(1);
+              else if (richting == LV_DIR_RIGHT)
+                id(pagina_stap).execute(-1);
+            }, LV_EVENT_GESTURE, nullptr);
+            alarmklok::navigeer = [](int richting) { id(pagina_stap).execute(richting); };
+        - script.execute: thema_toepassen
+        - script.execute: indeling_toepassen
+        - script.execute: paginas_opbouwen
+
+globals:
+  # Volgorde van de pagina's (alarmklok::Pagina) en waar we nu zijn
+  - id: pag_volgorde
+    type: std::vector<int>
+  - id: pag_index
+    type: int
+    initial_value: "0"
+  # Aantal tegels op Verlichting en Scènes (4, 6 of 9)
+  - id: aantal_verlichting
+    type: int
+    initial_value: "6"
+  - id: aantal_scenes
+    type: int
+    initial_value: "6"
+
+select:
+  - platform: template
+    id: pagina_1
+    name: Pagina 1
+    icon: mdi:numeric-1-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: &pagina_opties [Uit, Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera]
+    initial_option: Verlichting
+    on_value: &paginas_wijzigen
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: paginas_opbouwen
+  - platform: template
+    id: pagina_2
+    name: Pagina 2
+    icon: mdi:numeric-2-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *pagina_opties
+    initial_option: Klimaat
+    on_value: *paginas_wijzigen
+  - platform: template
+    id: pagina_3
+    name: Pagina 3
+    icon: mdi:numeric-3-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *pagina_opties
+    initial_option: Muziek
+    on_value: *paginas_wijzigen
+  - platform: template
+    id: pagina_4
+    name: Pagina 4
+    icon: mdi:numeric-4-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *pagina_opties
+    initial_option: Scènes
+    on_value: *paginas_wijzigen
+  - platform: template
+    id: pagina_5
+    name: Pagina 5
+    icon: mdi:numeric-5-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *pagina_opties
+    initial_option: Wekker
+    on_value: *paginas_wijzigen
+  - platform: template
+    id: pagina_6
+    name: Pagina 6
+    icon: mdi:numeric-6-box-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *pagina_opties
+    initial_option: Uit
+    on_value: *paginas_wijzigen
+
+  - platform: template
+    id: indeling_verlichting
+    name: Indeling verlichting
+    icon: mdi:view-grid-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: &indeling_opties [4 tegels, 6 tegels, 9 tegels]
+    initial_option: 6 tegels
+    on_value: &indeling_wijzigen
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: indeling_toepassen
+  - platform: template
+    id: indeling_scenes
+    name: Indeling scènes
+    icon: mdi:view-grid-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: *indeling_opties
+    initial_option: 6 tegels
+    on_value: *indeling_wijzigen
+
+  - platform: template
+    id: kleurthema
+    name: Kleurthema
+    icon: mdi:palette-swatch
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: [Donker, Zwart, Blauw, Warm]
+    initial_option: Donker
+    on_value: &thema_wijzigen
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: thema_toepassen
+  - platform: template
+    id: accentkleur
+    name: Accentkleur
+    icon: mdi:format-color-fill
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: [Oranje, Geel, Blauw, Groen, Roze, Wit]
+    initial_option: Oranje
+    on_value: *thema_wijzigen
+
+switch:
+  - platform: template
+    id: swipe_animatie
+    name: Swipe-animatie
+    icon: mdi:gesture-swipe-horizontal
+    entity_category: config
+    optimistic: true
+    restore_mode: ${swipe_animatie}
+  # Klokontwerpen bij omhoog/omlaag swipen (allemaal uit = allemaal mee)
+  - platform: template
+    id: ontwerp_aan_digitaal
+    name: Klokontwerp Digitaal
+    icon: mdi:clock-digital
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_analoog
+    name: Klokontwerp Analoog
+    icon: mdi:clock-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_gestapeld
+    name: Klokontwerp Gestapeld
+    icon: mdi:format-line-spacing
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_info
+    name: Klokontwerp Info
+    icon: mdi:card-text-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_zon
+    name: Klokontwerp Zon
+    icon: mdi:weather-sunny
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_zwevend
+    name: Klokontwerp Zwevend
+    icon: mdi:clock-fast
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_maan
+    name: Klokontwerp Maan
+    icon: mdi:moon-waxing-crescent
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    id: ontwerp_aan_vierkant
+    name: Klokontwerp Vierkant
+    icon: mdi:square-rounded-outline
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+script:
+  # Volgorde uit Pagina 1-6 en de tegels van de tileview op hun plek zetten:
+  # de gekozen pagina's naast elkaar, de rest verborgen.
+  - id: paginas_opbouwen
+    then:
+      - lambda: |-
+          const std::string opties[6] = {
+              id(pagina_1).current_option().str(), id(pagina_2).current_option().str(),
+              id(pagina_3).current_option().str(), id(pagina_4).current_option().str(),
+              id(pagina_5).current_option().str(), id(pagina_6).current_option().str()};
+          int volgorde[alarmklok::P_AANTAL + 1];
+          const bool camera = ${heeft_camera} && (bool) alarmklok::camera_tonen;
+          const int n = alarmklok::pagina_volgorde(opties, 6, camera, volgorde);
+          id(pag_volgorde).assign(volgorde, volgorde + n);
+          lv_obj_t *tegels[6] = {id(vak_klok), id(vak_verlichting), id(vak_klimaat),
+                                 id(vak_muziek), id(vak_scenes), id(vak_wekker)};
+          bool gebruikt[6] = {};
+          lv_obj_update_layout(id(tv_hoofd));
+          const int32_t b = lv_obj_get_content_width(id(tv_hoofd));
+          int plek = 0;
+          for (int i = 0; i < n; i++) {
+            const int p = volgorde[i];
+            if (p >= 6)
+              continue;  // camera: eigen LVGL-pagina, geen tegel
+            gebruikt[p] = true;
+            lv_obj_clear_flag(tegels[p], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_pos(tegels[p], plek++ * b, 0);
+          }
+          for (int p = 0; p < 6; p++) {
+            if (!gebruikt[p]) {
+              lv_obj_add_flag(tegels[p], LV_OBJ_FLAG_HIDDEN);
+              lv_obj_set_pos(tegels[p], plek++ * b, 0);
+            }
+          }
+      - script.execute:
+          id: pagina_naar
+          doel: 0
+          animatie: false
+
+  # Naar positie `doel` in de volgorde
+  - id: pagina_naar
+    parameters:
+      doel: int
+      animatie: bool
+    then:
+      - lambda: |-
+          auto &v = id(pag_volgorde);
+          if (v.empty())
+            return;
+          const int i = std::max(0, std::min(doel, (int) v.size() - 1));
+          id(pag_index) = i;
+          const int p = v[i];
+          if (p == alarmklok::P_CAMERA) {
+            if (alarmklok::camera_tonen)
+              alarmklok::camera_tonen(true);
+          } else {
+            // Camerapagina dicht (doet niets als hij al dicht is)
+            if (alarmklok::camera_tonen)
+              alarmklok::camera_tonen(false);
+            lv_obj_t *tegels[6] = {id(vak_klok), id(vak_verlichting), id(vak_klimaat),
+                                   id(vak_muziek), id(vak_scenes), id(vak_wekker)};
+            lv_tileview_set_tile(id(tv_hoofd), tegels[p], animatie ? LV_ANIM_ON : LV_ANIM_OFF);
+          }
+      - script.execute: pagina_indicator_bijwerken
+
+  # Volgende (+1) of vorige (-1) pagina; niet rondgaan
+  - id: pagina_stap
+    mode: queued
+    max_runs: 2
+    parameters:
+      richting: int
+    then:
+      - script.execute:
+          id: pagina_naar
+          doel: !lambda return alarmklok::pagina_stap(id(pag_index), richting, (int) id(pag_volgorde).size());
+          animatie: !lambda return id(swipe_animatie).state;
+
+  - id: pagina_indicator_bijwerken
+    then:
+      - lvgl.label.update:
+          id: pagina_indicator
+          text: !lambda return alarmklok::stippen(id(pag_index), (int) id(pag_volgorde).size(), "");
+
+  # Klokontwerp wisselen met omhoog/omlaag swipen, alleen de ontwerpen die aan staan
+  - id: ontwerp_wisselen
+    parameters:
+      richting: int
+    then:
+      - lambda: |-
+          static const char *const NAMEN[8] = {"Digitaal", "Analoog", "Gestapeld", "Info",
+                                               "Zon", "Zwevend", "Maan", "Vierkant"};
+          const bool aan[8] = {id(ontwerp_aan_digitaal).state, id(ontwerp_aan_analoog).state,
+                               id(ontwerp_aan_gestapeld).state, id(ontwerp_aan_info).state,
+                               id(ontwerp_aan_zon).state, id(ontwerp_aan_zwevend).state,
+                               id(ontwerp_aan_maan).state, id(ontwerp_aan_vierkant).state};
+          const std::string huidig = id(klokontwerp).current_option().str();
+          int i = 0;
+          while (i < 8 && huidig != NAMEN[i])
+            i++;
+          const int nieuw = alarmklok::ontwerp_stap(i < 8 ? i : 0, richting, aan, 8);
+          auto call = id(klokontwerp).make_call();
+          call.set_option(NAMEN[nieuw]);
+          call.perform();
+
+  # Indeling van Verlichting en Scènes: raster van 2x2, 3x2 (liggend 2x3) of 3x3
+  - id: indeling_toepassen
+    then:
+      - lambda: |-
+          id(aantal_verlichting) = alarmklok::tegel_aantal(id(indeling_verlichting).current_option().str());
+          id(aantal_scenes) = alarmklok::tegel_aantal(id(indeling_scenes).current_option().str());
+          // De rasterbeschrijving moet blijven bestaan: static
+          static int32_t rijen_licht[6], kolommen_licht[4], rijen_scene[5], kolommen_scene[4];
+          auto raster = [](lv_obj_t *vak, lv_obj_t **tegels, int aantal, int32_t *rijen_dsc,
+                           int32_t *kolommen_dsc, lv_obj_t *dimmer, int dimmer_px) {
+            int rijen, kolommen;
+            alarmklok::tegel_raster(aantal, ${liggend}, rijen, kolommen);
+            int r = 0;
+            for (; r < rijen; r++)
+              rijen_dsc[r] = LV_GRID_FR(1);
+            if (dimmer != nullptr)
+              rijen_dsc[r++] = dimmer_px;
+            rijen_dsc[r] = LV_GRID_TEMPLATE_LAST;
+            for (int k = 0; k < kolommen; k++)
+              kolommen_dsc[k] = LV_GRID_FR(1);
+            kolommen_dsc[kolommen] = LV_GRID_TEMPLATE_LAST;
+            lv_obj_set_grid_dsc_array(vak, kolommen_dsc, rijen_dsc);
+            for (int i = 0; i < 9; i++)
+              lv_obj_set_grid_cell(tegels[i], LV_GRID_ALIGN_STRETCH, i < aantal ? i % kolommen : 0, 1,
+                                   LV_GRID_ALIGN_STRETCH, i < aantal ? i / kolommen : 0, 1);
+            if (dimmer != nullptr)
+              lv_obj_set_grid_cell(dimmer, LV_GRID_ALIGN_STRETCH, 0, kolommen, LV_GRID_ALIGN_STRETCH, rijen, 1);
+          };
+          lv_obj_t *licht[9] = {id(tegel_licht_1), id(tegel_licht_2), id(tegel_licht_3),
+                                id(tegel_licht_4), id(tegel_licht_5), id(tegel_licht_6),
+                                id(tegel_licht_7), id(tegel_licht_8), id(tegel_licht_9)};
+          lv_obj_t *scene[9] = {id(tegel_scene_1), id(tegel_scene_2), id(tegel_scene_3),
+                                id(tegel_scene_4), id(tegel_scene_5), id(tegel_scene_6),
+                                id(tegel_scene_7), id(tegel_scene_8), id(tegel_scene_9)};
+          // De dimmerkaart onder de verlichting alleen met een dimlamp
+          const bool dimmer = !id(cfg_dim_lamp).state.empty();
+          if (dimmer)
+            lv_obj_clear_flag(id(dimmer_kaart), LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_add_flag(id(dimmer_kaart), LV_OBJ_FLAG_HIDDEN);
+          raster(id(raster_verlichting), licht, id(aantal_verlichting), rijen_licht, kolommen_licht,
+                 dimmer ? (lv_obj_t *) id(dimmer_kaart) : nullptr, (int) (${dimmer_basis} * ${k}));
+          raster(id(raster_scenes), scene, id(aantal_scenes), rijen_scene, kolommen_scene, nullptr, 0);
+      # Tegels boven het aantal verbergen, de rest tonen
+      - script.execute: tegels_tonen
+
+  # Kleurthema en accentkleur op de stijlen
+  - id: thema_toepassen
+    then:
+      - lvgl.style.update:
+          id: pagina_stijl
+          bg_color: !lambda return lv_color_hex(alarmklok::thema(id(kleurthema).current_option().str()).pagina);
+      - lvgl.style.update:
+          id: kaart
+          bg_color: !lambda return lv_color_hex(alarmklok::thema(id(kleurthema).current_option().str()).kaart);
+      - lvgl.style.update:
+          id: tegel_stijl
+          bg_color: !lambda return lv_color_hex(alarmklok::thema(id(kleurthema).current_option().str()).tegel);
+      - lvgl.style.update:
+          id: titel
+          text_color: !lambda return lv_color_hex(alarmklok::thema(id(kleurthema).current_option().str()).titel);
+      - lvgl.style.update:
+          id: klok_accent
+          text_color: !lambda return lv_color_hex(alarmklok::accent_kleur(id(accentkleur).current_option().str()));

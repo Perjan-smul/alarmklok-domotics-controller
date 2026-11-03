@@ -10,6 +10,12 @@
 #     op de pagina Wekker: omhoog vegen voor volume, wake-up light en testen
 # =============================================================================
 
+
+substitutions:
+  # Voor de instelbare indeling (paginas.yaml): vierkant scherm, dimmerkaart 64 px bij k = 1
+  liggend: "false"
+  dimmer_basis: "64"
+
 font:
   - file: "gfonts://Roboto Condensed@700"
     id: f_klok
@@ -441,13 +447,13 @@ lvgl:
                       height: 100%
                       styles: leeg
                       on_swipe_down:
-                        - select.next:
-                            id: klokontwerp
-                            cycle: true
+                        - script.execute:
+                            id: ontwerp_wisselen
+                            richting: 1
                       on_swipe_up:
-                        - select.previous:
-                            id: klokontwerp
-                            cycle: true
+                        - script.execute:
+                            id: ontwerp_wisselen
+                            richting: -1
                       # Lang drukken: volgende klokkleur (zoals StandBy)
                       on_long_press:
                         - select.next:
@@ -900,6 +906,7 @@ lvgl:
                 widgets:
                   - label: { text: "Verlichting", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
                   - obj:
+                      id: raster_verlichting
                       x: 0
                       y: '${(44 * (k | float)) | int}'
                       width: 100%
@@ -909,21 +916,25 @@ lvgl:
                       layout:
                         type: GRID
                         grid_rows: [FR(1), FR(1), FR(1), '${((64 * (k | float)) | int) ~ "px"}']
-                        grid_columns: [FR(1), FR(1)]
+                        grid_columns: [FR(1), FR(1), FR(1)]
                         pad_row: '${(10 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
                         - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
                         - !include { file: tegel.yaml, vars: { nr: licht_2, rij: 0, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 1, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 2, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 2, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_3, rij: 0, kolom: 2, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_4, rij: 1, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_5, rij: 1, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_6, rij: 1, kolom: 2, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_7, rij: 2, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_8, rij: 2, kolom: 1, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: licht_9, rij: 2, kolom: 2, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
                         # Dimmerkaart: de hele kaart is de schuif; warm gevuld tot de helderheid
                         - obj:
+                            id: dimmer_kaart
                             grid_cell_row_pos: 3
                             grid_cell_column_pos: 0
-                            grid_cell_column_span: 2
+                            grid_cell_column_span: 3
                             grid_cell_x_align: STRETCH
                             grid_cell_y_align: STRETCH
                             styles: leeg
@@ -961,12 +972,12 @@ lvgl:
                                           - homeassistant.action:
                                               action: light.turn_off
                                               data:
-                                                entity_id: ${dim_lamp}
+                                                entity_id: !lambda return id(cfg_dim_lamp).state;
                                         else:
                                           - homeassistant.action:
                                               action: light.turn_on
                                               data:
-                                                entity_id: ${dim_lamp}
+                                                entity_id: !lambda return id(cfg_dim_lamp).state;
                                                 brightness: !lambda return std::to_string((int) x);
                               - label:
                                   align: LEFT_MID
@@ -979,7 +990,8 @@ lvgl:
                                   x: '${(58 * (k | float)) | int}'
                                   clickable: false
                                   text_font: f_midden
-                                  text: "${dim_lamp_naam}"
+                                  id: lbl_dimmer_naam
+                                  text: ""
                               - label:
                                   id: lbl_dimmer
                                   align: RIGHT_MID
@@ -1030,11 +1042,11 @@ lvgl:
                               - homeassistant.action:
                                   action: climate.set_temperature
                                   data:
-                                    entity_id: ${thermostaat}
+                                    entity_id: !lambda return id(cfg_thermostaat).state;
                                     temperature: !lambda |-
                                       if (std::isnan(id(klimaat_doel).state))
-                                        ESP_LOGW("klimaat", "Thermostaat ${thermostaat} geeft geen doeltemperatuur "
-                                                 "(attribuut 'temperature'): klopt de entiteit?");
+                                        ESP_LOGW("klimaat", "Thermostaat %s geeft geen doeltemperatuur "
+                                                 "(attribuut 'temperature'): klopt de entiteit?", id(cfg_thermostaat).state.c_str());
                                       char buf[8];
                                       snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state - 0.5f);
                                       return std::string(buf);
@@ -1051,11 +1063,11 @@ lvgl:
                               - homeassistant.action:
                                   action: climate.set_temperature
                                   data:
-                                    entity_id: ${thermostaat}
+                                    entity_id: !lambda return id(cfg_thermostaat).state;
                                     temperature: !lambda |-
                                       if (std::isnan(id(klimaat_doel).state))
-                                        ESP_LOGW("klimaat", "Thermostaat ${thermostaat} geeft geen doeltemperatuur "
-                                                 "(attribuut 'temperature'): klopt de entiteit?");
+                                        ESP_LOGW("klimaat", "Thermostaat %s geeft geen doeltemperatuur "
+                                                 "(attribuut 'temperature'): klopt de entiteit?", id(cfg_thermostaat).state.c_str());
                                       char buf[8];
                                       snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state + 0.5f);
                                       return std::string(buf);
@@ -1093,7 +1105,7 @@ lvgl:
                               - homeassistant.action:
                                   action: cover.set_cover_position
                                   data:
-                                    entity_id: ${rolluik}
+                                    entity_id: !lambda return id(cfg_rolluik).state;
                                     position: !lambda return std::to_string((int) x);
                         - label: { text: "\U000F111C", x: '${(14 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', clickable: false, text_font: f_icoon_klein }
                         # Batterij van het rolluik/gordijn (ha-bediening.yaml)
@@ -1142,7 +1154,7 @@ lvgl:
                                     - homeassistant.action:
                                         action: cover.open_cover
                                         data:
-                                          entity_id: ${rolluik}
+                                          entity_id: !lambda return id(cfg_rolluik).state;
                                   widgets:
                                     - label: { text: "\U000F005D", text_font: f_icoon, align: CENTER }
                               - button:
@@ -1153,7 +1165,7 @@ lvgl:
                                     - homeassistant.action:
                                         action: cover.stop_cover
                                         data:
-                                          entity_id: ${rolluik}
+                                          entity_id: !lambda return id(cfg_rolluik).state;
                                   widgets:
                                     - label: { text: "\U000F04DB", text_font: f_icoon, align: CENTER }
                               - button:
@@ -1164,7 +1176,7 @@ lvgl:
                                     - homeassistant.action:
                                         action: cover.close_cover
                                         data:
-                                          entity_id: ${rolluik}
+                                          entity_id: !lambda return id(cfg_rolluik).state;
                                   widgets:
                                     - label: { text: "\U000F0045", text_font: f_icoon, align: CENTER }
 
@@ -1219,7 +1231,7 @@ lvgl:
                               - homeassistant.action:
                                   action: media_player.media_previous_track
                                   data:
-                                    entity_id: ${mediaspeler}
+                                    entity_id: !lambda return id(cfg_mediaspeler).state;
                             widgets:
                               - label: { text: "\U000F04AE", text_font: f_icoon, align: CENTER }
                         - button:
@@ -1233,7 +1245,7 @@ lvgl:
                               - homeassistant.action:
                                   action: media_player.media_play_pause
                                   data:
-                                    entity_id: ${mediaspeler}
+                                    entity_id: !lambda return id(cfg_mediaspeler).state;
                             widgets:
                               - label: { id: lbl_media_playpause, text: "\U000F040A", text_font: f_icoon, align: CENTER }
                         - button:
@@ -1245,7 +1257,7 @@ lvgl:
                               - homeassistant.action:
                                   action: media_player.media_next_track
                                   data:
-                                    entity_id: ${mediaspeler}
+                                    entity_id: !lambda return id(cfg_mediaspeler).state;
                             widgets:
                               - label: { text: "\U000F04AD", text_font: f_icoon, align: CENTER }
                         - slider:
@@ -1260,7 +1272,7 @@ lvgl:
                               - homeassistant.action:
                                   action: media_player.volume_set
                                   data:
-                                    entity_id: ${mediaspeler}
+                                    entity_id: !lambda return id(cfg_mediaspeler).state;
                                     volume_level: !lambda |-
                                       char buf[8];
                                       snprintf(buf, sizeof(buf), "%.2f", x / 100.0f);
@@ -1292,6 +1304,7 @@ lvgl:
                 widgets:
                   - label: { text: "Scènes", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
                   - obj:
+                      id: raster_scenes
                       x: 0
                       y: '${(44 * (k | float)) | int}'
                       width: 100%
@@ -1301,16 +1314,19 @@ lvgl:
                       layout:
                         type: GRID
                         grid_rows: [FR(1), FR(1), FR(1)]
-                        grid_columns: [FR(1), FR(1)]
+                        grid_columns: [FR(1), FR(1), FR(1)]
                         pad_row: '${(10 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
                         - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
                         - !include { file: tegel.yaml, vars: { nr: scene_2, rij: 0, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 1, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 2, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
-                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 2, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_3, rij: 0, kolom: 2, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_4, rij: 1, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_5, rij: 1, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_6, rij: 1, kolom: 2, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_7, rij: 2, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_8, rij: 2, kolom: 1, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
+                        - !include { file: tegel.yaml, vars: { nr: scene_9, rij: 2, kolom: 2, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
 
               # ===============================================================
               #  Wekker instellen. Past niet op één scherm: omhoog vegen voor

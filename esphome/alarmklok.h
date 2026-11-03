@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <string>
 
 namespace alarmklok {
@@ -488,6 +489,145 @@ inline const char *melodie(const std::string &naam) {
     return "zacht:d=4,o=5,b=60:8c,8e,8g,2c6,8p,8g,8e,2c";
   // "Klassiek" - het bekende piep-piep van een wekker
   return "klassiek:d=16,o=6,b=200:c,p,c,p,c,p,c,4p,c,p,c,p,c,p,c,4p";
+}
+
+// ---- Instelbare pagina's (fase 4) ---------------------------------------------
+
+// Bestemmingen bij het swipen links/rechts. De klok is altijd de eerste.
+enum Pagina : int { P_KLOK = 0, P_VERLICHTING, P_KLIMAAT, P_MUZIEK, P_SCENES, P_WEKKER, P_CAMERA, P_AANTAL };
+
+// Optie uit "Pagina N" naar een bestemming, of -1 voor "Uit"/onbekend
+inline int pagina_nummer(const std::string &optie) {
+  if (optie == "Verlichting")
+    return P_VERLICHTING;
+  if (optie == "Klimaat")
+    return P_KLIMAAT;
+  if (optie == "Muziek")
+    return P_MUZIEK;
+  if (optie == "Scènes")
+    return P_SCENES;
+  if (optie == "Wekker")
+    return P_WEKKER;
+  if (optie == "Camera")
+    return P_CAMERA;
+  return -1;
+}
+
+// Volgorde van de pagina's: de klok, dan de gekozen pagina's (dubbele en "Uit"
+// overgeslagen; Camera alleen als het bord een camera heeft). Geeft het aantal.
+inline int pagina_volgorde(const std::string *opties, int n, bool camera, int *uit) {
+  int aantal = 0;
+  uit[aantal++] = P_KLOK;
+  for (int i = 0; i < n; i++) {
+    const int p = pagina_nummer(opties[i]);
+    if (p < 0 || (p == P_CAMERA && !camera))
+      continue;
+    bool dubbel = false;
+    for (int j = 0; j < aantal; j++)
+      dubbel = dubbel || uit[j] == p;
+    if (!dubbel)
+      uit[aantal++] = p;
+  }
+  return aantal;
+}
+
+// Volgende (richting +1) of vorige (-1) index in de volgorde, zonder rondgaan
+inline int pagina_stap(int index, int richting, int aantal) {
+  const int nieuw = index + richting;
+  return nieuw < 0 || nieuw >= aantal ? index : nieuw;
+}
+
+// Indeling van een tegelpagina: "4 tegels" (2x2), "6 tegels" (3x2), "9 tegels" (3x3)
+inline int tegel_aantal(const std::string &indeling) {
+  if (indeling == "4 tegels")
+    return 4;
+  if (indeling == "9 tegels")
+    return 9;
+  return 6;
+}
+// Staand/vierkant scherm: 6 = 3 rijen x 2; liggend (7"): 6 = 2 rijen x 3
+inline void tegel_raster(int aantal, bool liggend, int &rijen, int &kolommen) {
+  if (aantal == 4) {
+    rijen = kolommen = 2;
+  } else if (aantal == 9) {
+    rijen = kolommen = 3;
+  } else {
+    rijen = liggend ? 2 : 3;
+    kolommen = liggend ? 3 : 2;
+  }
+}
+
+// Gedraagt de tegel zich als schakelaar (status, aan/uit, lang drukken voor
+// details) of als scène (alleen aanzetten)? "Automatisch": scènes, scripts,
+// automatiseringen en knoppen zijn scènes, de rest schakelaars.
+inline bool tegel_is_schakelaar(const std::string &soort, const std::string &entiteit) {
+  if (soort == "Aan/uit")
+    return true;
+  if (soort == "Scène/script")
+    return false;
+  const std::string d = domein(entiteit);
+  return !(d == "scene" || d == "script" || d == "automation" || d == "button" || d == "input_button");
+}
+
+// Klokontwerp na `huidig` in richting +1/-1, alleen ontwerpen die aan staan
+// (actief[i]). Staat er geen enkele aan, dan alle ontwerpen.
+inline int ontwerp_stap(int huidig, int richting, const bool *actief, int n) {
+  bool een = false;
+  for (int i = 0; i < n; i++)
+    een = een || actief[i];
+  for (int s = 1; s <= n; s++) {
+    const int i = ((huidig + richting * s) % n + n) % n;
+    if (!een || actief[i])
+      return i;
+  }
+  return huidig;
+}
+
+// Kleurthema's: achtergrond van de pagina's, kaarten en tegels
+struct Thema {
+  uint32_t pagina, kaart, tegel, titel;
+};
+inline Thema thema(const std::string &naam) {
+  if (naam == "Zwart")
+    return {0x000000, 0x141414, 0x1C1C1C, 0x9A9A9A};
+  if (naam == "Blauw")
+    return {0x07101F, 0x13233D, 0x1A2E4F, 0xA8BEDF};
+  if (naam == "Warm")
+    return {0x120C08, 0x2A2019, 0x352820, 0xD2B8A0};
+  return {0x000000, 0x232A35, 0x2B3340, 0xB0B6C0};  // Donker (standaard)
+}
+inline uint32_t accent_kleur(const std::string &naam) {
+  if (naam == "Geel")
+    return 0xF5C35A;
+  if (naam == "Blauw")
+    return 0x5AA9F5;
+  if (naam == "Groen")
+    return 0x5AD08A;
+  if (naam == "Roze")
+    return 0xF57AB4;
+  if (naam == "Wit")
+    return 0xFFFFFF;
+  return 0xF5A623;  // Oranje (standaard)
+}
+
+// Koppelingen tussen onderdelen die elkaar niet kennen: het camerapakket (alleen
+// P4) zet camera_tonen (true = camerapagina tonen, false = terug naar de
+// hoofdpagina); de navigatie zet navigeer (+1/-1 = volgende/vorige pagina).
+inline std::function<void(bool)> camera_tonen;
+inline std::function<void(int)> navigeer;
+
+// Camera-URL uit het attribuut entity_picture van een camera in HA
+// ("/api/camera_proxy/camera.x?token=..."), met de breedte die HA moet leveren
+inline std::string camera_url(const std::string &ha_url, const std::string &plaatje, int breedte) {
+  if (plaatje.empty() || plaatje == "None")
+    return "";
+  std::string url = ha_url;
+  while (!url.empty() && url.back() == '/')
+    url.pop_back();
+  url += plaatje;
+  url += plaatje.find('?') == std::string::npos ? "?" : "&";
+  url += "width=" + std::to_string(breedte);
+  return url;
 }
 
 }  // namespace alarmklok

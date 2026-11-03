@@ -1,0 +1,229 @@
+# =============================================================================
+#  Camerapagina (alleen P4: 7" en 4B; de S3 is te traag om JPEG's te decoderen)
+#
+#  Kies in Home Assistant bij "Pagina 1-6" de pagina Camera, en stel in:
+#   - Camera: een camera-entiteit uit HA (bv. camera.voordeur)
+#   - Deurbel: optioneel een binary_sensor (of iets dat "on" wordt); bij "on"
+#     springt de klok naar de camera en gaat het scherm aan, ook 's nachts
+#   - Camera verversen: om de hoeveel seconden een nieuw beeld
+#
+#  Het beeld is een momentopname via HA (/api/camera_proxy), geen video. Er is
+#  geen token nodig: HA geeft in het attribuut entity_picture een kortlevende
+#  toegangscode mee en ververst die zelf. Wel moet de klok HA kunnen bereiken
+#  op ha_url (instellingen.yaml). Alleen terwijl de camerapagina open is wordt
+#  er beeld opgehaald.
+#
+#  Vars: breedte en hoogte van het beeld (HA schaalt het naar die breedte).
+# =============================================================================
+
+esphome:
+  on_boot:
+    # Vóór de verbinding met HA: entiteiten volgen (zoals de tegels)
+    - priority: 600
+      then:
+        - lambda: |-
+            const std::string camera = id(cfg_camera).state;
+            if (!camera.empty()) {
+              api::global_api_server->subscribe_home_assistant_state(
+                  camera, optional<std::string>("entity_picture"),
+                  std::function<void(StringRef)>([](StringRef plaatje) { id(camera_plaatje) = plaatje.str(); }));
+            }
+            const std::string deurbel = id(cfg_deurbel).state;
+            if (!deurbel.empty()) {
+              api::global_api_server->subscribe_home_assistant_state(
+                  deurbel, optional<std::string>(),
+                  std::function<void(StringRef)>([](StringRef status) {
+                    if (status.str() == "on" && id(ui_klaar))
+                      id(deurbel_gaat).execute();
+                  }));
+            }
+    # Vóór paginas_opbouwen (-110): de navigatie moet weten dat er een camera is
+    - priority: -105
+      then:
+        - lambda: |-
+            alarmklok::camera_tonen = [](bool aan) {
+              if (aan != id(camera_zichtbaar))
+                id(camera_pagina).execute(aan);
+            };
+
+globals:
+  # entity_picture van de camera: "/api/camera_proxy/camera.x?token=..."
+  - id: camera_plaatje
+    type: std::string
+  - id: camera_zichtbaar
+    type: bool
+    initial_value: "false"
+  - id: camera_laatst_ms
+    type: uint32_t
+    initial_value: "0"
+
+text:
+  - platform: template
+    id: cfg_camera
+    name: Camera
+    icon: mdi:cctv
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${camera_entiteit}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+  - platform: template
+    id: cfg_deurbel
+    name: Deurbel
+    icon: mdi:doorbell
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${deurbel_entiteit}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+number:
+  - platform: template
+    id: camera_verversen
+    name: Camera verversen
+    icon: mdi:camera-timer
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 1
+    max_value: 30
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 2
+
+image:
+  - platform: online_image
+    id: camera_beeld
+    # Wordt gezet als de camerapagina opengaat (camera_ophalen)
+    url: http://homeassistant.local:8123/
+    format: JPEG
+    type: RGB565
+    resize: ${breedte}x${hoogte}
+    http_request_id: http_verzoek
+    on_download_finished:
+      - lvgl.image.update:
+          id: camera_img
+          src: camera_beeld
+      - lvgl.label.update:
+          id: lbl_camera_status
+          text: ""
+    on_error:
+      - lvgl.label.update:
+          id: lbl_camera_status
+          text: "Geen camerabeeld (klopt ha_url?)"
+
+lvgl:
+  pages:
+    - id: pagina_camera
+      bg_color: 0x000000
+      bg_opa: COVER
+      widgets:
+        # Vangt de veeggebaren op: links/rechts = volgende/vorige pagina
+        - obj:
+            x: 0
+            y: 0
+            width: 100%
+            height: 100%
+            bg_opa: TRANSP
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            scrollable: false
+            on_swipe_left:
+              - lambda: if (alarmklok::navigeer) alarmklok::navigeer(1);
+            on_swipe_right:
+              - lambda: if (alarmklok::navigeer) alarmklok::navigeer(-1);
+            widgets:
+              - image:
+                  id: camera_img
+                  align: CENTER
+                  src: camera_beeld
+                  clickable: false
+              - label:
+                  id: lbl_camera_status
+                  align: CENTER
+                  text: "Camera laden..."
+                  text_color: 0x9AA4B2
+                  clickable: false
+
+interval:
+  # Zolang de camerapagina open is: om de "Camera verversen" seconden een nieuw beeld
+  - interval: 500ms
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(camera_zichtbaar) &&
+                     millis() - id(camera_laatst_ms) >= (uint32_t) (id(camera_verversen).state * 1000);
+          then:
+            - script.execute: camera_ophalen
+
+script:
+  - id: camera_pagina
+    parameters:
+      aan: bool
+    then:
+      - lambda: id(camera_zichtbaar) = aan;
+      - if:
+          condition:
+            lambda: return aan;
+          then:
+            - lvgl.page.show:
+                id: pagina_camera
+                animation: NONE
+            - script.execute: camera_ophalen
+          else:
+            - lvgl.page.show:
+                id: pagina_hoofd
+                animation: NONE
+            - online_image.release: camera_beeld
+
+  - id: camera_ophalen
+    mode: single
+    then:
+      - lambda: id(camera_laatst_ms) = millis();
+      - if:
+          condition:
+            lambda: return id(cfg_camera).state.empty() || id(camera_plaatje).empty();
+          then:
+            - lvgl.label.update:
+                id: lbl_camera_status
+                text: !lambda |-
+                  return std::string(id(cfg_camera).state.empty() ? "Geen camera ingesteld (HA: Camera)"
+                                                                  : "Wacht op beeld van Home Assistant...");
+          else:
+            - lambda: id(camera_beeld)->set_url(alarmklok::camera_url("${ha_url}", id(camera_plaatje), ${breedte}));
+            - component.update: camera_beeld
+
+  # Deurbel: scherm aan (ook in de nachtstand) en naar de camera
+  - id: deurbel_gaat
+    then:
+      - lambda: |-
+          ESP_LOGI("camera", "Deurbel: naar de camera");
+          id(laatste_aanraking_ms) = millis();
+      - script.execute: helderheid_regelen
+      - lambda: |-
+          auto &v = id(pag_volgorde);
+          for (size_t i = 0; i < v.size(); i++) {
+            if (v[i] == alarmklok::P_CAMERA) {
+              id(pagina_naar).execute((int) i, false);
+              return;
+            }
+          }
+          // Camera staat niet in de paginavolgorde: toch tonen; swipen of 30 s
+          // niets doen brengt je terug
+          alarmklok::camera_tonen(true);

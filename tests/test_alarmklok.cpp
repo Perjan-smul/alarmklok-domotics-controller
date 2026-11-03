@@ -208,6 +208,47 @@ int main() {
   CONTROLEER(std::strcmp(batterij_icoon(60), "\U000F007F") == 0);
   CONTROLEER(std::strcmp(batterij_icoon(100), "\U000F0079") == 0);
 
+  // Instelbare pagina's
+  {
+    const std::string opties[6] = {"Verlichting", "Uit", "Klimaat", "Verlichting", "Camera", "Wekker"};
+    int v[P_AANTAL + 1];
+    int n = pagina_volgorde(opties, 6, false, v);
+    CONTROLEER(n == 4 && v[0] == P_KLOK && v[1] == P_VERLICHTING && v[2] == P_KLIMAAT && v[3] == P_WEKKER);
+    n = pagina_volgorde(opties, 6, true, v);
+    CONTROLEER(n == 5 && v[3] == P_CAMERA && v[4] == P_WEKKER);
+    const std::string leeg[2] = {"Uit", "Uit"};
+    CONTROLEER(pagina_volgorde(leeg, 2, true, v) == 1 && v[0] == P_KLOK);
+    CONTROLEER(pagina_stap(0, -1, 4) == 0 && pagina_stap(0, 1, 4) == 1 && pagina_stap(3, 1, 4) == 3);
+    CONTROLEER(pagina_nummer("Scènes") == P_SCENES && pagina_nummer("Iets") == -1);
+  }
+  {
+    int r, k;
+    CONTROLEER(tegel_aantal("4 tegels") == 4 && tegel_aantal("9 tegels") == 9 && tegel_aantal("x") == 6);
+    tegel_raster(4, false, r, k);
+    CONTROLEER(r == 2 && k == 2);
+    tegel_raster(6, false, r, k);
+    CONTROLEER(r == 3 && k == 2);
+    tegel_raster(6, true, r, k);
+    CONTROLEER(r == 2 && k == 3);
+    tegel_raster(9, true, r, k);
+    CONTROLEER(r == 3 && k == 3);
+  }
+  CONTROLEER(tegel_is_schakelaar("Automatisch", "light.bed"));
+  CONTROLEER(!tegel_is_schakelaar("Automatisch", "scene.film") && !tegel_is_schakelaar("Automatisch", "script.x"));
+  CONTROLEER(tegel_is_schakelaar("Aan/uit", "script.x") && !tegel_is_schakelaar("Scène/script", "light.bed"));
+  {
+    bool aan[8] = {true, false, false, true, false, false, false, true};
+    CONTROLEER(ontwerp_stap(0, 1, aan, 8) == 3 && ontwerp_stap(3, 1, aan, 8) == 7 && ontwerp_stap(7, 1, aan, 8) == 0);
+    CONTROLEER(ontwerp_stap(0, -1, aan, 8) == 7);
+    bool geen[8] = {};
+    CONTROLEER(ontwerp_stap(2, 1, geen, 8) == 3);
+  }
+  CONTROLEER(thema("Zwart").kaart == 0x141414 && thema("onbekend").kaart == 0x232A35);
+  CONTROLEER(accent_kleur("Groen") == 0x5AD08A && accent_kleur("x") == 0xF5A623);
+  CONTROLEER(camera_url("http://ha:8123/", "/api/camera_proxy/camera.d?token=ab", 800) ==
+             "http://ha:8123/api/camera_proxy/camera.d?token=ab&width=800");
+  CONTROLEER(camera_url("http://ha:8123", "", 800).empty() && camera_url("http://ha", "None", 8).empty());
+
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");
   return fouten == 0 ? 0 : 1;

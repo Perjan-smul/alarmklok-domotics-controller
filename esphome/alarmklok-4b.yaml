@@ -33,4 +33,6 @@ packages:
   c6_update: !include onderdelen/c6-update.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
   detail: !include onderdelen/detail-pagina.yaml
+  # Camerapagina (kies 'Camera' bij Pagina 1-6 in HA); niet nodig: zet er een # voor
+  camera: !include { file: onderdelen/camera.yaml, vars: { breedte: 720, hoogte: 405 } }
   spraak: !include onderdelen/spraak.yaml

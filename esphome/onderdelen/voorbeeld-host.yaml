@@ -6,6 +6,10 @@
 # =============================================================================
 
 substitutions:
+  # Camerapagina (camera.yaml, alleen P4) en swipe-animatie standaard aan/uit
+  # (in HA te wijzigen; de S3 is te traag voor een vloeiende animatie)
+  heeft_camera: "false"
+  swipe_animatie: RESTORE_DEFAULT_OFF
   # 4"-klok: 480x480 (zie scherm-vierkant.yaml)
   k: "1.0"
   draaiing: "0"

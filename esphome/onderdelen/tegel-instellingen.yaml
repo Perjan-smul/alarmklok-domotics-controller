@@ -1,12 +1,16 @@
-# Naam, entiteit en icoon van tegel ${nr}. De waarden uit alarmklok.yaml zijn
-# alleen de standaard; daarna pas je ze aan in Home Assistant (Instellingen ->
-# Apparaten -> Alarmklok -> Configuratie), zonder opnieuw te flashen.
-#  - Naam en icoon veranderen meteen op het scherm.
+# Naam, entiteit, icoon en soort van tegel ${nr}. De waarden uit
+# instellingen.yaml zijn alleen de standaard; daarna pas je ze aan in Home
+# Assistant (Configuratie van de klok of het dashboard uit
+# homeassistant/dashboard/), zonder opnieuw te flashen.
+#  - Naam, icoon en soort veranderen meteen op het scherm.
 #  - Een andere entiteit laat de klok na 5 s even herstarten, zodat hij de
 #    status (aan/uit) van de nieuwe entiteit volgt.
-#  - Een lege entiteit verbergt de tegel.
-#  - Schakelaar: true voor verlichting (status en lang drukken), false voor
-#    scènes.
+#  - Een lege entiteit verbergt de tegel; tegels boven de gekozen indeling
+#    ("4/6/9 tegels", paginas.yaml) ook.
+#  - Soort: Automatisch (scènes, scripts en knoppen alleen aanzetten, de rest
+#    aan/uit met status), Aan/uit of Scène/script.
+# Vars: nr, titel, naam, entity, icoon, index (1-9) en aantal (global met het
+# aantal tegels op deze pagina).
 text:
   - platform: template
     id: tegel_${nr}_naam
@@ -90,7 +94,28 @@ select:
           then:
             - script.execute: tegel_${nr}_tonen
 
+  - platform: template
+    id: tegel_${nr}_soort
+    name: ${titel} soort
+    icon: mdi:gesture-tap
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: [Automatisch, Aan/uit, Scène/script]
+    initial_option: Automatisch
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegel_${nr}_tonen
+            - script.execute: tegels_herladen
+
 globals:
+  # Gedraagt de tegel zich als schakelaar (status, lang drukken) of als scène?
+  - id: tegel_${nr}_schakelaar
+    type: bool
+    initial_value: "true"
   # Laatste status en percentage (0-100, -1 = geen) uit Home Assistant
   - id: tegel_${nr}_status
     type: std::string
@@ -105,7 +130,9 @@ script:
           lv_label_set_text(id(tegel_${nr}_icoon_tekst),
                             alarmklok::icoon(id(tegel_${nr}_icoon).current_option().str()));
           lv_label_set_text(id(tegel_${nr}_naam_tekst), id(tegel_${nr}_naam).state.c_str());
-          if (id(tegel_${nr}_entiteit).state.empty())
+          id(tegel_${nr}_schakelaar) = alarmklok::tegel_is_schakelaar(
+              id(tegel_${nr}_soort).current_option().str(), id(tegel_${nr}_entiteit).state);
+          if (id(tegel_${nr}_entiteit).state.empty() || ${index} > id(${aantal}))
             lv_obj_add_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
           else
             lv_obj_clear_flag(id(tegel_${nr}), LV_OBJ_FLAG_HIDDEN);
@@ -119,22 +146,25 @@ script:
           const std::string entiteit = id(tegel_${nr}_entiteit).state;
           const std::string dom = alarmklok::domein(entiteit);
           const std::string &status = id(tegel_${nr}_status);
-          const bool aan = ${schakelaar} && alarmklok::status_aan(status);
+          const bool schakelaar = id(tegel_${nr}_schakelaar);
+          const bool aan = schakelaar && alarmklok::status_aan(status);
           lv_label_set_text(id(tegel_${nr}_status_tekst),
-                            alarmklok::tegel_status(dom, status, id(tegel_${nr}_procent), ${schakelaar}).c_str());
-          if (!${schakelaar})
-            lv_obj_add_flag(id(tegel_${nr}_schakelaar), LV_OBJ_FLAG_HIDDEN);
+                            alarmklok::tegel_status(dom, status, id(tegel_${nr}_procent), schakelaar).c_str());
+          if (schakelaar)
+            lv_obj_clear_flag(id(tegel_${nr}_schakelaar_widget), LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_add_flag(id(tegel_${nr}_schakelaar_widget), LV_OBJ_FLAG_HIDDEN);
           // Aan: lichtere kaart, warm geel icoon
           lv_obj_set_style_text_color(id(tegel_${nr}_icoon_tekst),
                                       lv_color_hex(aan ? 0xF5C35A : 0xE8EAED), 0);
           if (aan) {
             lv_obj_add_state(id(tegel_${nr}), LV_STATE_CHECKED);
-            lv_obj_add_state(id(tegel_${nr}_schakelaar), LV_STATE_CHECKED);
+            lv_obj_add_state(id(tegel_${nr}_schakelaar_widget), LV_STATE_CHECKED);
           } else {
             lv_obj_clear_state(id(tegel_${nr}), LV_STATE_CHECKED);
-            lv_obj_clear_state(id(tegel_${nr}_schakelaar), LV_STATE_CHECKED);
+            lv_obj_clear_state(id(tegel_${nr}_schakelaar_widget), LV_STATE_CHECKED);
           }
-          if (${schakelaar} && !entiteit.empty() && id(detail_entiteit) == entiteit) {
+          if (schakelaar && !entiteit.empty() && id(detail_entiteit) == entiteit) {
             id(detail_status) = status;
             id(detail_procent) = id(tegel_${nr}_procent);
             id(detail_tonen).execute();
@@ -167,7 +197,8 @@ script:
               }));
           const std::string dom = alarmklok::domein(entiteit);
           const char *attribuut = alarmklok::waarde_attribuut(dom);
-          if (${schakelaar} && attribuut[0] != '\0') {
+          const bool schakelaar = alarmklok::tegel_is_schakelaar(id(tegel_${nr}_soort).current_option().str(), entiteit);
+          if (schakelaar && attribuut[0] != '\0') {
             api::global_api_server->subscribe_home_assistant_state(
                 entiteit, optional<std::string>(attribuut),
                 std::function<void(StringRef)>([dom](StringRef waarde) {

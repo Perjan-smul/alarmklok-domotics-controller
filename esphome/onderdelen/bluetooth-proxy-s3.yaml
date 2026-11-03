@@ -13,6 +13,10 @@
 #  In het log staat hoeveel geheugen er vóór en na het aanzetten vrij is.
 # =============================================================================
 
+substitutions:
+  # Minimaal vrij intern geheugen (bytes) om Bluetooth te starten
+  bt_min_vrij: "50000"
+
 esp32_ble:
   id: ble_stack
   enable_on_boot: false
@@ -59,26 +63,42 @@ script:
                 id: bt_status
                 state: "Uit (vorige poging liep vast)"
           else:
-            - lambda: |-
-                ESP_LOGI("bluetooth", "Bluetooth aanzetten; intern vrij %u B, grootste blok %u B",
-                         (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                         (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
-                id(bt_proef_bezig) = true;
-                global_preferences->sync();
-            - text_sensor.template.publish:
-                id: bt_status
-                state: "Starten..."
-            - ble.enable:
-            - delay: 30s
-            - lambda: |-
-                id(bt_proef_bezig) = false;
-                global_preferences->sync();
-                ESP_LOGI("bluetooth", "Bluetooth draait; intern vrij %u B, grootste blok %u B",
-                         (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                         (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
-            - text_sensor.template.publish:
-                id: bt_status
-                state: "Aan"
+            - if:
+                # Bluetooth vraagt bij het starten ± 40 kB intern geheugen; is
+                # dat er niet, dan niet proberen (geen crash)
+                condition:
+                  lambda: |-
+                    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) < ${bt_min_vrij} ||
+                           heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) < 16000;
+                then:
+                  - lambda: |-
+                      ESP_LOGW("bluetooth", "Bluetooth blijft uit: te weinig intern geheugen (vrij %u B, grootste blok %u B)",
+                               (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                               (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+                  - text_sensor.template.publish:
+                      id: bt_status
+                      state: "Uit (te weinig geheugen)"
+                else:
+                  - lambda: |-
+                      ESP_LOGI("bluetooth", "Bluetooth aanzetten; intern vrij %u B, grootste blok %u B",
+                               (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                               (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+                      id(bt_proef_bezig) = true;
+                      global_preferences->sync();
+                  - text_sensor.template.publish:
+                      id: bt_status
+                      state: "Starten..."
+                  - ble.enable:
+                  - delay: 30s
+                  - lambda: |-
+                      id(bt_proef_bezig) = false;
+                      global_preferences->sync();
+                      ESP_LOGI("bluetooth", "Bluetooth draait; intern vrij %u B, grootste blok %u B",
+                               (unsigned) heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                               (unsigned) heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+                  - text_sensor.template.publish:
+                      id: bt_status
+                      state: "Aan"
 
 text_sensor:
   - platform: template

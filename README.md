@@ -26,8 +26,8 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 
 | Gebaar | Wat gebeurt er |
 |---|---|
-| **Links/rechts swipen** | Bladeren tussen Klok → Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant. De keuze wordt onthouden. |
+| **Links/rechts swipen** | Bladeren tussen de klok en de pagina's die je in HA kiest (standaard Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker; op de 7" en 4B ook Camera) |
+| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant (alleen de ontwerpen die in HA aan staan). De keuze wordt onthouden. |
 | **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
 | **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
@@ -312,10 +312,18 @@ elke build de nieuwste versie op).
    radiostream.
 4. Herstart Home Assistant.
 
-### 4. Dashboard (optioneel)
+### 4. Dashboards (optioneel)
 
-Dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak de inhoud van
-`homeassistant/dashboard-kaart.yaml`.
+- **Bedienkaart:** dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak
+  de inhoud van `homeassistant/dashboard-kaart.yaml`.
+- **Instellingen van de klok, overzichtelijk:** in plaats van de lange lijst
+  bij het apparaat staat alles op één dashboard, per onderwerp (wekkers,
+  pagina's, uiterlijk, nachtstand, bediening en per tegelpagina de tegels).
+  *Instellingen → Dashboards → Dashboard toevoegen → Nieuw dashboard*, openen,
+  potlood → drie puntjes → *Raw configuration editor*, en plak de inhoud van
+  `homeassistant/dashboard/alarmklok_4_inch.yaml` (4"), `alarmklok.yaml` (7")
+  of `alarmklok_4b.yaml` (4B). Heet je klok anders, maak er dan een met
+  `python3 tools/dashboard.py "Naam van je klok"` (`--camera` voor de 7"/4B).
 
 ## Spraakassistent (7" en 4B)
 
@@ -435,35 +443,58 @@ stop zet de radio weer uit.
 
 ## Pagina's aanpassen
 
-### Tegels: vanuit Home Assistant, zonder flashen
+Alles hieronder stel je in Home Assistant in, zonder te flashen: bij het
+apparaat (*Instellingen → Apparaten & diensten → ESPHome → Alarmklok*, kopje
+**Configuratie**) of, overzichtelijker, op het instellingendashboard (zie
+Installatie, stap 4).
 
-De 6 tegels op *Verlichting* en de 6 knoppen op *Scènes* stel je in Home
-Assistant in: *Instellingen → Apparaten & diensten → ESPHome → Alarmklok*,
-kopje **Configuratie**. Per tegel zijn er drie instellingen:
+### Welke pagina's, en hoe ze eruitzien
+
+| Instelling | Wat |
+|---|---|
+| *Pagina 1* t/m *Pagina 6* | Welke pagina na de klok komt bij links/rechts swipen: Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera (7" en 4B) of Uit. Dubbele worden overgeslagen. |
+| *Indeling verlichting*, *Indeling scènes* | 4 tegels (2×2, groot), 6 tegels of 9 tegels (3×3) |
+| *Kleurthema* | Donker, Zwart, Blauw of Warm: achtergrond van pagina's, kaarten en tegels |
+| *Accentkleur* | Kleur van de accenten op de klok (datum, tweede tijd, ...) |
+| *Klokontwerp Digitaal* … *Vierkant* | Welke ontwerpen meedoen bij omhoog/omlaag swipen (allemaal uit = allemaal mee) |
+| *Swipe-animatie* | Aan: de pagina schuift mee. Uit: de nieuwe pagina staat er meteen, veel sneller op de 4" (daar standaard uit) |
+| *Thermostaat*, *Rolluik*, *Rolluik batterij*, *Mediaspeler*, *Dimlamp*, *Dimlamp naam* | De entiteiten op Klimaat, Muziek en de dimmerkaart (leeg *Dimlamp* = geen dimmerkaart) |
+| *Camera*, *Deurbel*, *Camera verversen* (7" en 4B) | Camera-entiteit, optioneel een deurbel (bij "on" springt de klok naar de camera en gaat het scherm aan, ook 's nachts) en om de hoeveel seconden een nieuw beeld. De klok haalt het beeld bij HA op via `ha_url` (in `instellingen.yaml`); er is geen token nodig. |
+
+Een andere entiteit laat de klok na ~5 s even herstarten om die te volgen; de
+herstart wacht als er een wekker afgaat of snoozet.
+
+### Tegels
+
+Per tegel zijn er vier instellingen (tegels 1-9 op Verlichting en op Scènes):
 
 | Instelling | Wat | Wanneer zichtbaar |
 |---|---|---|
 | *Tegel verlichting 1 naam* | Tekst onder het icoon | Meteen |
 | *Tegel verlichting 1 icoon* | Kies uit de lijst hieronder | Meteen |
 | *Tegel verlichting 1 entiteit* | Bijvoorbeeld `light.bedlamp`; leeg = tegel verbergen | Na ~10 s: de klok herstart even om de nieuwe entiteit te volgen |
+| *Tegel verlichting 1 soort* | *Automatisch*, *Aan/uit* of *Scène/script* (zie hieronder) | Meteen (de status na de herstart) |
 
-De herstart wacht als er een wekker afgaat of snoozet. Je instellingen blijven
-bewaard, ook na een nieuwe firmware.
+Je instellingen blijven bewaard, ook na een nieuwe firmware. Tegels boven de
+gekozen indeling (bijvoorbeeld 7-9 bij "6 tegels") zijn verborgen.
 
-Tegels op de pagina Verlichting doen een `toggle` (werkt met `light`,
-`switch`, `fan`, `cover`, `input_boolean` en dergelijke). Scèneknoppen doen
-`turn_on` (werkt met `scene`, `script` en `automation`).
+Soort *Aan/uit* doet een `toggle` (werkt met `light`, `switch`, `fan`,
+`cover`, `input_boolean` en dergelijke), met status en lang drukken voor de
+detailpagina. *Scène/script* doet `turn_on` (`scene`, `script`, `automation`,
+`button`). *Automatisch* kiest zelf: scènes, scripts, automatiseringen en
+knoppen als scène, de rest aan/uit.
 
 Elke verlichtingstegel toont de status uit Home Assistant: "Aan · 80%" voor
 een gedimde lamp, "Open 50%" voor een rolluik, "Uit", of "Niet beschikbaar".
 Lang drukken opent de detailpagina van die entiteit, met een schuif voor
 helderheid (`light`), positie (`cover`) of snelheid (`fan`).
 
-### Overige pagina's en standaardwaarden
+### Standaardwaarden
 
-De rest staat bovenin `esphome/alarmklok.yaml`. Daar staan ook de
-**standaardwaarden** van de tegels, die gelden totdat je ze in Home Assistant
-verandert:
+In `esphome/instellingen.yaml` (of in de substitutions van je eigen
+klokbestand) staan de **standaardwaarden** van tegels en entiteiten. Die gelden
+bij de eerste start, totdat je ze in Home Assistant verandert; daarna wint
+wat in HA staat:
 
 ```yaml
   # Verlichting (standaard; daarna aanpassen in HA)
@@ -483,8 +514,10 @@ verandert:
   radio_1_url: https://icecast.omroep.nl/radio2-bb-mp3
 ```
 
-Na een wijziging in dit bestand moet je de klok opnieuw flashen. Dat gaat
-draadloos.
+Na een wijziging in dit bestand moet je de klok opnieuw flashen (draadloos).
+Een klok die al draait houdt de waarden uit HA; pas ze daar aan. Bij het
+opstarten staat in het log welke entiteiten de klok gebruikt
+(`Entiteiten: thermostaat ...`).
 
 ### Beschikbare iconen
 

@@ -9,7 +9,7 @@ button:
     - homeassistant.action:
         action: media_player.play_media
         data:
-          entity_id: ${mediaspeler}
+          entity_id: !lambda return id(cfg_mediaspeler).state;
           media_content_id: ${url}
           media_content_type: music
   widgets:

@@ -1,8 +1,9 @@
-# Eén bedieningstegel: icoon linksboven, schakelaartje rechtsboven (alleen bij
-# schakelaar: true), naam en status onderaan. Een tik voert ${actie} uit op de
-# entiteit uit Home Assistant (homeassistant.toggle voor lampen e.d.,
-# homeassistant.turn_on voor scènes); lang drukken opent de detailpagina
-# (detail-pagina.yaml). Naam, icoon en entiteit: zie tegel-instellingen.yaml.
+# Eén bedieningstegel: icoon linksboven, schakelaartje rechtsboven (alleen als
+# de tegel een schakelaar is), naam en status onderaan. Een tik doet
+# homeassistant.toggle (schakelaar) of homeassistant.turn_on (scène/script) op
+# de entiteit uit Home Assistant; lang drukken opent de detailpagina
+# (detail-pagina.yaml). Naam, icoon, entiteit en soort: zie
+# tegel-instellingen.yaml.
 # Maten per scherm: icoon_font, sw_b en sw_h (breedte/hoogte schakelaartje) en
 # naam_y (naam boven de statusregel).
 button:
@@ -23,7 +24,7 @@ button:
         text: ""
         text_font: ${icoon_font}
     - switch:
-        id: tegel_${nr}_schakelaar
+        id: tegel_${nr}_schakelaar_widget
         align: TOP_RIGHT
         width: ${sw_b}
         height: ${sw_h}
@@ -50,14 +51,14 @@ button:
           lambda: return !id(lang_gedrukt);
         then:
           - homeassistant.action:
-              action: ${actie}
+              action: !lambda 'return std::string(id(tegel_${nr}_schakelaar) ? "homeassistant.toggle" : "homeassistant.turn_on");'
               data:
                 entity_id: !lambda return id(tegel_${nr}_entiteit).state;
     - lambda: id(lang_gedrukt) = false;
   on_long_press:
     - if:
         condition:
-          lambda: return ${schakelaar};
+          lambda: return id(tegel_${nr}_schakelaar);
         then:
           - lambda: id(lang_gedrukt) = true;
           - script.execute: tegel_${nr}_detail

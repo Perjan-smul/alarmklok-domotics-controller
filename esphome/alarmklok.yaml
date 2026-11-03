@@ -45,3 +45,5 @@ packages:
   spraak: !include onderdelen/spraak.yaml
   scherm: !include onderdelen/scherm.yaml
   detail: !include onderdelen/detail-pagina.yaml
+  # Camerapagina (kies 'Camera' bij Pagina 1-6 in HA); niet nodig: zet er een # voor
+  camera: !include { file: onderdelen/camera.yaml, vars: { breedte: 1024, hoogte: 576 } }

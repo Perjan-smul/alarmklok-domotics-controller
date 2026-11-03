@@ -1,24 +1,136 @@
 # =============================================================================
 #  Statussen uit Home Assistant voor de bedieningspagina's
 #  (thermostaat, rolluik, mediaspeler en de dimlamp)
+#
+#  Welke entiteiten dat zijn stel je in Home Assistant in (Configuratie van de
+#  klok, of het dashboard uit homeassistant/dashboard/), zonder te flashen. De
+#  substitutions (thermostaat, rolluik, ...) zijn alleen de standaard bij de
+#  eerste start. Een andere entiteit laat de klok na 5 s even herstarten: HA
+#  geeft de lijst met gevolgde entiteiten alleen bij het verbinden door.
 # =============================================================================
 
-# Bij het opstarten: welke entiteiten de bedieningspagina's gebruiken (zo zie je
-# in het log of je substitutions zijn overgenomen)
 esphome:
   on_boot:
+    # Vóór de verbinding met HA (zoals de tegels, zie kern.yaml)
+    - priority: 600
+      then:
+        - script.execute: bediening_volgen
     - priority: -100
       then:
-        - logger.log:
-            level: INFO
-            format: "Entiteiten: thermostaat ${thermostaat}, rolluik ${rolluik}, mediaspeler ${mediaspeler}, dimlamp ${dim_lamp}"
+        - lambda: |-
+            ESP_LOGI("bediening", "Entiteiten: thermostaat %s, rolluik %s, mediaspeler %s, dimlamp %s",
+                     id(cfg_thermostaat).state.c_str(), id(cfg_rolluik).state.c_str(),
+                     id(cfg_mediaspeler).state.c_str(), id(cfg_dim_lamp).state.c_str());
+            lv_label_set_text(id(lbl_dimmer_naam), id(cfg_dim_lamp_naam).state.c_str());
+
+text:
+  - platform: template
+    id: cfg_thermostaat
+    name: Thermostaat
+    icon: mdi:thermostat
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${thermostaat}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+  - platform: template
+    id: cfg_rolluik
+    name: Rolluik
+    icon: mdi:window-shutter
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${rolluik}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+  - platform: template
+    id: cfg_rolluik_batterij
+    name: Rolluik batterij
+    icon: mdi:battery
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${rolluik_batterij}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+  - platform: template
+    id: cfg_mediaspeler
+    name: Mediaspeler
+    icon: mdi:speaker
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${mediaspeler}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+  - platform: template
+    id: cfg_dim_lamp
+    name: Dimlamp
+    icon: mdi:lightbulb-on
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${dim_lamp}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - script.execute: tegels_herladen
+
+  - platform: template
+    id: cfg_dim_lamp_naam
+    name: Dimlamp naam
+    icon: mdi:form-textbox
+    entity_category: config
+    mode: text
+    max_length: 64
+    optimistic: true
+    restore_value: true
+    initial_value: "${dim_lamp_naam}"
+    on_value:
+      - if:
+          condition:
+            lambda: return id(ui_klaar);
+          then:
+            - lambda: lv_label_set_text(id(lbl_dimmer_naam), x.c_str());
 
 sensor:
   # Helderheid (0-255) van de dimlamp; NaN als de lamp uit staat
-  - platform: homeassistant
+  - platform: template
     id: dim_lamp_helderheid
-    entity_id: ${dim_lamp}
-    attribute: brightness
+    update_interval: never
     internal: true
     on_value:
       - lvgl.slider.update:
@@ -30,18 +142,16 @@ sensor:
             if (std::isnan(x) || x < 3) return std::string("Uit");
             return std::to_string((int) (x * 100.0f / 255.0f + 0.5f)) + "%";
 
-  - platform: homeassistant
+  - platform: template
     id: klimaat_huidig
-    entity_id: ${thermostaat}
-    attribute: current_temperature
+    update_interval: never
     internal: true
     on_value:
       - script.execute: klimaat_status_tonen
 
-  - platform: homeassistant
+  - platform: template
     id: klimaat_doel
-    entity_id: ${thermostaat}
-    attribute: temperature
+    update_interval: never
     internal: true
     on_value:
       - lvgl.label.update:
@@ -50,10 +160,9 @@ sensor:
             format: "%.1f°"
             args: [x]
 
-  - platform: homeassistant
+  - platform: template
     id: rolluik_positie
-    entity_id: ${rolluik}
-    attribute: current_position
+    update_interval: never
     internal: true
     on_value:
       - lvgl.slider.update:
@@ -69,9 +178,9 @@ sensor:
 
   # Batterij van het rolluik/gordijn: icoon en percentage op de rolluikkaart,
   # rood onder de 20%. Geen waarde (sensor bestaat niet): niets tonen.
-  - platform: homeassistant
+  - platform: template
     id: rolluik_batterij_procent
-    entity_id: ${rolluik_batterij}
+    update_interval: never
     internal: true
     on_value:
       - lambda: |-
@@ -88,10 +197,9 @@ sensor:
           lv_obj_clear_flag(rij, LV_OBJ_FLAG_HIDDEN);
 
   # volume_level is 0..1
-  - platform: homeassistant
+  - platform: template
     id: media_volume
-    entity_id: ${mediaspeler}
-    attribute: volume_level
+    update_interval: never
     internal: true
     on_value:
       - lvgl.slider.update:
@@ -109,17 +217,16 @@ text_sensor:
       - lambda: lv_label_set_text(id(lbl_v_weer), alarmklok::weer_icoon(x));
 
   # Wat de thermostaat nu doet: heating, cooling, idle, off, ...
-  - platform: homeassistant
+  - platform: template
     id: klimaat_actie
-    entity_id: ${thermostaat}
-    attribute: hvac_action
+    update_interval: never
     internal: true
     on_value:
       - script.execute: klimaat_status_tonen
 
-  - platform: homeassistant
+  - platform: template
     id: media_status
-    entity_id: ${mediaspeler}
+    update_interval: never
     internal: true
     on_value:
       - lvgl.label.update:
@@ -127,20 +234,18 @@ text_sensor:
           text: !lambda |-
             return std::string(x == "playing" ? "\U000F03E4" : "\U000F040A");
 
-  - platform: homeassistant
+  - platform: template
     id: media_titel
-    entity_id: ${mediaspeler}
-    attribute: media_title
+    update_interval: never
     internal: true
     on_value:
       - lvgl.label.update:
           id: lbl_media_titel
           text: !lambda "return x.empty() ? std::string(\"Niets aan het afspelen\") : x;"
 
-  - platform: homeassistant
+  - platform: template
     id: media_artiest
-    entity_id: ${mediaspeler}
-    attribute: media_artist
+    update_interval: never
     internal: true
     on_value:
       - lvgl.label.update:
@@ -165,3 +270,43 @@ script:
           if (nl[0] != '\0')
             tekst += tekst.empty() ? nl : std::string(" \u00B7 ") + nl;
           lv_label_set_text(id(lbl_klimaat_huidig), tekst.c_str());
+
+  # Volgt de entiteiten van de bedieningspagina's in HA en zet de waarden in de
+  # (template-)sensoren hierboven; hun on_value werkt het scherm bij.
+  - id: bediening_volgen
+    then:
+      - lambda: |-
+          // Getal uit HA, of NaN ("None", "unavailable", leeg)
+          auto getal = [](StringRef w) -> float {
+            const std::string t = w.str();
+            char *eind = nullptr;
+            const float x = std::strtof(t.c_str(), &eind);
+            return (t.empty() || eind == t.c_str()) ? NAN : x;
+          };
+          auto volg_getal = [&](const std::string &ent, const char *attr, sensor::Sensor *doel) {
+            if (ent.empty())
+              return;
+            api::global_api_server->subscribe_home_assistant_state(
+                ent, attr ? optional<std::string>(attr) : optional<std::string>(),
+                std::function<void(StringRef)>([doel, getal](StringRef w) { doel->publish_state(getal(w)); }));
+          };
+          auto volg_tekst = [](const std::string &ent, const char *attr, text_sensor::TextSensor *doel) {
+            if (ent.empty())
+              return;
+            api::global_api_server->subscribe_home_assistant_state(
+                ent, attr ? optional<std::string>(attr) : optional<std::string>(),
+                std::function<void(StringRef)>([doel](StringRef w) { doel->publish_state(w.str()); }));
+          };
+          const std::string thermostaat = id(cfg_thermostaat).state, rolluik = id(cfg_rolluik).state,
+                            batterij = id(cfg_rolluik_batterij).state, speler = id(cfg_mediaspeler).state,
+                            lamp = id(cfg_dim_lamp).state;
+          volg_getal(lamp, "brightness", id(dim_lamp_helderheid));
+          volg_getal(thermostaat, "current_temperature", id(klimaat_huidig));
+          volg_getal(thermostaat, "temperature", id(klimaat_doel));
+          volg_tekst(thermostaat, "hvac_action", id(klimaat_actie));
+          volg_getal(rolluik, "current_position", id(rolluik_positie));
+          volg_getal(batterij, nullptr, id(rolluik_batterij_procent));
+          volg_getal(speler, "volume_level", id(media_volume));
+          volg_tekst(speler, nullptr, id(media_status));
+          volg_tekst(speler, "media_title", id(media_titel));
+          volg_tekst(speler, "media_artist", id(media_artiest));
