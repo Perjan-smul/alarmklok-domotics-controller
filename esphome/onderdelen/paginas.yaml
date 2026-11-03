@@ -28,9 +28,13 @@ esphome:
     - priority: -110
       then:
         - lambda: |-
-            // Swipen links/rechts zelf afhandelen (zie boven)
+            // Veeggebaren zelf afhandelen. LVGL stuurt een gebaar naar het
+            // bovenste object dat het niet doorgeeft: dat is het scherm zelf
+            // (alle objecten erin geven gebaren door). Dus hier luisteren:
+            //   links/rechts  = volgende/vorige pagina
+            //   omlaag/omhoog = volgend/vorig klokontwerp (alleen op de klok)
             lv_obj_remove_flag(id(tv_hoofd), LV_OBJ_FLAG_SCROLLABLE);
-            lv_obj_add_event_cb(id(tv_hoofd), [](lv_event_t *e) {
+            lv_obj_add_event_cb(lv_obj_get_screen(id(tv_hoofd)), [](lv_event_t *e) {
               lv_indev_t *indev = lv_indev_active();
               if (indev == nullptr)
                 return;
@@ -45,6 +49,10 @@ esphome:
                 id(pagina_stap).execute(1);
               else if (richting == LV_DIR_RIGHT)
                 id(pagina_stap).execute(-1);
+              else if (id(pag_index) == 0 && richting == LV_DIR_BOTTOM)
+                id(ontwerp_wisselen).execute(1);
+              else if (id(pag_index) == 0 && richting == LV_DIR_TOP)
+                id(ontwerp_wisselen).execute(-1);
             }, LV_EVENT_GESTURE, nullptr);
             alarmklok::navigeer = [](int richting) { id(pagina_stap).execute(richting); };
         - script.execute: thema_toepassen
