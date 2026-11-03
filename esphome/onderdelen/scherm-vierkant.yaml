@@ -14,6 +14,8 @@
 substitutions:
   # Voor de instelbare indeling (paginas.yaml): vierkant scherm, dimmerkaart 64 px bij k = 1
   liggend: "false"
+  # Klokontwerpstippen onderaan, naast elkaar (links/rechts vegen)
+  ontwerp_scheiding: ""
   dimmer_basis: "64"
 
 font:
@@ -25,19 +27,30 @@ font:
     id: f_klok_mid
     size: '${(84 * (k | float)) | int}'
     glyphs: "0123456789:.-°"
-  - file: "gfonts://Roboto@500"
+  - file: "gfonts://Inter@600"
     id: f_groot
     size: '${(40 * (k | float)) | int}'
     glyphsets: [GF_Latin_Core]
     ignore_missing_glyphs: true
-  - file: "gfonts://Roboto"
+  - file: "gfonts://Inter@500"
     id: f_midden
     size: '${(24 * (k | float)) | int}'
     glyphsets: [GF_Latin_Core]
     ignore_missing_glyphs: true
-  - file: "gfonts://Roboto"
+  - file: "gfonts://Inter@500"
     id: f_klein
     size: '${(18 * (k | float)) | int}'
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true
+  # Stijl D: namen op tegels en kaarten, en paginatitels
+  - file: "gfonts://Inter@600"
+    id: f_naam
+    size: '${(18 * (k | float)) | int}'
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true
+  - file: "gfonts://Inter@600"
+    id: f_titel
+    size: '${(22 * (k | float)) | int}'
     glyphsets: [GF_Latin_Core]
     ignore_missing_glyphs: true
   # Material Design Icons; zelfde lijst als in scherm.yaml
@@ -188,11 +201,24 @@ font:
       - "\U000F0A70"  # silverware-fork-knife
       - "\U000F140B"  # lightning-bolt
       - "\U000F0140"  # chevron-down (keuzelijsten)
+      - "\U000F0425"  # power (airco uit)
+      - "\U000F1B17"  # thermostat-auto
+      - "\U000F0717"  # snowflake
+      - "\U000F0238"  # fire
+      - "\U000F058E"  # water-percent
+      - "\U000F1847"  # curtains-closed
+      - "\U000F0493"  # cog (wekker: meer)
+      - "\U000F004D"  # arrow-left (terug)
   # Batterij-iconen op de rolluikkaart (alarmklok::batterij_icoon)
   - file: *mdi
     id: f_batterij
     size: '${(28 * (k | float)) | int}'
     glyphs: ["\U000F0083", "\U000F007C", "\U000F007F", "\U000F0079"]
+  # Icoon in het icoonvlak van een tegel of rij (stijl D)
+  - file: *mdi
+    id: f_icoon_tegel
+    size: '${(26 * (k | float)) | int}'
+    glyphs: *tegel_iconen
   # Kleiner icoon voor de tegels op een vierkant scherm
   - file: *mdi
     id: f_icoon_klein
@@ -201,6 +227,12 @@ font:
 
 # Wijzers en asje van het klokontwerp "Vierkant" (tools/wijzerplaat.py)
 image:
+  # Achtergrond van alle pagina's (stijl D, tools/achtergrond.py)
+  - platform: file
+    file: ../afbeeldingen/achtergrond.png
+    id: img_achtergrond
+    type: RGB565
+    resize: '${(480 * (k | float)) | int}x${(480 * (k | float)) | int}'
   - platform: file
     file: ../afbeeldingen/wijzer_uur.png
     id: img_wijzer_uur
@@ -249,61 +281,69 @@ lvgl:
           then:
             - script.execute: naar_klokscherm
 
+  # Stijl D: glaskaarten met een dunne lichte rand, afgeronde knoppen,
+  # okergeel voor wat aan staat
   theme:
     label:
-      text_color: 0xE8EAED
+      text_color: 0xF0F2F6
     button:
-      bg_color: 0x2B3340
-      text_color: 0xE8EAED
-      radius: '${(14 * (k | float)) | int}'
+      bg_color: 0x3E4350
+      text_color: 0xF0F2F6
+      radius: '${(16 * (k | float)) | int}'
       border_width: 0
       shadow_width: 0
-      # Tegels die "aan" zijn en de gekozen wekker (1/2/3) worden oranje
       checked:
-        bg_color: 0xF5A623
-        text_color: 0x16181D
+        bg_color: 0xE8B23C
+        text_color: 0x1E1E22
     slider:
-      bg_color: 0x46505F
+      bg_color: 0x3E4350
       indicator:
-        bg_color: 0xF5A623
+        bg_color: 0xE8B23C
       knob:
         bg_color: 0xFFFFFF
     switch:
-      bg_color: 0x46505F
+      bg_color: 0x3E4350
       indicator:
         checked:
-          bg_color: 0xF5A623
+          bg_color: 0xE8B23C
     dropdown:
-      bg_color: 0x2B3340
-      text_color: 0xE8EAED
-      border_width: 0
-      radius: '${(10 * (k | float)) | int}'
+      bg_color: 0x262B36
+      text_color: 0xF0F2F6
+      border_width: 1
+      border_color: 0x404654
+      radius: '${(16 * (k | float)) | int}'
     roller:
-      bg_color: 0x232A35
+      bg_color: 0x262B36
       text_color: 0x6C727C
-      border_width: 0
+      border_width: 1
+      border_color: 0x404654
+      radius: '${(20 * (k | float)) | int}'
       selected:
-        bg_color: 0x2B3340
+        bg_color: 0x3E4350
         text_color: 0xFFFFFF
 
   style_definitions:
+    # Pagina's doorzichtig: de achtergrond (img_achtergrond) zit op het scherm
     - id: pagina_stijl
-      bg_color: 0x000000
-      bg_opa: COVER
+      bg_color: 0x0E1118
+      bg_opa: TRANSP
       border_width: 0
       pad_all: 0
       radius: 0
     - id: tegel_stijl
-      bg_color: 0x2B3340
-      border_width: 0
-      text_color: 0xE8EAED
-      radius: '${(18 * (k | float)) | int}'
+      bg_color: 0x262B36
+      bg_opa: COVER
+      border_width: 1
+      border_color: 0x404654
+      text_color: 0xF0F2F6
+      radius: '${(24 * (k | float)) | int}'
       pad_all: '${(12 * (k | float)) | int}'
     - id: kaart
-      bg_color: 0x232A35
+      bg_color: 0x262B36
       bg_opa: COVER
-      border_width: 0
-      radius: '${(18 * (k | float)) | int}'
+      border_width: 1
+      border_color: 0x404654
+      radius: '${(26 * (k | float)) | int}'
       pad_all: '${(14 * (k | float)) | int}'
     - id: leeg
       bg_opa: TRANSP
@@ -311,26 +351,27 @@ lvgl:
       pad_all: 0
       radius: 0
     - id: titel
-      text_font: f_midden
-      text_color: 0xB0B6C0
+      text_font: f_titel
+      text_color: 0xF0F2F6
     # Kleuren van de klokken; 's nachts worden deze rood gemaakt
     - id: klok_tekst
       text_color: 0xFFFFFF
     - id: klok_sub
       text_color: 0xB0B6C0
     - id: klok_accent
-      text_color: 0xF5A623
+      text_color: 0xE8B23C
 
   # ---- Altijd zichtbaar: paginastippen + onzichtbare "wek-laag" --------------
   top_layer:
     widgets:
+      # Paginastippen rechts, onder elkaar (omhoog/omlaag vegen)
       - label:
           id: pagina_indicator
-          align: BOTTOM_MID
-          y: '${(-6 * (k | float)) | int}'
+          align: RIGHT_MID
+          x: '${(-6 * (k | float)) | int}'
           text_font: f_stip
           text_color: 0x6C727C
-          text_letter_space: '${(8 * (k | float)) | int}'
+          text_line_space: '${(6 * (k | float)) | int}'
           text: ""
       # Melding uit Home Assistant: tik ergens om te sluiten
       - obj:
@@ -353,14 +394,14 @@ lvgl:
                 width: '${(448 * (k | float)) | int}'
                 height: '${(330 * (k | float)) | int}'
                 bg_color: 0x2B3340
-                border_color: 0xF5A623
+                border_color: 0xE8B23C
                 border_width: '${(2 * (k | float)) | int}'
                 radius: '${(18 * (k | float)) | int}'
                 pad_all: '${(18 * (k | float)) | int}'
                 clickable: false
                 scrollable: false
                 widgets:
-                  - label: { id: melding_icoon, text: "", text_font: f_icoon, text_color: 0xF5A623 }
+                  - label: { id: melding_icoon, text: "", text_font: f_icoon, text_color: 0xE8B23C }
                   - label: { id: melding_titel, x: '${(64 * (k | float)) | int}', y: '${(2 * (k | float)) | int}', width: '${(340 * (k | float)) | int}', long_mode: DOT, text_font: f_groot, text: "" }
                   - label: { id: melding_tekst, y: '${(70 * (k | float)) | int}', width: 100%, long_mode: WRAP, text_font: f_midden, text: "" }
                   - label: { align: BOTTOM_MID, text: "Tik om te sluiten", text_color: 0x6C727C }
@@ -372,14 +413,14 @@ lvgl:
           width: '${(456 * (k | float)) | int}'
           height: SIZE_CONTENT
           bg_color: 0x2B3340
-          border_color: 0xF5A623
+          border_color: 0xE8B23C
           border_width: '${(2 * (k | float)) | int}'
           radius: '${(18 * (k | float)) | int}'
           pad_all: '${(10 * (k | float)) | int}'
           hidden: true
           scrollable: false
           widgets:
-            - label: { id: spraak_icoon, align: LEFT_MID, text: "", text_font: f_icoon, text_color: 0xF5A623 }
+            - label: { id: spraak_icoon, align: LEFT_MID, text: "", text_font: f_icoon, text_color: 0xE8B23C }
             - label: { id: spraak_tekst, align: LEFT_MID, x: '${(60 * (k | float)) | int}', width: '${(370 * (k | float)) | int}', long_mode: WRAP, text_font: f_midden, text: "" }
       # Microfoon gedempt
       - label:
@@ -419,6 +460,9 @@ lvgl:
   pages:
     - id: pagina_hoofd
       styles: pagina_stijl
+      bg_color: 0x0E1118
+      bg_opa: COVER
+      bg_image_src: img_achtergrond
       widgets:
         - tileview:
             id: tv_hoofd
@@ -535,7 +579,7 @@ lvgl:
                                         - line:
                                             id: wijzer_seconde
                                             width: 2
-                                            color: 0xF5A623
+                                            color: 0xE8B23C
                                             length: '${(131 * (k | float)) | int}'
                                     # Uurcijfers
                                     - range_from: 1
@@ -878,14 +922,14 @@ lvgl:
                         # ---- 8. Vierkant: analoge klok over het hele scherm
                         - !include { file: klok-vierkant.yaml, vars: { x0: 0 } }
 
-                        # Stippen rechts: welk klokontwerp?
+                        # Stippen onderaan: welk klokontwerp? (links/rechts vegen)
                         - label:
                             id: lbl_ontwerp_stippen
-                            align: RIGHT_MID
-                            x: '${(-6 * (k | float)) | int}'
+                            align: BOTTOM_MID
+                            y: '${(-8 * (k | float)) | int}'
                             text_font: f_stip
                             text_color: 0x4A4F58
-                            text_line_space: '${(6 * (k | float)) | int}'
+                            text_letter_space: '${(8 * (k | float)) | int}'
                             text: ""
 
               # ===============================================================
@@ -896,20 +940,20 @@ lvgl:
                 column: 1
                 dir: HOR
                 widgets:
-                  - label: { text: "Verlichting", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
+                  - label: { text: "Verlichting", x: '${(18 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', styles: titel }
                   - obj:
                       id: raster_verlichting
                       x: 0
-                      y: '${(44 * (k | float)) | int}'
-                      width: 100%
-                      height: '${(410 * (k | float)) | int}'
+                      y: '${(46 * (k | float)) | int}'
+                      width: '${(464 * (k | float)) | int}'
+                      height: '${(428 * (k | float)) | int}'
                       styles: leeg
                       pad_all: '${(12 * (k | float)) | int}'
                       layout:
                         type: GRID
                         grid_rows: [FR(1), FR(1), FR(1), '${((64 * (k | float)) | int) ~ "px"}']
                         grid_columns: [FR(1), FR(1), FR(1)]
-                        pad_row: '${(10 * (k | float)) | int}'
+                        pad_row: '${(8 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
                         - !include { file: tegel.yaml, vars: { nr: licht_1, rij: 0, kolom: 0, actie: homeassistant.toggle, schakelaar: "true", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
@@ -942,8 +986,8 @@ lvgl:
                                   radius: '${(13 * (k | float)) | int}'
                                   pad_all: 0
                                   indicator:
-                                    bg_color: 0xF5A623
-                                    bg_grad_color: 0xF5C35A
+                                    bg_color: 0xE8B23C
+                                    bg_grad_color: 0xF0C860
                                     bg_grad_dir: HOR
                                     radius: '${(13 * (k | float)) | int}'
                                   knob:
@@ -1000,36 +1044,53 @@ lvgl:
                 column: 2
                 dir: HOR
                 widgets:
-                  - label: { text: "Klimaat & rolluik", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
-                  # ---- Thermostaat: ingestelde temperatuur groot, - en + ernaast ----
+                  - label: { text: "Klimaat", x: '${(18 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', styles: titel }
+                  # ---- Airco (bv. Daikin Perfera): stand, temperatuur en standknoppen ----
                   - obj:
                       x: '${(12 * (k | float)) | int}'
-                      y: '${(44 * (k | float)) | int}'
-                      width: '${(456 * (k | float)) | int}'
-                      height: '${(190 * (k | float)) | int}'
-                      styles: tegel_stijl
+                      y: '${(50 * (k | float)) | int}'
+                      width: '${(440 * (k | float)) | int}'
+                      height: '${(262 * (k | float)) | int}'
+                      styles: kaart
+                      pad_all: 0
+                      scrollable: false
                       widgets:
-                        - label: { text: "\U000F0393", text_font: f_icoon_klein, text_color: 0xF5C35A }
-                        - label: { text: "Thermostaat", x: '${(46 * (k | float)) | int}', text_font: f_midden }
+                        - obj:
+                            id: klimaat_chip
+                            x: '${(12 * (k | float)) | int}'
+                            y: '${(12 * (k | float)) | int}'
+                            width: '${(46 * (k | float)) | int}'
+                            height: '${(46 * (k | float)) | int}'
+                            bg_color: 0x3E4350
+                            border_width: 0
+                            radius: '${(15 * (k | float)) | int}'
+                            pad_all: 0
+                            scrollable: false
+                            widgets:
+                              - label: { id: lbl_klimaat_icoon, text: "\U000F0393", text_font: f_icoon_tegel, align: CENTER, text_color: 0xA8AEBA }
+                        - label: { text: "Airco", x: '${(72 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', text_font: f_naam }
                         - label:
                             id: lbl_klimaat_huidig
-                            align: TOP_RIGHT
-                            y: '${(4 * (k | float)) | int}'
-                            text_color: 0x9AA4B2
+                            x: '${(72 * (k | float)) | int}'
+                            y: '${(38 * (k | float)) | int}'
+                            width: '${(350 * (k | float)) | int}'
+                            long_mode: DOT
+                            text_font: f_klein
+                            text_color: 0xE8B23C
                             text: ""
                         - label:
                             id: lbl_klimaat_doel
                             align: CENTER
-                            y: '${(16 * (k | float)) | int}'
+                            y: '${(-6 * (k | float)) | int}'
                             text_font: f_klok_mid
                             text: "--"
                         - button:
                             align: LEFT_MID
-                            y: '${(16 * (k | float)) | int}'
-                            width: '${(76 * (k | float)) | int}'
-                            height: '${(76 * (k | float)) | int}'
-                            radius: '${(38 * (k | float)) | int}'
-                            bg_color: 0x46505F
+                            x: '${(16 * (k | float)) | int}'
+                            y: '${(-6 * (k | float)) | int}'
+                            width: '${(64 * (k | float)) | int}'
+                            height: '${(64 * (k | float)) | int}'
+                            radius: '${(20 * (k | float)) | int}'
                             on_click:
                               - homeassistant.action:
                                   action: climate.set_temperature
@@ -1046,11 +1107,11 @@ lvgl:
                               - label: { text: "\U000F0374", text_font: f_icoon, align: CENTER }
                         - button:
                             align: RIGHT_MID
-                            y: '${(16 * (k | float)) | int}'
-                            width: '${(76 * (k | float)) | int}'
-                            height: '${(76 * (k | float)) | int}'
-                            radius: '${(38 * (k | float)) | int}'
-                            bg_color: 0x46505F
+                            x: '${(-16 * (k | float)) | int}'
+                            y: '${(-6 * (k | float)) | int}'
+                            width: '${(64 * (k | float)) | int}'
+                            height: '${(64 * (k | float)) | int}'
+                            radius: '${(20 * (k | float)) | int}'
                             on_click:
                               - homeassistant.action:
                                   action: climate.set_temperature
@@ -1065,42 +1126,130 @@ lvgl:
                                       return std::string(buf);
                             widgets:
                               - label: { text: "\U000F0415", text_font: f_icoon, align: CENTER }
-                  # ---- Rolluik: kaart gevuld tot de positie, knoppen eronder ----
+                        # Standen: Uit, Automatisch, Koelen, Verwarmen, Drogen, Ventileren
+                        - obj:
+                            align: BOTTOM_MID
+                            y: '${(-12 * (k | float)) | int}'
+                            width: '${(416 * (k | float)) | int}'
+                            height: '${(52 * (k | float)) | int}'
+                            styles: leeg
+                            scrollable: false
+                            layout:
+                              type: FLEX
+                              flex_flow: ROW
+                              flex_align_main: SPACE_BETWEEN
+                            widgets:
+                              - button:
+                                  id: knop_airco_0
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "off"
+                                  widgets:
+                                    - label: { text: "\U000F0425", text_font: f_icoon_tegel, align: CENTER }
+                              - button:
+                                  id: knop_airco_1
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "heat_cool"
+                                  widgets:
+                                    - label: { text: "\U000F1B17", text_font: f_icoon_tegel, align: CENTER }
+                              - button:
+                                  id: knop_airco_2
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "cool"
+                                  widgets:
+                                    - label: { text: "\U000F0717", text_font: f_icoon_tegel, align: CENTER }
+                              - button:
+                                  id: knop_airco_3
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "heat"
+                                  widgets:
+                                    - label: { text: "\U000F0238", text_font: f_icoon_tegel, align: CENTER }
+                              - button:
+                                  id: knop_airco_4
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "dry"
+                                  widgets:
+                                    - label: { text: "\U000F058E", text_font: f_icoon_tegel, align: CENTER }
+                              - button:
+                                  id: knop_airco_5
+                                  width: '${(66 * (k | float)) | int}'
+                                  height: '${(52 * (k | float)) | int}'
+                                  radius: '${(16 * (k | float)) | int}'
+                                  on_click:
+                                    - homeassistant.action:
+                                        action: climate.set_hvac_mode
+                                        data:
+                                          entity_id: !lambda return id(cfg_thermostaat).state;
+                                          hvac_mode: "fan_only"
+                                  widgets:
+                                    - label: { text: "\U000F0210", text_font: f_icoon_tegel, align: CENTER }
+                  # ---- Gordijn: stand, batterij en een dunne schuif; knoppen eronder ----
                   - obj:
                       x: '${(12 * (k | float)) | int}'
-                      y: '${(244 * (k | float)) | int}'
-                      width: '${(456 * (k | float)) | int}'
-                      height: '${(200 * (k | float)) | int}'
-                      styles: leeg
+                      y: '${(324 * (k | float)) | int}'
+                      width: '${(440 * (k | float)) | int}'
+                      height: '${(78 * (k | float)) | int}'
+                      styles: kaart
+                      pad_all: 0
+                      scrollable: false
                       widgets:
-                        - slider:
-                            id: sl_rolluik
-                            align: TOP_MID
-                            width: 100%
-                            height: '${(110 * (k | float)) | int}'
-                            min_value: 0
-                            max_value: 100
-                            bg_color: 0x2B3340
-                            bg_opa: COVER
-                            radius: '${(18 * (k | float)) | int}'
+                        - obj:
+                            x: '${(12 * (k | float)) | int}'
+                            y: '${(16 * (k | float)) | int}'
+                            width: '${(46 * (k | float)) | int}'
+                            height: '${(46 * (k | float)) | int}'
+                            bg_color: 0x3E4350
+                            border_width: 0
+                            radius: '${(15 * (k | float)) | int}'
                             pad_all: 0
-                            indicator:
-                              bg_color: 0x5B7FA6
-                              bg_grad_color: 0x7FA3C9
-                              bg_grad_dir: HOR
-                              radius: '${(18 * (k | float)) | int}'
-                            knob:
-                              bg_opa: TRANSP
-                              shadow_width: 0
-                              pad_all: 0
-                            on_release:
-                              - homeassistant.action:
-                                  action: cover.set_cover_position
-                                  data:
-                                    entity_id: !lambda return id(cfg_rolluik).state;
-                                    position: !lambda return std::to_string((int) x);
-                        - label: { text: "\U000F111C", x: '${(14 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', clickable: false, text_font: f_icoon_klein }
-                        # Batterij van het rolluik/gordijn (ha-bediening.yaml)
+                            clickable: false
+                            scrollable: false
+                            widgets:
+                              - label: { text: "\U000F1846", text_font: f_icoon_tegel, align: CENTER, text_color: 0x8B6EE6 }
+                        - label: { text: "Gordijn", x: '${(72 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', text_font: f_naam, clickable: false }
+                        - label:
+                            id: lbl_rolluik
+                            x: '${(72 * (k | float)) | int}'
+                            y: '${(38 * (k | float)) | int}'
+                            clickable: false
+                            text_font: f_klein
+                            text_color: 0xA8AEBA
+                            text: "--"
+                        # Batterij van het gordijn (ha-bediening.yaml)
                         - obj:
                             id: rolluik_batterij_rij
                             align: TOP_RIGHT
@@ -1119,58 +1268,70 @@ lvgl:
                             widgets:
                               - label: { id: lbl_rolluik_batterij_icoon, text: "\U000F0079", text_font: f_batterij, clickable: false }
                               - label: { id: lbl_rolluik_batterij, text: "", text_font: f_klein, clickable: false }
-                        - label: { text: "Rolluik", x: '${(14 * (k | float)) | int}', y: '${(70 * (k | float)) | int}', clickable: false, text_font: f_midden }
-                        - label:
-                            id: lbl_rolluik
-                            align: TOP_RIGHT
-                            x: '${(-14 * (k | float)) | int}'
-                            y: '${(70 * (k | float)) | int}'
-                            clickable: false
-                            text_font: f_midden
-                            text: "--"
-                        - obj:
-                            align: BOTTOM_MID
-                            width: 100%
-                            height: '${(66 * (k | float)) | int}'
-                            styles: leeg
-                            layout:
-                              type: FLEX
-                              flex_flow: ROW
-                              flex_align_main: SPACE_BETWEEN
+                        # Stand van het gordijn; slepen zet hem op een andere stand
+                        - slider:
+                            id: sl_rolluik
+                            align: BOTTOM_RIGHT
+                            x: '${(-16 * (k | float)) | int}'
+                            y: '${(-12 * (k | float)) | int}'
+                            width: '${(150 * (k | float)) | int}'
+                            height: '${(8 * (k | float)) | int}'
+                            min_value: 0
+                            max_value: 100
+                            knob:
+                              bg_opa: TRANSP
+                              pad_all: '${(10 * (k | float)) | int}'
+                            on_release:
+                              - homeassistant.action:
+                                  action: cover.set_cover_position
+                                  data:
+                                    entity_id: !lambda return id(cfg_rolluik).state;
+                                    position: !lambda return std::to_string((int) x);
+                  - obj:
+                      x: '${(12 * (k | float)) | int}'
+                      y: '${(414 * (k | float)) | int}'
+                      width: '${(440 * (k | float)) | int}'
+                      height: '${(56 * (k | float)) | int}'
+                      styles: leeg
+                      scrollable: false
+                      layout:
+                        type: FLEX
+                        flex_flow: ROW
+                        flex_align_main: SPACE_BETWEEN
+                      widgets:
+                        - button:
+                            width: '${(140 * (k | float)) | int}'
+                            height: '${(56 * (k | float)) | int}'
+                            styles: tegel_stijl
+                            on_click:
+                              - homeassistant.action:
+                                  action: cover.open_cover
+                                  data:
+                                    entity_id: !lambda return id(cfg_rolluik).state;
                             widgets:
-                              - button:
-                                  width: '${(144 * (k | float)) | int}'
-                                  height: '${(66 * (k | float)) | int}'
-                                  styles: tegel_stijl
-                                  on_click:
-                                    - homeassistant.action:
-                                        action: cover.open_cover
-                                        data:
-                                          entity_id: !lambda return id(cfg_rolluik).state;
-                                  widgets:
-                                    - label: { text: "\U000F005D", text_font: f_icoon, align: CENTER }
-                              - button:
-                                  width: '${(144 * (k | float)) | int}'
-                                  height: '${(66 * (k | float)) | int}'
-                                  styles: tegel_stijl
-                                  on_click:
-                                    - homeassistant.action:
-                                        action: cover.stop_cover
-                                        data:
-                                          entity_id: !lambda return id(cfg_rolluik).state;
-                                  widgets:
-                                    - label: { text: "\U000F04DB", text_font: f_icoon, align: CENTER }
-                              - button:
-                                  width: '${(144 * (k | float)) | int}'
-                                  height: '${(66 * (k | float)) | int}'
-                                  styles: tegel_stijl
-                                  on_click:
-                                    - homeassistant.action:
-                                        action: cover.close_cover
-                                        data:
-                                          entity_id: !lambda return id(cfg_rolluik).state;
-                                  widgets:
-                                    - label: { text: "\U000F0045", text_font: f_icoon, align: CENTER }
+                              - label: { text: "Open", text_font: f_naam, align: CENTER }
+                        - button:
+                            width: '${(140 * (k | float)) | int}'
+                            height: '${(56 * (k | float)) | int}'
+                            styles: tegel_stijl
+                            on_click:
+                              - homeassistant.action:
+                                  action: cover.stop_cover
+                                  data:
+                                    entity_id: !lambda return id(cfg_rolluik).state;
+                            widgets:
+                              - label: { text: "Stop", text_font: f_naam, align: CENTER }
+                        - button:
+                            width: '${(140 * (k | float)) | int}'
+                            height: '${(56 * (k | float)) | int}'
+                            styles: tegel_stijl
+                            on_click:
+                              - homeassistant.action:
+                                  action: cover.close_cover
+                                  data:
+                                    entity_id: !lambda return id(cfg_rolluik).state;
+                            widgets:
+                              - label: { text: "Dicht", text_font: f_naam, align: CENTER }
 
               # ===============================================================
               #  Muziek
@@ -1180,7 +1341,7 @@ lvgl:
                 column: 3
                 dir: HOR
                 widgets:
-                  - label: { text: "Muziek", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
+                  - label: { text: "Muziek", x: '${(18 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', styles: titel }
                   - obj:
                       x: '${(12 * (k | float)) | int}'
                       y: '${(44 * (k | float)) | int}'
@@ -1193,11 +1354,11 @@ lvgl:
                             y: 0
                             width: '${(96 * (k | float)) | int}'
                             height: '${(96 * (k | float)) | int}'
-                            bg_color: 0x364152
+                            bg_color: 0xE8B23C
                             border_width: 0
-                            radius: '${(14 * (k | float)) | int}'
+                            radius: '${(22 * (k | float)) | int}'
                             widgets:
-                              - label: { text: "\U000F075A", text_font: f_icoon, align: CENTER, text_color: 0xF5A623 }
+                              - label: { text: "\U000F075A", text_font: f_icoon, align: CENTER, text_color: 0x1E1E22 }
                         - label:
                             id: lbl_media_titel
                             x: '${(112 * (k | float)) | int}'
@@ -1231,7 +1392,7 @@ lvgl:
                             y: '${(112 * (k | float)) | int}'
                             width: '${(100 * (k | float)) | int}'
                             height: '${(64 * (k | float)) | int}'
-                            bg_color: 0xF5A623
+                            bg_color: 0xE8B23C
                             text_color: 0x000000
                             on_click:
                               - homeassistant.action:
@@ -1294,20 +1455,20 @@ lvgl:
                 column: 4
                 dir: HOR
                 widgets:
-                  - label: { text: "Scènes", x: '${(20 * (k | float)) | int}', y: '${(12 * (k | float)) | int}', styles: titel }
+                  - label: { text: "Scènes", x: '${(18 * (k | float)) | int}', y: '${(14 * (k | float)) | int}', styles: titel }
                   - obj:
                       id: raster_scenes
                       x: 0
-                      y: '${(44 * (k | float)) | int}'
-                      width: 100%
-                      height: '${(410 * (k | float)) | int}'
+                      y: '${(46 * (k | float)) | int}'
+                      width: '${(464 * (k | float)) | int}'
+                      height: '${(428 * (k | float)) | int}'
                       styles: leeg
                       pad_all: '${(12 * (k | float)) | int}'
                       layout:
                         type: GRID
                         grid_rows: [FR(1), FR(1), FR(1)]
                         grid_columns: [FR(1), FR(1), FR(1)]
-                        pad_row: '${(10 * (k | float)) | int}'
+                        pad_row: '${(8 * (k | float)) | int}'
                         pad_column: '${(10 * (k | float)) | int}'
                       widgets:
                         - !include { file: tegel.yaml, vars: { nr: scene_1, rij: 0, kolom: 0, actie: homeassistant.turn_on, schakelaar: "false", icoon_font: f_icoon_klein, sw_b: '${(44 * (k | float)) | int}', sw_h: '${(24 * (k | float)) | int}', naam_y: '${(-22 * (k | float)) | int}' } }
@@ -1329,69 +1490,67 @@ lvgl:
                 column: 5
                 dir: HOR
                 widgets:
+                  # Alles op één scherm: omhoog/omlaag vegen is voor de pagina's.
+                  # Volume, wake-up light, testen en langzaam luider: "Meer instellingen".
                   - obj:
                       x: 0
                       y: 0
                       width: 100%
                       height: 100%
                       styles: leeg
-                      scroll_dir: VER
-                      scrollbar_mode: ACTIVE
+                      scrollable: false
                       widgets:
-                        # ---- Kies de wekker (1/2/3) en zet hem aan/uit ----
-                        - label: { text: "Wekker", x: '${(16 * (k | float)) | int}', y: '${(18 * (k | float)) | int}', styles: titel }
+                        - label: { text: "Wekker", x: '${(18 * (k | float)) | int}', y: '${(16 * (k | float)) | int}', styles: titel }
                         - button:
                             id: knop_wekker_1
-                            x: '${(120 * (k | float)) | int}'
-                            y: '${(8 * (k | float)) | int}'
-                            width: '${(64 * (k | float)) | int}'
-                            height: '${(48 * (k | float)) | int}'
+                            x: '${(122 * (k | float)) | int}'
+                            y: '${(10 * (k | float)) | int}'
+                            width: '${(52 * (k | float)) | int}'
+                            height: '${(44 * (k | float)) | int}'
                             on_click:
                               - lambda: id(bewerk_wekker) = 1;
                               - script.execute: ui_synchroniseren
                             widgets:
-                              - label: { text: "1", align: CENTER, text_font: f_midden }
+                              - label: { text: "1", align: CENTER, text_font: f_naam }
                         - button:
                             id: knop_wekker_2
-                            x: '${(194 * (k | float)) | int}'
-                            y: '${(8 * (k | float)) | int}'
-                            width: '${(64 * (k | float)) | int}'
-                            height: '${(48 * (k | float)) | int}'
+                            x: '${(180 * (k | float)) | int}'
+                            y: '${(10 * (k | float)) | int}'
+                            width: '${(52 * (k | float)) | int}'
+                            height: '${(44 * (k | float)) | int}'
                             on_click:
                               - lambda: id(bewerk_wekker) = 2;
                               - script.execute: ui_synchroniseren
                             widgets:
-                              - label: { text: "2", align: CENTER, text_font: f_midden }
+                              - label: { text: "2", align: CENTER, text_font: f_naam }
                         - button:
                             id: knop_wekker_3
-                            x: '${(268 * (k | float)) | int}'
-                            y: '${(8 * (k | float)) | int}'
-                            width: '${(64 * (k | float)) | int}'
-                            height: '${(48 * (k | float)) | int}'
+                            x: '${(238 * (k | float)) | int}'
+                            y: '${(10 * (k | float)) | int}'
+                            width: '${(52 * (k | float)) | int}'
+                            height: '${(44 * (k | float)) | int}'
                             on_click:
                               - lambda: id(bewerk_wekker) = 3;
                               - script.execute: ui_synchroniseren
                             widgets:
-                              - label: { text: "3", align: CENTER, text_font: f_midden }
+                              - label: { text: "3", align: CENTER, text_font: f_naam }
                         - switch:
                             id: sw_wekker
-                            x: '${(372 * (k | float)) | int}'
-                            y: '${(12 * (k | float)) | int}'
-                            width: '${(88 * (k | float)) | int}'
-                            height: '${(40 * (k | float)) | int}'
+                            x: '${(364 * (k | float)) | int}'
+                            y: '${(14 * (k | float)) | int}'
+                            width: '${(80 * (k | float)) | int}'
+                            height: '${(38 * (k | float)) | int}'
                             on_change:
                               - lambda: |-
                                   auto *aan = id(wekker_aan_lijst)[id(bewerk_wekker) - 1];
                                   if (x) aan->turn_on();
                                   else aan->turn_off();
-
-                        # ---- Wektijd met twee rollers ----
                         - roller:
                             id: rl_uur
                             x: '${(70 * (k | float)) | int}'
-                            y: '${(70 * (k | float)) | int}'
+                            y: '${(62 * (k | float)) | int}'
                             width: '${(140 * (k | float)) | int}'
-                            height: '${(250 * (k | float)) | int}'
+                            height: '${(200 * (k | float)) | int}'
                             text_font: f_groot
                             visible_row_count: 3
                             mode: NORMAL
@@ -1405,15 +1564,15 @@ lvgl:
                                   call.perform();
                         - label:
                             x: '${(228 * (k | float)) | int}'
-                            y: '${(168 * (k | float)) | int}'
+                            y: '${(138 * (k | float)) | int}'
                             text: ":"
                             text_font: f_groot
                         - roller:
                             id: rl_minuut
                             x: '${(270 * (k | float)) | int}'
-                            y: '${(70 * (k | float)) | int}'
+                            y: '${(62 * (k | float)) | int}'
                             width: '${(140 * (k | float)) | int}'
-                            height: '${(250 * (k | float)) | int}'
+                            height: '${(200 * (k | float)) | int}'
                             text_font: f_groot
                             visible_row_count: 3
                             mode: NORMAL
@@ -1426,20 +1585,15 @@ lvgl:
                                   call.perform();
 
                         # ---- Dagen en geluid ----
-                        - label:
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(352 * (k | float)) | int}'
-                            text: "Dagen"
-                            text_color: 0xB0B6C0
                         - dropdown:
                             id: dd_wekdagen
                             # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
                             symbol: "\U000F0140"
                             indicator:
                               text_font: f_icoon_klein
-                            x: '${(130 * (k | float)) | int}'
-                            y: '${(340 * (k | float)) | int}'
-                            width: '${(334 * (k | float)) | int}'
+                            x: '${(12 * (k | float)) | int}'
+                            y: '${(276 * (k | float)) | int}'
+                            width: '${(214 * (k | float)) | int}'
                             text_font: f_midden
                             options: ["Elke dag", "Werkdagen", "Weekend", "Eenmalig", "Maandag", "Dinsdag",
                                       "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
@@ -1449,26 +1603,21 @@ lvgl:
                               text_font: f_midden
                               selected:
                                 checked:
-                                  bg_color: 0xF5A623
+                                  bg_color: 0xE8B23C
                             on_change:
                               - lambda: |-
                                   auto call = id(wekker_dagen_lijst)[id(bewerk_wekker) - 1]->make_call();
                                   call.set_index(x);
                                   call.perform();
-                        - label:
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(412 * (k | float)) | int}'
-                            text: "Geluid"
-                            text_color: 0xB0B6C0
                         - dropdown:
                             id: dd_wekgeluid
                             # Pijltje uit de MDI-iconen (het standaardsymbool zit niet in onze lettertypen)
                             symbol: "\U000F0140"
                             indicator:
                               text_font: f_icoon_klein
-                            x: '${(130 * (k | float)) | int}'
-                            y: '${(400 * (k | float)) | int}'
-                            width: '${(334 * (k | float)) | int}'
+                            x: '${(238 * (k | float)) | int}'
+                            y: '${(276 * (k | float)) | int}'
+                            width: '${(214 * (k | float)) | int}'
                             text_font: f_midden
                             options: ["Klassiek", "Zacht", "Mario", "Radio"]
                             dropdown_list:
@@ -1477,7 +1626,7 @@ lvgl:
                               text_font: f_midden
                               selected:
                                 checked:
-                                  bg_color: 0xF5A623
+                                  bg_color: 0xE8B23C
                             on_change:
                               - select.set_index:
                                   id: wekgeluid
@@ -1486,90 +1635,112 @@ lvgl:
                         # Eén keer overslaan (oranje = aan)
                         - button:
                             id: knop_overslaan
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(460 * (k | float)) | int}'
-                            width: '${(448 * (k | float)) | int}'
+                            x: '${(12 * (k | float)) | int}'
+                            y: '${(336 * (k | float)) | int}'
+                            width: '${(440 * (k | float)) | int}'
                             height: '${(52 * (k | float)) | int}'
                             on_click:
                               - switch.toggle: overslaan
                             widgets:
-                              - label: { text: "Volgende wekker overslaan", align: CENTER }
-
-                        # ---- Na omhoog vegen: volume, wake-up light, testen ----
-                        - label:
-                            id: lbl_volume
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(548 * (k | float)) | int}'
-                            text: "Wekvolume"
-                            text_color: 0xB0B6C0
-                        - slider:
-                            id: sl_volume
-                            x: '${(24 * (k | float)) | int}'
-                            y: '${(582 * (k | float)) | int}'
-                            width: '${(432 * (k | float)) | int}'
-                            height: '${(24 * (k | float)) | int}'
-                            min_value: 10
-                            max_value: 100
-                            on_release:
-                              - number.set:
-                                  id: volume
-                                  value: !lambda return roundf(x / 10.0f) * 10.0f;
-                        - label:
-                            id: lbl_wakeup
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(632 * (k | float)) | int}'
-                            text: "Wake-up light"
-                            text_color: 0xB0B6C0
-                        - slider:
-                            id: sl_wakeup
-                            x: '${(24 * (k | float)) | int}'
-                            y: '${(666 * (k | float)) | int}'
-                            width: '${(432 * (k | float)) | int}'
-                            height: '${(24 * (k | float)) | int}'
-                            min_value: 0
-                            max_value: 60
-                            on_release:
-                              - number.set:
-                                  id: wakeup_minuten
-                                  value: !lambda return roundf(x / 5.0f) * 5.0f;
+                              - label: { text: "Volgende wekker overslaan", align: CENTER, text_font: f_naam }
                         - button:
-                            x: '${(16 * (k | float)) | int}'
-                            y: '${(720 * (k | float)) | int}'
-                            width: '${(180 * (k | float)) | int}'
-                            height: '${(56 * (k | float)) | int}'
+                            x: '${(12 * (k | float)) | int}'
+                            y: '${(400 * (k | float)) | int}'
+                            width: '${(440 * (k | float)) | int}'
+                            height: '${(52 * (k | float)) | int}'
+                            styles: tegel_stijl
                             on_click:
-                              - script.execute: test_wekker
+                              - lvgl.page.show:
+                                  id: pagina_wekker_extra
+                                  animation: NONE
                             widgets:
-                              - label: { text: "Test wekker", align: CENTER }
-                        - label:
-                            x: '${(212 * (k | float)) | int}'
-                            y: '${(738 * (k | float)) | int}'
-                            text: "Langzaam luider"
-                            text_color: 0xB0B6C0
-                        - switch:
-                            id: sw_oplopen
-                            x: '${(380 * (k | float)) | int}'
-                            y: '${(728 * (k | float)) | int}'
-                            width: '${(80 * (k | float)) | int}'
-                            height: '${(40 * (k | float)) | int}'
-                            on_change:
-                              - number.set:
-                                  id: oplopen_seconden
-                                  value: !lambda |-
-                                    if (!x)
-                                      return 0.0f;
-                                    return id(oplopen_seconden).state > 0 ? id(oplopen_seconden).state : 60.0f;
-                        # Ruimte onder de laatste regel, boven de paginastippen
-                        - obj:
-                            x: 0
-                            y: '${(776 * (k | float)) | int}'
-                            width: '${(10 * (k | float)) | int}'
-                            height: '${(50 * (k | float)) | int}'
-                            styles: leeg
+                              - label: { text: "\U000F0493", text_font: f_icoon_tegel, align: LEFT_MID, x: '${(8 * (k | float)) | int}' }
+                              - label: { text: "Meer instellingen", text_font: f_naam, align: LEFT_MID, x: '${(48 * (k | float)) | int}' }
 
-    # =========================================================================
-    #  Wekker gaat af
-    # =========================================================================
+    # Wekker: meer instellingen (vanaf de pagina Wekker)
+    - id: pagina_wekker_extra
+      bg_color: 0x0E1118
+      bg_opa: COVER
+      bg_image_src: img_achtergrond
+      scrollable: false
+      widgets:
+        - button:
+            x: '${(12 * (k | float)) | int}'
+            y: '${(10 * (k | float)) | int}'
+            width: '${(52 * (k | float)) | int}'
+            height: '${(48 * (k | float)) | int}'
+            on_click:
+              - lvgl.page.show:
+                  id: pagina_hoofd
+                  animation: NONE
+            widgets:
+              - label: { text: "\U000F004D", text_font: f_icoon_tegel, align: CENTER }
+        - label: { text: "Wekker-instellingen", x: '${(76 * (k | float)) | int}', y: '${(20 * (k | float)) | int}', styles: titel }
+        - label:
+            id: lbl_volume
+            x: '${(16 * (k | float)) | int}'
+            y: '${(80 * (k | float)) | int}'
+            text: "Wekvolume"
+            text_color: 0xB0B6C0
+        - slider:
+            id: sl_volume
+            x: '${(24 * (k | float)) | int}'
+            y: '${(114 * (k | float)) | int}'
+            width: '${(432 * (k | float)) | int}'
+            height: '${(24 * (k | float)) | int}'
+            min_value: 10
+            max_value: 100
+            on_release:
+              - number.set:
+                  id: volume
+                  value: !lambda return roundf(x / 10.0f) * 10.0f;
+        - label:
+            id: lbl_wakeup
+            x: '${(16 * (k | float)) | int}'
+            y: '${(164 * (k | float)) | int}'
+            text: "Wake-up light"
+            text_color: 0xB0B6C0
+        - slider:
+            id: sl_wakeup
+            x: '${(24 * (k | float)) | int}'
+            y: '${(198 * (k | float)) | int}'
+            width: '${(432 * (k | float)) | int}'
+            height: '${(24 * (k | float)) | int}'
+            min_value: 0
+            max_value: 60
+            on_release:
+              - number.set:
+                  id: wakeup_minuten
+                  value: !lambda return roundf(x / 5.0f) * 5.0f;
+        - button:
+            x: '${(16 * (k | float)) | int}'
+            y: '${(252 * (k | float)) | int}'
+            width: '${(180 * (k | float)) | int}'
+            height: '${(56 * (k | float)) | int}'
+            on_click:
+              - script.execute: test_wekker
+            widgets:
+              - label: { text: "Test wekker", align: CENTER }
+        - label:
+            x: '${(212 * (k | float)) | int}'
+            y: '${(270 * (k | float)) | int}'
+            text: "Langzaam luider"
+            text_color: 0xB0B6C0
+        - switch:
+            id: sw_oplopen
+            x: '${(380 * (k | float)) | int}'
+            y: '${(260 * (k | float)) | int}'
+            width: '${(80 * (k | float)) | int}'
+            height: '${(40 * (k | float)) | int}'
+            on_change:
+              - number.set:
+                  id: oplopen_seconden
+                  value: !lambda |-
+                    if (!x)
+                      return 0.0f;
+                    return id(oplopen_seconden).state > 0 ? id(oplopen_seconden).state : 60.0f;
+        # Ruimte onder de laatste regel, boven de paginastippen
+
     - id: pagina_wekker_gaat_af
       styles: pagina_stijl
       widgets:
@@ -1586,7 +1757,7 @@ lvgl:
             y: '${(190 * (k | float)) | int}'
             width: '${(448 * (k | float)) | int}'
             height: '${(170 * (k | float)) | int}'
-            bg_color: 0xF5A623
+            bg_color: 0xE8B23C
             text_color: 0x000000
             on_click:
               - script.execute: snooze_wekker
@@ -1609,3 +1780,35 @@ lvgl:
                   align: CENTER
                   text_font: f_midden
                   text: "Stop (lang indrukken)"
+
+esphome:
+  on_boot:
+    - priority: -110
+      then:
+        # Detailpagina (gedeeld met de 7"): ook de achtergrond van stijl D
+        - lambda: |-
+            lv_obj_set_style_bg_image_src(id(pagina_detail)->obj, id(img_achtergrond)->get_lv_image_dsc(), 0);
+            lv_obj_set_style_bg_color(id(pagina_detail)->obj, lv_color_hex(0x0E1118), 0);
+            lv_obj_set_style_bg_opa(id(pagina_detail)->obj, LV_OPA_COVER, 0);
+
+script:
+  # Stand van de airco (ha-bediening.yaml, klimaat_modus): de knop van die stand
+  # okergeel, en het icoon linksboven op de kaart
+  - id: klimaat_modus_tonen
+    then:
+      - lambda: |-
+          const std::string stand = id(klimaat_modus).state;
+          const int actief = alarmklok::airco_index(stand);
+          lv_obj_t *knoppen[6] = {id(knop_airco_0), id(knop_airco_1), id(knop_airco_2),
+                                  id(knop_airco_3), id(knop_airco_4), id(knop_airco_5)};
+          for (int i = 0; i < 6; i++) {
+            if (i == actief)
+              lv_obj_add_state(knoppen[i], LV_STATE_CHECKED);
+            else
+              lv_obj_clear_state(knoppen[i], LV_STATE_CHECKED);
+          }
+          const bool aan = actief > 0;
+          lv_label_set_text(id(lbl_klimaat_icoon), alarmklok::airco_icoon(stand));
+          lv_obj_set_style_bg_color(id(klimaat_chip), lv_color_hex(aan ? 0xE8B23C : 0x3E4350), 0);
+          lv_obj_set_style_text_color(id(lbl_klimaat_icoon), lv_color_hex(aan ? 0x1E1E22 : 0xA8AEBA), 0);
+

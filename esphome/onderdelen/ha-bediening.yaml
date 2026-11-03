@@ -216,6 +216,15 @@ text_sensor:
     on_value:
       - lambda: lv_label_set_text(id(lbl_v_weer), alarmklok::weer_icoon(x));
 
+  # Stand van de airco/thermostaat (off, heat_cool, cool, heat, dry, fan_only)
+  - platform: template
+    id: klimaat_modus
+    update_interval: never
+    internal: true
+    on_value:
+      - script.execute: klimaat_modus_tonen
+      - script.execute: klimaat_status_tonen
+
   # Wat de thermostaat nu doet: heating, cooling, idle, off, ...
   - platform: template
     id: klimaat_actie
@@ -257,22 +266,17 @@ script:
   - id: klimaat_status_tonen
     then:
       - lambda: |-
-          std::string tekst;
-          if (!std::isnan(id(klimaat_huidig).state)) {
-            char buf[16];
-            snprintf(buf, sizeof(buf), "Nu %.1f\u00B0", id(klimaat_huidig).state);
-            tekst = buf;
+          // "Koelen · nu 22,1°": de stand van de airco en de temperatuur nu;
+          // zonder stand (gewone thermostaat) wat hij doet (verwarmen, rust)
+          std::string stand = id(klimaat_modus).state;
+          if (alarmklok::airco_index(stand) < 0) {
+            const std::string actie = id(klimaat_actie).state;
+            stand = actie == "heating" ? "heat" : actie == "cooling" ? "cool" : actie == "drying" ? "dry"
+                  : actie == "fan" ? "fan_only" : actie == "off" ? "off" : "";
           }
-          const std::string actie = id(klimaat_actie).state;
-          const char *nl = actie == "heating" ? "Verwarmen" : actie == "cooling" ? "Koelen"
-                         : actie == "drying" ? "Drogen" : actie == "fan" ? "Ventileren"
-                         : actie == "idle" ? "Rust" : actie == "off" ? "Uit" : "";
-          if (nl[0] != '\0')
-            tekst += tekst.empty() ? nl : std::string(" \u00B7 ") + nl;
-          lv_label_set_text(id(lbl_klimaat_huidig), tekst.c_str());
+          lv_label_set_text(id(lbl_klimaat_huidig),
+                            alarmklok::airco_status(stand, id(klimaat_huidig).state).c_str());
 
-  # Volgt de entiteiten van de bedieningspagina's in HA en zet de waarden in de
-  # (template-)sensoren hierboven; hun on_value werkt het scherm bij.
   - id: bediening_volgen
     then:
       - lambda: |-
@@ -304,6 +308,7 @@ script:
           volg_getal(thermostaat, "current_temperature", id(klimaat_huidig));
           volg_getal(thermostaat, "temperature", id(klimaat_doel));
           volg_tekst(thermostaat, "hvac_action", id(klimaat_actie));
+          volg_tekst(thermostaat, nullptr, id(klimaat_modus));
           volg_getal(rolluik, "current_position", id(rolluik_positie));
           volg_getal(batterij, nullptr, id(rolluik_batterij_procent));
           volg_getal(speler, "volume_level", id(media_volume));

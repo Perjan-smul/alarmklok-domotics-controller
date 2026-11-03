@@ -99,8 +99,8 @@ def maak(friendly, camera):
     uit += ["  - title: Klok", "    path: klok", "    type: sections", "    max_columns: 3", "    sections:",
             sectie([kaart("Wekkers", wekkers)]),
             sectie([kaart("Wekker-opties", wekker_opties), kaart("Nachtstand", nacht)]),
-            sectie([kaart("Pagina's (swipen links/rechts)", paginas), kaart("Uiterlijk", uiterlijk),
-                    kaart("Klokontwerpen bij omhoog/omlaag swipen", ontwerpen)]),
+            sectie([kaart("Pagina's (omhoog/omlaag swipen)", paginas), kaart("Uiterlijk", uiterlijk),
+                    kaart("Klokontwerpen bij links/rechts swipen op de klok", ontwerpen)]),
             sectie([kaart("Bediening (Klimaat, Muziek, dimmer" + (", camera" if camera else "") + ")", bediening)])]
     uit += ["  - title: Verlichting", "    path: verlichting", "    type: sections", "    max_columns: 3",
             "    sections:", sectie(tegels("verlichting", "Tegel"))]

@@ -51,9 +51,9 @@ substitutions:
   licht_4_naam: Gang
   licht_4_entity: light.gang
   licht_4_icoon: lightbulb
-  licht_5_naam: Ventilator
-  licht_5_entity: fan.slaapkamer
-  licht_5_icoon: fan
+  licht_5_naam: Nachtlampje
+  licht_5_entity: light.nachtlampje
+  licht_5_icoon: lamp
   licht_6_naam: Alle lampen
   licht_6_entity: light.alle_lampen
   licht_6_icoon: lightbulb-group
@@ -68,7 +68,7 @@ substitutions:
   licht_9_entity: ""
   licht_9_icoon: lightbulb
 
-  # ---- Pagina "Klimaat & rolluik" -------------------------------------------
+  # ---- Pagina "Klimaat": airco/thermostaat en gordijn ----------------------------
   thermostaat: climate.slaapkamer
   rolluik: cover.slaapkamer
   # Batterij van het rolluik of gordijn (bv. SwitchBot Curtain 3:
