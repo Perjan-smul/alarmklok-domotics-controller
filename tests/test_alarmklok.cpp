@@ -243,11 +243,24 @@ int main() {
     bool geen[8] = {};
     CONTROLEER(ontwerp_stap(2, 1, geen, 8) == 3);
   }
-  CONTROLEER(thema("Zwart").kaart == 0x141414 && thema("onbekend").kaart == 0x232A35);
+  CONTROLEER(thema("Zwart").kaart == 0x141414 && thema("onbekend").kaart == 0x262B36);
   CONTROLEER(accent_kleur("Groen") == 0x5AD08A && accent_kleur("x") == 0xF5A623);
   CONTROLEER(camera_url("http://ha:8123/", "/api/camera_proxy/camera.d?token=ab", 800) ==
              "http://ha:8123/api/camera_proxy/camera.d?token=ab&width=800");
   CONTROLEER(camera_url("http://ha:8123", "", 800).empty() && camera_url("http://ha", "None", 8).empty());
+
+  // Rijen en airco
+  CONTROLEER(tegel_rijen("Rijen") && !tegel_rijen("6 tegels") && tegel_aantal("Rijen") == 5);
+  {
+    int r, k;
+    tegel_raster(5, false, r, k);
+    CONTROLEER(r == 5 && k == 1);
+  }
+  CONTROLEER(airco_index("cool") == 2 && airco_index("auto") == 1 && airco_index("x") == -1);
+  CONTROLEER(std::string(airco_naam("heat")) == "Verwarmen" && std::string(airco_naam("iets")).empty());
+  CONTROLEER(std::strcmp(airco_icoon("cool"), "\U000F0717") == 0 && std::strcmp(airco_icoon("?"), "\U000F0393") == 0);
+  CONTROLEER(airco_status("cool", 22.1f) == "Koelen \u00B7 nu 22,1\u00B0");
+  CONTROLEER(airco_status("", 21.0f) == "nu 21,0\u00B0" && airco_status("off", NAN) == "Uit");
 
   if (fouten == 0)
     std::printf("Alle tests geslaagd\n");

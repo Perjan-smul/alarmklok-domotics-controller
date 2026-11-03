@@ -58,7 +58,7 @@ views:
       - type: grid
         cards:
           - type: entities
-            title: Pagina's (swipen links/rechts)
+            title: Pagina's (omhoog/omlaag swipen)
             entities:
               - entity: select.alarmklok_4b_pagina_1
               - entity: select.alarmklok_4b_pagina_2
@@ -81,7 +81,7 @@ views:
               - entity: select.alarmklok_4b_nachtklok
               - entity: select.alarmklok_4b_secondewijzer
           - type: entities
-            title: Klokontwerpen bij omhoog/omlaag swipen
+            title: Klokontwerpen bij links/rechts swipen op de klok
             entities:
               - entity: switch.alarmklok_4b_klokontwerp_digitaal
                 name: Digitaal

@@ -9,8 +9,8 @@
 #    ("4/6/9 tegels", paginas.yaml) ook.
 #  - Soort: Automatisch (scènes, scripts en knoppen alleen aanzetten, de rest
 #    aan/uit met status), Aan/uit of Scène/script.
-# Vars: nr, titel, naam, entity, icoon, index (1-9) en aantal (global met het
-# aantal tegels op deze pagina).
+# Vars: nr, titel, naam, entity, icoon, index (1-9), aantal (global met het
+# aantal tegels op deze pagina) en rijen (global: pagina als rijen?).
 text:
   - platform: template
     id: tegel_${nr}_naam
@@ -112,6 +112,11 @@ select:
             - script.execute: tegels_herladen
 
 globals:
+  # Dimmen door te slepen (tegel_ui.h), gekoppeld bij het opstarten
+  - id: tegel_${nr}_slepen
+    # void *: globals worden vóór de includes gedeclareerd (tegelui::Slepen *)
+    type: void *
+    initial_value: "nullptr"
   # Gedraagt de tegel zich als schakelaar (status, lang drukken) of als scène?
   - id: tegel_${nr}_schakelaar
     type: bool
@@ -148,27 +153,46 @@ script:
           const std::string &status = id(tegel_${nr}_status);
           const bool schakelaar = id(tegel_${nr}_schakelaar);
           const bool aan = schakelaar && alarmklok::status_aan(status);
-          lv_label_set_text(id(tegel_${nr}_status_tekst),
-                            alarmklok::tegel_status(dom, status, id(tegel_${nr}_procent), schakelaar).c_str());
-          if (schakelaar)
-            lv_obj_clear_flag(id(tegel_${nr}_schakelaar_widget), LV_OBJ_FLAG_HIDDEN);
-          else
-            lv_obj_add_flag(id(tegel_${nr}_schakelaar_widget), LV_OBJ_FLAG_HIDDEN);
-          // Aan: lichtere kaart, warm geel icoon
-          lv_obj_set_style_text_color(id(tegel_${nr}_icoon_tekst),
-                                      lv_color_hex(aan ? 0xF5C35A : 0xE8EAED), 0);
-          if (aan) {
-            lv_obj_add_state(id(tegel_${nr}), LV_STATE_CHECKED);
-            lv_obj_add_state(id(tegel_${nr}_schakelaar_widget), LV_STATE_CHECKED);
-          } else {
-            lv_obj_clear_state(id(tegel_${nr}), LV_STATE_CHECKED);
-            lv_obj_clear_state(id(tegel_${nr}_schakelaar_widget), LV_STATE_CHECKED);
-          }
+          const bool rij = id(${rijen});
+          const bool dimbaar = alarmklok::waarde_attribuut(dom)[0] != '\0';
+          // Als rij staat het percentage rechts: onder de naam dan alleen "Aan"
+          std::string tekst = alarmklok::tegel_status(dom, status, rij && dimbaar ? -1 : id(tegel_${nr}_procent), schakelaar);
+          tegelui::opmaak({id(tegel_${nr}), id(tegel_${nr}_vul), id(tegel_${nr}_chip), id(tegel_${nr}_icoon_tekst),
+                           id(tegel_${nr}_naam_tekst), id(tegel_${nr}_status_tekst), id(tegel_${nr}_pct)},
+                          rij, aan, id(tegel_${nr}_procent), dimbaar, tekst.c_str(), ${k});
           if (schakelaar && !entiteit.empty() && id(detail_entiteit) == entiteit) {
             id(detail_status) = status;
             id(detail_procent) = id(tegel_${nr}_procent);
             id(detail_tonen).execute();
           }
+
+  # Dimmen door horizontaal over de rij te slepen (tegel_ui.h). Eén keer bij
+  # het opstarten (kern.yaml, tegels_tonen).
+  - id: tegel_${nr}_slepen_koppelen
+    then:
+      - lambda: |-
+          if (id(tegel_${nr}_slepen) != nullptr)
+            return;
+          auto *s = new tegelui::Slepen();
+          s->tegel = id(tegel_${nr});
+          s->mag = []() {
+            const std::string dom = alarmklok::domein(id(tegel_${nr}_entiteit).state);
+            return id(${rijen}) && id(tegel_${nr}_schakelaar) && alarmklok::waarde_attribuut(dom)[0] != '\0';
+          };
+          s->procent = []() {
+            return alarmklok::status_aan(id(tegel_${nr}_status)) ? id(tegel_${nr}_procent) : 0;
+          };
+          s->tonen = [](int n) {
+            // Tijdens het slepen: alvast aan, met het nieuwe percentage
+            id(tegel_${nr}_status) = "on";
+            id(tegel_${nr}_procent) = n;
+            id(tegel_${nr}_status_tonen).execute();
+          };
+          s->klaar = [](int n) {
+            id(tegel_dimmen).execute(id(tegel_${nr}_entiteit).state, n);
+          };
+          tegelui::slepen_koppelen(s);
+          id(tegel_${nr}_slepen) = s;
 
   # Lang drukken: detailpagina voor deze tegel
   - id: tegel_${nr}_detail

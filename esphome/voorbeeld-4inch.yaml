@@ -95,7 +95,8 @@ script:
           id(buitentemperatuur).publish_state(8.4f);
           id(klimaat_huidig).publish_state(20.3f);
           id(klimaat_doel).publish_state(21.5f);
-          id(klimaat_actie).publish_state("heating");
+          id(klimaat_actie).publish_state("cooling");
+          id(klimaat_modus).publish_state("cool");
           id(dim_lamp_helderheid).publish_state(204.0f);
           id(rolluik_positie).publish_state(60.0f);
           id(rolluik_batterij_procent).publish_state(15.0f);
@@ -105,7 +106,7 @@ script:
           id(media_volume).publish_state(0.4f);
           id(weer_toestand).publish_state("partlycloudy");
           const char *status[] = {"on", "off", "on", "off", "on", "on"};
-          const int procent[] = {80, -1, 35, -1, 50, -1};
+          const int procent[] = {80, -1, 35, -1, 20, -1};
           std::string *statussen[] = {&id(tegel_licht_1_status), &id(tegel_licht_2_status),
                                       &id(tegel_licht_3_status), &id(tegel_licht_4_status),
                                       &id(tegel_licht_5_status), &id(tegel_licht_6_status)};
@@ -194,7 +195,7 @@ script:
       - select.set: {id: kleurthema, option: Blauw}
       - script.execute: {id: pagina_afdruk, kolom: 1, naam: 17-verlichting-9-tegels-blauw}
       - script.wait: pagina_afdruk
-      - select.set: {id: indeling_verlichting, option: 6 tegels}
+      - select.set: {id: indeling_verlichting, option: Rijen}
       - select.set: {id: kleurthema, option: Donker}
 
       # ---- Melding van HA: batterij bijna leeg ----

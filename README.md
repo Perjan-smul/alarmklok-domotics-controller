@@ -26,15 +26,26 @@ maar zijn **nog niet op de echte borden getest**; zie [Bekende aandachtspunten](
 
 | Gebaar | Wat gebeurt er |
 |---|---|
-| **Links/rechts swipen** | Bladeren tussen de klok en de pagina's die je in HA kiest (standaard Verlichting → Klimaat & rolluik → Muziek → Scènes → Wekker; op de 7" en 4B ook Camera) |
-| **Omlaag/omhoog swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant (alleen de ontwerpen die in HA aan staan). De keuze wordt onthouden. |
+| **Omhoog/omlaag swipen** | Bladeren tussen de klok en de pagina's die je in HA kiest (standaard Verlichting → Klimaat → Muziek → Scènes → Wekker; op de 7" en 4B ook Camera) |
+| **Links/rechts swipen op de klok** | Ander klokontwerp: Digitaal, Analoog, Gestapeld, Info, Zon, Zwevend, Maan of Vierkant (alleen de ontwerpen die in HA aan staan). De keuze wordt onthouden. |
 | **Lang drukken op de klok** | Volgende klokkleur (wit, warm, oranje, rood, roze, paars, blauw, groen), zoals StandBy op de iPhone |
-| **Lang drukken op een verlichtingstegel** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
+| **Tik op een lamp** | Aan/uit |
+| **Links/rechts slepen over een lamp** (indeling *Rijen*) | Dimmen: de rij vult zich tot de helderheid; loslaten stuurt het naar HA |
+| **Lang drukken op een lamp** | Detailpagina: groot icoon, status, schuif voor helderheid (of positie/snelheid) en knoppen Aan/Uit. Terug met de pijl. |
 | 30 s niets aanraken | Terug naar de klok |
 
-De stippen onderaan geven aan op welke pagina je bent; de stippen rechts op de
+De stippen rechts geven aan op welke pagina je bent; de stippen onderaan op de
 klok geven aan welk klokontwerp actief is. Je kunt het ontwerp ook vanuit Home
 Assistant kiezen met `select.alarmklok_klokontwerp`.
+
+De 4" heeft de stijl van een donker HA-dashboard: glaskaarten op een
+blauwgrijze achtergrond met zachte lichtvlekken (`tools/achtergrond.py`),
+iconen in een afgerond vierkant en okergeel voor wat aan staat. De pagina
+**Klimaat** is gemaakt voor een airco (bijvoorbeeld een Daikin Perfera): stand
+(Uit, Automatisch, Koelen, Verwarmen, Drogen, Ventileren), de ingestelde
+temperatuur met − / +, en daaronder het gordijn (Open, Stop, Dicht, met een
+schuifje voor de stand). De entiteiten heten in HA nog *Thermostaat* en
+*Rolluik*.
 
 ## Wat kan hij?
 
@@ -456,11 +467,12 @@ Installatie, stap 4).
 
 | Instelling | Wat |
 |---|---|
-| *Pagina 1* t/m *Pagina 6* | Welke pagina na de klok komt bij links/rechts swipen: Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera (7" en 4B) of Uit. Dubbele worden overgeslagen. |
-| *Indeling verlichting*, *Indeling scènes* | 4 tegels (2×2, groot), 6 tegels of 9 tegels (3×3) |
+| *Pagina 1* t/m *Pagina 6* | Welke pagina na de klok komt bij omhoog/omlaag swipen: Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera (7" en 4B) of Uit. Dubbele worden overgeslagen. |
+| *Indeling verlichting* | Rijen (5 brede, dimbare rijen; standaard), 4 tegels (2×2), 6 tegels of 9 tegels (3×3) |
+| *Indeling scènes* | 4, 6 of 9 tegels |
 | *Kleurthema* | Donker, Zwart, Blauw of Warm: achtergrond van pagina's, kaarten en tegels |
 | *Accentkleur* | Kleur van de accenten op de klok (datum, tweede tijd, ...) |
-| *Klokontwerp Digitaal* … *Vierkant* | Welke ontwerpen meedoen bij omhoog/omlaag swipen (allemaal uit = allemaal mee) |
+| *Klokontwerp Digitaal* … *Vierkant* | Welke ontwerpen meedoen bij links/rechts swipen op de klok (allemaal uit = allemaal mee) |
 | *Secondewijzer* | Op de klok Analoog: Altijd, Bij aanraken (standaard, 20 s na een aanraking) of Uit. Elke seconde de wijzer tekenen kost rekenwerk. |
 | *Swipe-animatie* | Aan: de pagina schuift mee. Uit: de nieuwe pagina staat er meteen, veel sneller op de 4" (daar standaard uit) |
 | *Thermostaat*, *Rolluik*, *Rolluik batterij*, *Mediaspeler*, *Dimlamp*, *Dimlamp naam* | De entiteiten op Klimaat, Muziek en de dimmerkaart (leeg *Dimlamp* = geen dimmerkaart) |

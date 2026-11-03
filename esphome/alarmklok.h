@@ -537,17 +537,25 @@ inline int pagina_stap(int index, int richting, int aantal) {
   return nieuw < 0 || nieuw >= aantal ? index : nieuw;
 }
 
-// Indeling van een tegelpagina: "4 tegels" (2x2), "6 tegels" (3x2), "9 tegels" (3x3)
+// Indeling van een tegelpagina: "Rijen" (5 brede, dimbare rijen onder elkaar),
+// "4 tegels" (2x2), "6 tegels" (3x2), "9 tegels" (3x3)
+inline bool tegel_rijen(const std::string &indeling) { return indeling == "Rijen"; }
 inline int tegel_aantal(const std::string &indeling) {
+  if (indeling == "Rijen")
+    return 5;
   if (indeling == "4 tegels")
     return 4;
   if (indeling == "9 tegels")
     return 9;
   return 6;
 }
-// Staand/vierkant scherm: 6 = 3 rijen x 2; liggend (7"): 6 = 2 rijen x 3
+// Staand/vierkant scherm: 6 = 3 rijen x 2; liggend (7"): 6 = 2 rijen x 3.
+// Rijen (5): 5 x 1.
 inline void tegel_raster(int aantal, bool liggend, int &rijen, int &kolommen) {
-  if (aantal == 4) {
+  if (aantal == 5) {
+    rijen = 5;
+    kolommen = 1;
+  } else if (aantal == 4) {
     rijen = kolommen = 2;
   } else if (aantal == 9) {
     rijen = kolommen = 3;
@@ -594,7 +602,7 @@ inline Thema thema(const std::string &naam) {
     return {0x07101F, 0x13233D, 0x1A2E4F, 0xA8BEDF};
   if (naam == "Warm")
     return {0x120C08, 0x2A2019, 0x352820, 0xD2B8A0};
-  return {0x000000, 0x232A35, 0x2B3340, 0xB0B6C0};  // Donker (standaard)
+  return {0x0E1118, 0x262B36, 0x262B36, 0xF0F2F6};  // Donker (standaard, glaskaarten)
 }
 inline uint32_t accent_kleur(const std::string &naam) {
   if (naam == "Geel")
@@ -608,6 +616,57 @@ inline uint32_t accent_kleur(const std::string &naam) {
   if (naam == "Wit")
     return 0xFFFFFF;
   return 0xF5A623;  // Oranje (standaard)
+}
+
+// ---- Airco (bv. Daikin Perfera) -------------------------------------------------
+
+// Knoppen op de klimaatkaart, in deze volgorde; de HA-stand (hvac_mode) erbij.
+// Daikin noemt "automatisch" heat_cool.
+static const char *const AIRCO_STANDEN[] = {"off", "heat_cool", "cool", "heat", "dry", "fan_only"};
+static const int AIRCO_AANTAL = 6;
+
+// Index van een HA-stand in AIRCO_STANDEN ("auto" telt als heat_cool), of -1
+inline int airco_index(const std::string &stand) {
+  const std::string s = stand == "auto" ? "heat_cool" : stand;
+  for (int i = 0; i < AIRCO_AANTAL; i++)
+    if (s == AIRCO_STANDEN[i])
+      return i;
+  return -1;
+}
+
+// Nederlandse naam van een stand ("cool" -> "Koelen")
+inline const char *airco_naam(const std::string &stand) {
+  switch (airco_index(stand)) {
+    case 0: return "Uit";
+    case 1: return "Automatisch";
+    case 2: return "Koelen";
+    case 3: return "Verwarmen";
+    case 4: return "Drogen";
+    case 5: return "Ventileren";
+    default: return "";
+  }
+}
+
+// Icoon (MDI) voor een stand: power, thermostat-auto, snowflake, fire, water-percent, fan
+inline const char *airco_icoon(const std::string &stand) {
+  static const char *const ICONEN[] = {"\U000F0425", "\U000F1B17", "\U000F0717",
+                                       "\U000F0238", "\U000F058E", "\U000F0210"};
+  const int i = airco_index(stand);
+  return i < 0 ? "\U000F0393" : ICONEN[i];  // onbekend: thermostat
+}
+
+// "Koelen · nu 22,1°" (alleen de delen die er zijn)
+inline std::string airco_status(const std::string &stand, float nu) {
+  std::string tekst = airco_naam(stand);
+  if (nu == nu) {
+    char buf[24];
+    snprintf(buf, sizeof(buf), "nu %.1f\u00B0", nu);
+    for (char *c = buf; *c; c++)
+      if (*c == '.')
+        *c = ',';
+    tekst += tekst.empty() ? buf : std::string(" \u00B7 ") + buf;
+  }
+  return tekst;
 }
 
 // Koppelingen tussen onderdelen die elkaar niet kennen: het camerapakket (alleen

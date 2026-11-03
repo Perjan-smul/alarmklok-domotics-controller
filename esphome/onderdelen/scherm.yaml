@@ -14,6 +14,8 @@ substitutions:
   k: "1.25"
   # Voor de instelbare indeling (paginas.yaml): liggend scherm, dimmerkaart 100 px
   liggend: "true"
+  # Klokontwerpstippen rechts, onder elkaar
+  ontwerp_scheiding: '\n'
   dimmer_basis: "80"
 
 font:
@@ -203,6 +205,17 @@ font:
     size: 36
     glyphs: *tegel_iconen
 # Wijzers en asje van het klokontwerp "Vierkant" (tools/wijzerplaat.py)
+  # Stijl D (tegel.yaml): namen en het icoon in het icoonvlak
+  - file: "gfonts://Inter@600"
+    id: f_naam
+    size: 22
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true
+  - file: *mdi
+    id: f_icoon_tegel
+    size: 32
+    glyphs: *tegel_iconen
+
 image:
   - platform: file
     file: ../afbeeldingen/wijzer_uur.png
@@ -1593,3 +1606,10 @@ lvgl:
                   text_align: CENTER
                   text_font: f_midden
                   text: "Stop\n(lang\nindrukken)"
+
+script:
+  # Stand van de airco: op de 7" nog geen standknoppen (de 4" heeft ze)
+  - id: klimaat_modus_tonen
+    then:
+      - lambda: return;
+

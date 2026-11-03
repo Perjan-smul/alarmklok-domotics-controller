@@ -4,7 +4,8 @@
 #   - Pagina 1-6: welke pagina na de klok komt bij links/rechts swipen
 #     (Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera of Uit). Camera
 #     alleen op borden met een camera (P4, zie camera.yaml).
-#   - Indeling van Verlichting en Scènes: 4, 6 of 9 tegels.
+#   - Indeling van Verlichting: Rijen (5 dimbare rijen) of 4, 6 of 9 tegels;
+#     Scènes: 4, 6 of 9 tegels.
 #   - Kleurthema en accentkleur.
 #   - Welke klokontwerpen meedoen bij omhoog/omlaag swipen op de klok.
 #   - Swipe-animatie: aan = de pagina schuift mee (vloeiend, kost rekenwerk);
@@ -31,8 +32,9 @@ esphome:
             // Veeggebaren zelf afhandelen. LVGL stuurt een gebaar naar het
             // bovenste object dat het niet doorgeeft: dat is het scherm zelf
             // (alle objecten erin geven gebaren door). Dus hier luisteren:
-            //   links/rechts  = volgende/vorige pagina
-            //   omlaag/omhoog = volgend/vorig klokontwerp (alleen op de klok)
+            //   omhoog/omlaag = volgende/vorige pagina
+            //   links/rechts  = volgend/vorig klokontwerp (alleen op de klok);
+            //                   op andere pagina's is links/rechts slepen dimmen
             lv_obj_remove_flag(id(tv_hoofd), LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_add_event_cb(lv_obj_get_screen(id(tv_hoofd)), [](lv_event_t *e) {
               lv_indev_t *indev = lv_indev_active();
@@ -45,13 +47,13 @@ esphome:
                   return;
               }
               const lv_dir_t richting = lv_indev_get_gesture_dir(indev);
-              if (richting == LV_DIR_LEFT)
+              if (richting == LV_DIR_TOP)
                 id(pagina_stap).execute(1);
-              else if (richting == LV_DIR_RIGHT)
+              else if (richting == LV_DIR_BOTTOM)
                 id(pagina_stap).execute(-1);
-              else if (id(pag_index) == 0 && richting == LV_DIR_BOTTOM)
+              else if (id(pag_index) == 0 && richting == LV_DIR_LEFT)
                 id(ontwerp_wisselen).execute(1);
-              else if (id(pag_index) == 0 && richting == LV_DIR_TOP)
+              else if (id(pag_index) == 0 && richting == LV_DIR_RIGHT)
                 id(ontwerp_wisselen).execute(-1);
             }, LV_EVENT_GESTURE, nullptr);
             alarmklok::navigeer = [](int richting) { id(pagina_stap).execute(richting); };
@@ -73,6 +75,13 @@ globals:
   - id: aantal_scenes
     type: int
     initial_value: "6"
+  # Verlichting als rijen (indeling "Rijen"); Scènes altijd als tegels
+  - id: rijen_verlichting
+    type: bool
+    initial_value: "true"
+  - id: rijen_scenes
+    type: bool
+    initial_value: "false"
 
 select:
   - platform: template
@@ -148,8 +157,9 @@ select:
     entity_category: config
     optimistic: true
     restore_value: true
-    options: &indeling_opties [4 tegels, 6 tegels, 9 tegels]
-    initial_option: 6 tegels
+    # Rijen: 5 brede rijen onder elkaar, dimmen door links/rechts te slepen
+    options: [Rijen, 4 tegels, 6 tegels, 9 tegels]
+    initial_option: Rijen
     on_value: &indeling_wijzigen
       - if:
           condition:
@@ -163,7 +173,7 @@ select:
     entity_category: config
     optimistic: true
     restore_value: true
-    options: *indeling_opties
+    options: [4 tegels, 6 tegels, 9 tegels]
     initial_option: 6 tegels
     on_value: *indeling_wijzigen
 
@@ -277,7 +287,7 @@ script:
                                  id(vak_muziek), id(vak_scenes), id(vak_wekker)};
           bool gebruikt[6] = {};
           lv_obj_update_layout(id(tv_hoofd));
-          const int32_t b = lv_obj_get_content_width(id(tv_hoofd));
+          const int32_t b = lv_obj_get_content_height(id(tv_hoofd));
           int plek = 0;
           for (int i = 0; i < n; i++) {
             const int p = volgorde[i];
@@ -285,12 +295,12 @@ script:
               continue;  // camera: eigen LVGL-pagina, geen tegel
             gebruikt[p] = true;
             lv_obj_clear_flag(tegels[p], LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_pos(tegels[p], plek++ * b, 0);
+            lv_obj_set_pos(tegels[p], 0, plek++ * b);
           }
           for (int p = 0; p < 6; p++) {
             if (!gebruikt[p]) {
               lv_obj_add_flag(tegels[p], LV_OBJ_FLAG_HIDDEN);
-              lv_obj_set_pos(tegels[p], plek++ * b, 0);
+              lv_obj_set_pos(tegels[p], 0, plek++ * b);
             }
           }
       - script.execute:
@@ -347,7 +357,7 @@ script:
     then:
       - lvgl.label.update:
           id: pagina_indicator
-          text: !lambda return alarmklok::stippen(id(pag_index), (int) id(pag_volgorde).size(), "");
+          text: !lambda return alarmklok::stippen(id(pag_index), (int) id(pag_volgorde).size(), "\n");
 
   # Klokontwerp wisselen met omhoog/omlaag swipen, alleen de ontwerpen die aan staan
   - id: ontwerp_wisselen
@@ -375,9 +385,10 @@ script:
     then:
       - lambda: |-
           id(aantal_verlichting) = alarmklok::tegel_aantal(id(indeling_verlichting).current_option().str());
+          id(rijen_verlichting) = alarmklok::tegel_rijen(id(indeling_verlichting).current_option().str());
           id(aantal_scenes) = alarmklok::tegel_aantal(id(indeling_scenes).current_option().str());
           // De rasterbeschrijving moet blijven bestaan: static
-          static int32_t rijen_licht[6], kolommen_licht[4], rijen_scene[5], kolommen_scene[4];
+          static int32_t rijen_licht[8], kolommen_licht[5], rijen_scene[8], kolommen_scene[5];
           auto raster = [](lv_obj_t *vak, lv_obj_t **tegels, int aantal, int32_t *rijen_dsc,
                            int32_t *kolommen_dsc, lv_obj_t *dimmer, int dimmer_px) {
             int rijen, kolommen;
@@ -404,8 +415,9 @@ script:
           lv_obj_t *scene[9] = {id(tegel_scene_1), id(tegel_scene_2), id(tegel_scene_3),
                                 id(tegel_scene_4), id(tegel_scene_5), id(tegel_scene_6),
                                 id(tegel_scene_7), id(tegel_scene_8), id(tegel_scene_9)};
-          // De dimmerkaart onder de verlichting alleen met een dimlamp
-          const bool dimmer = !id(cfg_dim_lamp).state.empty();
+          // De dimmerkaart onder de verlichting alleen met een dimlamp, en niet
+          // als de verlichting rijen zijn (die dimmen zelf)
+          const bool dimmer = !id(cfg_dim_lamp).state.empty() && !id(rijen_verlichting);
           if (dimmer)
             lv_obj_clear_flag(id(dimmer_kaart), LV_OBJ_FLAG_HIDDEN);
           else
