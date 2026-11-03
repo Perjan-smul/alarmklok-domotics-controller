@@ -53,6 +53,9 @@ esp32:
   framework:
     type: esp-idf
     advanced:
+      # Alleen de code voor het flashgeheugen van dit bord (scheelt IRAM; de
+      # waarschuwing "Set flash_chip: generic" in het log)
+      flash_chip: generic
       # Het RGB-scherm leest continu uit PSRAM; zo blijft het beeld rustig als
       # er naar het flashgeheugen wordt geschreven (OTA, instellingen)
       execute_from_psram: true
@@ -61,6 +64,12 @@ esp32:
     # Uit EspControl, voor hun 480x480 ST7701-paneel op een ESP32-S3 (zelfde
     # opzet als dit bord; zie README, "Stabiliteit")
     sdkconfig_options:
+      # Intern geheugen: wifi- en netwerkcode niet in IRAM (op de S3 delen IRAM
+      # en DRAM hetzelfde geheugen; wat hier vrijkomt is extra werkgeheugen).
+      # Wifi wordt iets trager, voor een klok niet merkbaar.
+      CONFIG_ESP_WIFI_IRAM_OPT: "n"
+      CONFIG_ESP_WIFI_RX_IRAM_OPT: "n"
+      CONFIG_LWIP_IRAM_OPTIMIZATION: "n"
       # Beeld: 64-byte cacheregels houden PSRAM en scherm-DMA in de pas; zonder
       # kan het hele beeld verschoven blijven staan tot een herstart
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"

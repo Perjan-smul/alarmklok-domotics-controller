@@ -25,10 +25,10 @@ packages:
   instellingen: !include instellingen.yaml
   kern: !include onderdelen/kern.yaml
   esp: !include onderdelen/esp.yaml
-  # Bluetooth-proxy (o.a. SwitchBot Curtain 3), veilige variant voor de S3:
-  # start pas na 20 s en blijft uit als het de vorige keer vastliep.
-  # Niet nodig: zet er een # voor
-  bluetooth: !include onderdelen/bluetooth-proxy-s3.yaml
+  # Bluetooth-proxy: standaard UIT op de 4". Alleen al meecompileren kost
+  # ± 23 kB intern geheugen, en met alle instellingen erbij startte de klok
+  # niet meer (OTA rollback). Aanzetten: zie installeren/alarmklok-4inch.yaml
+  # (onderdelen/bluetooth-proxy-s3.yaml als extra bestand).
   hardware: !include onderdelen/waveshare-s3-4.yaml
   scherm: !include onderdelen/scherm-vierkant.yaml
   detail: !include onderdelen/detail-pagina.yaml
