@@ -21,6 +21,10 @@ substitutions:
   # Lichtsensor (lux) uit HA: nachtstand ook als het donker is. Leeg = alleen
   # het tijdvenster. Later aan te passen in HA (Configuratie -> Lichtsensor).
   lichtsensor: ""
+  # Nachtstand: zoveel minuten na een aanraking blijft het scherm fel en
+  # gewoon bedienbaar, daarna dimt het naar "Helderheid 's nachts". 0 = nooit
+  # dimmen. Later aan te passen in HA (Configuratie -> Fel na aanraken).
+  fel_na_aanraken: "30"
   # Weerentiteit uit HA voor het weericoon op de klok "Vierkant" (Met.no maakt
   # standaard weather.forecast_home aan).
   weer_entiteit: weather.forecast_home

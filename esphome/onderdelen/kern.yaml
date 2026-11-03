@@ -437,6 +437,21 @@ number:
     step: 1
     initial_value: 3
 
+  # Nachtstand: na een aanraking blijft het scherm zo lang fel (0 = altijd fel)
+  - platform: template
+    id: fel_na_aanraken
+    name: Fel na aanraken
+    icon: mdi:timer-sand
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    optimistic: true
+    restore_value: true
+    min_value: 0
+    max_value: 240
+    step: 1
+    initial_value: ${fel_na_aanraken}
+
   # Nachtstand ook als de lichtsensor (hieronder) minder dan dit meet
   - platform: template
     id: nacht_lux
@@ -1663,7 +1678,13 @@ script:
       - if:
           condition:
             lambda: |-
-              bool actief = id(gaat_af) || millis() - id(laatste_aanraking_ms) < 20000;
+              // "Fel na aanraken" (minuten, 0 = nooit dimmen); bij het
+              // opstarten telt dat als aanraking
+              const float min = id(fel_na_aanraken).state;
+              if (std::isnan(min) || min <= 0)
+                return false;
+              const uint32_t fel_ms = (uint32_t) (min * 60000.0f);
+              bool actief = id(gaat_af) || millis() - id(laatste_aanraking_ms) < fel_ms;
               return id(nachtstand) && !actief;
           then:
             - if:
