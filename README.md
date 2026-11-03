@@ -358,13 +358,16 @@ gevonden is; zo niet, probeer een ander adres met `es7210_adres` (0x40–0x43).
 
 ## Bluetooth-proxy (SwitchBot Curtain 3 en meer)
 
-Elke klok is ook een **Bluetooth-proxy** voor Home Assistant
-(`onderdelen/bluetooth-proxy.yaml`). De 4" (ESP32-S3) heeft naast het
-RGB-scherm weinig intern geheugen; daar staat een veilige variant
-(`onderdelen/bluetooth-proxy-s3.yaml`): buffers in PSRAM, één verbinding,
-Bluetooth pas 20 s na het opstarten aan, en liep het de vorige keer vast, dan
-blijft het uit (sensor *Bluetooth-proxy* in HA; knop *Bluetooth opnieuw
-proberen*). HA hoort via de klok Bluetooth-apparaten
+De 7" en de 4B zijn ook een **Bluetooth-proxy** voor Home Assistant
+(`onderdelen/bluetooth-proxy.yaml`). Op de 4" (ESP32-S3) staat hij standaard
+**uit**: naast het RGB-scherm en alle instellingen is er te weinig intern
+geheugen (alleen al meecompileren kost ± 23 kB, en de klok startte daarmee
+niet meer). Wil je hem toch, zet dan in je installatiebestand
+`esphome/onderdelen/bluetooth-proxy-s3.yaml` bij `files:` (zie
+`installeren/alarmklok-4inch.yaml`). Dat is een veilige variant: buffers in
+PSRAM, één verbinding, Bluetooth pas 20 s na het opstarten en alleen met
+genoeg vrij geheugen, en liep het de vorige keer vast, dan blijft het uit
+(sensor *Bluetooth-proxy* in HA; knop *Bluetooth opnieuw proberen*). HA hoort via de klok Bluetooth-apparaten
 in de slaapkamer en kan er verbinding mee maken, bijvoorbeeld een **SwitchBot
 Curtain 3**, zonder SwitchBot-hub:
 
@@ -646,7 +649,11 @@ scherm goed werkt.
     10 s alle stroom van het bord;
   - het scherm krijgt de init-sequentie uit Waveshare's BSP voor dit bord
     (zie het HA-forumtopic "Waveshare ESP32-S3-LCD-Touch-4");
-  - Bluetooth (proxy): veilige variant, zie Bluetooth-proxy hierboven.
+  - Bluetooth (proxy): standaard uit, zie Bluetooth-proxy hierboven.
+  - **Klok start na een update niet (`OTA rollback detected`)?** Dan is de
+    nieuwe firmware binnen een minuut herstart en draait de vorige weer.
+    Meestal is dat te weinig intern geheugen; haal de Bluetooth-proxy weg en
+    stuur het log via USB (ESPHome Web → Logs).
   - **Acties naar HA komen niet aan** (`action ... dropped; client has not
     subscribed to actions`)? Zet in HA bij het ESPHome-apparaat (Configureren)
     *Allow the device to perform Home Assistant actions* aan.

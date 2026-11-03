@@ -4,7 +4,7 @@
 #  Installeren via de ESPHome-add-on in Home Assistant: maak in de add-on een
 #  nieuw apparaat "alarmklok-4inch" aan, open het met Edit en vervang de inhoud
 #  door dit bestand. De rest (onderdelen, plaatjes, geluiden) haalt ESPHome
-#  zelf van GitHub, en elke dag de nieuwste versie (refresh: 1d).
+#  zelf van GitHub, bij elke Install de nieuwste versie (refresh: 0s).
 #
 #  In /config/esphome/secrets.yaml (knop Secrets in de add-on) horen:
 #    wifi_ssid, wifi_password, api_encryption_key, fallback_ap_password
@@ -39,4 +39,9 @@ packages:
     username: Perjan-smul
     password: !secret github_token
     files: [esphome/alarmklok-4inch.yaml]
-    refresh: 1d
+    # Bluetooth-proxy (o.a. SwitchBot Curtain 3) erbij? Gebruik dan deze regel
+    # in plaats van de regel hierboven. Kost ± 23 kB intern geheugen; start
+    # alleen als er genoeg vrij is (sensor "Bluetooth-proxy" in HA).
+    # files: [esphome/alarmklok-4inch.yaml, esphome/onderdelen/bluetooth-proxy-s3.yaml]
+    # 0s: bij elke Install eerst de nieuwste versie van GitHub halen
+    refresh: 0s
