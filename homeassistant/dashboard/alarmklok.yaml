@@ -79,6 +79,7 @@ views:
               - entity: select.alarmklok_klokkleur
               - entity: select.alarmklok_wijzerplaat
               - entity: select.alarmklok_nachtklok
+              - entity: select.alarmklok_secondewijzer
           - type: entities
             title: Klokontwerpen bij omhoog/omlaag swipen
             entities:

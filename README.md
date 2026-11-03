@@ -282,9 +282,11 @@ elke build de nieuwste versie op).
 > het bootlog `chip revision: v1.x`? Zet dan in
 > `onderdelen/waveshare-p4-7b.yaml` de optie `engineering_sample: true`.
 
-> **4": beeld op z'n kop?** In de Bosun-behuizing zit het scherm 180° gedraaid.
-> Zet dan in `alarmklok-4inch.yaml` onder `substitutions:` de regel
-> `draaiing: "180"`. De touch draait mee.
+> **4": beeld op z'n kop?** Het beeld staat standaard 180° gedraaid, zoals de
+> Bosun-bootmonitor (in de Bosun-behuizing zit het paneel op z'n kop). Zonder
+> die behuizing zet je in `alarmklok-4inch.yaml` onder `substitutions:` de regel
+> `draaiing: "0"`. De touch draait mee. ESPHome draait het beeld in software;
+> `"0"` is daardoor iets sneller.
 
 > **4B: USB-C onderaan.** Het beeld van de 4B staat standaard een kwartslag
 > gedraaid (`draaiing: "270"` in `alarmklok-4b.yaml`), zodat de USB-C-aansluiting
@@ -457,6 +459,7 @@ Installatie, stap 4).
 | *Kleurthema* | Donker, Zwart, Blauw of Warm: achtergrond van pagina's, kaarten en tegels |
 | *Accentkleur* | Kleur van de accenten op de klok (datum, tweede tijd, ...) |
 | *Klokontwerp Digitaal* … *Vierkant* | Welke ontwerpen meedoen bij omhoog/omlaag swipen (allemaal uit = allemaal mee) |
+| *Secondewijzer* | Op de klok Analoog: Altijd, Bij aanraken (standaard, 20 s na een aanraking) of Uit. Elke seconde de wijzer tekenen kost rekenwerk. |
 | *Swipe-animatie* | Aan: de pagina schuift mee. Uit: de nieuwe pagina staat er meteen, veel sneller op de 4" (daar standaard uit) |
 | *Thermostaat*, *Rolluik*, *Rolluik batterij*, *Mediaspeler*, *Dimlamp*, *Dimlamp naam* | De entiteiten op Klimaat, Muziek en de dimmerkaart (leeg *Dimlamp* = geen dimmerkaart) |
 | *Camera*, *Deurbel*, *Camera verversen* (7" en 4B) | Camera-entiteit, optioneel een deurbel (bij "on" springt de klok naar de camera en gaat het scherm aan, ook 's nachts) en om de hoeveel seconden een nieuw beeld. De klok haalt het beeld bij HA op via `ha_url` (in `instellingen.yaml`); er is geen token nodig. |

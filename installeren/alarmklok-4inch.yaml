@@ -20,8 +20,9 @@
 substitutions:
   name: alarmklok-4inch
   friendly_name: Alarmklok 4 inch
-  # Scherm op z'n kop in de Bosun-behuizing? Haal het hekje weg:
-  # draaiing: "180"
+  # Het beeld staat standaard 180° gedraaid, zoals de Bosun-bootmonitor. Staat
+  # het op z'n kop (bord zonder behuizing)? Haal het hekje weg:
+  # draaiing: "0"
   # Mediaspeler in HA voor Muziek en de radio (deze klok heeft geen speaker):
   mediaspeler: media_player.slaapkamer
   # Voorbeelden (haal het hekje weg en vul je eigen entiteiten in):
