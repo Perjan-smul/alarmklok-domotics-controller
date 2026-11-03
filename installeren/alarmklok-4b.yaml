@@ -12,9 +12,17 @@
 #                  (Contents: Read-only) op deze repo; nodig zolang de repo
 #                  privé is
 #
-#  Je eigen lampen, scènes en zenders zet je onder substitutions: alles uit
-#  esphome/instellingen.yaml kan hier, en wat hier staat gaat voor. De tegels
-#  kun je ook later in Home Assistant aanpassen, zonder te flashen.
+#  Wat waar?
+#  - Hieronder (substitutions): alleen wat bij het bouwen vast moet liggen.
+#    Na een wijziging: Install.
+#  - Al het andere stel je in Home Assistant in, zonder te flashen:
+#    Instellingen -> Apparaten -> deze klok -> Configuratie (of het dashboard
+#    uit homeassistant/dashboard/). Daar staan de tegels (naam, entiteit,
+#    icoon), Thermostaat (airco), Rolluik (gordijn), Mediaspeler, Dimlamp,
+#    Lichtsensor, pagina's, klokontwerpen, kleuren, nachtstand en wekkers.
+#    Zet die NIET hier: een waarde hier is alleen de beginwaarde bij de
+#    allereerste start; daarna onthoudt de klok wat in Home Assistant staat en
+#    doet een wijziging hier niets meer.
 # =============================================================================
 
 substitutions:
@@ -22,12 +30,13 @@ substitutions:
   friendly_name: Alarmklok 4B
   # Stand van het beeld: "270" = USB-C onderaan (standaard), "90" of "0"
   # draaiing: "270"
-  # Voorbeelden (haal het hekje weg en vul je eigen entiteiten in):
-  # thermostaat: climate.slaapkamer
-  # rolluik: cover.slaapkamer
-  # dim_lamp: light.slaapkamer
-  # temperatuur_sensor: sensor.buitentemperatuur
-  # weer_entiteit: weather.forecast_home
+  # Alleen via deze regels in te stellen (haal het hekje weg):
+  # temperatuur_sensor: sensor.buitentemperatuur   # buitentemperatuur op de klok
+  # weer_entiteit: weather.forecast_home           # weericoon (klok Vierkant)
+  # werkdag_sensor: binary_sensor.workday_sensor   # "Niet op feestdagen"
+  # tijdzone: Europe/Amsterdam
+  # breedtegraad: "52.09"                          # plaats voor klok Zon
+  # lengtegraad: "5.12"
 
 packages:
   alarmklok:
