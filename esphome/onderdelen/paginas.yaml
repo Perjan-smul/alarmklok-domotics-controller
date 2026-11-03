@@ -315,6 +315,13 @@ script:
             lv_tileview_set_tile(id(tv_hoofd), tegels[p], animatie ? LV_ANIM_ON : LV_ANIM_OFF);
           }
       - script.execute: pagina_indicator_bijwerken
+      # Terug op de klok: meteen de juiste tijd (de klok wordt niet bijgewerkt
+      # zolang hij niet in beeld is)
+      - if:
+          condition:
+            lambda: return id(pag_index) == 0;
+          then:
+            - script.execute: scherm_bijwerken
 
   # Volgende (+1) of vorige (-1) pagina; niet rondgaan
   - id: pagina_stap

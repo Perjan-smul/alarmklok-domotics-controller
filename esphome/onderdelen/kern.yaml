@@ -112,6 +112,14 @@ globals:
   - id: nachtstand
     type: bool
     initial_value: "false"
+  # Welk klokontwerp er nu in beeld is (0-7, ook in de nachtstand); alleen dat
+  # ontwerp wordt elke seconde bijgewerkt
+  - id: zichtbaar_ontwerp
+    type: int
+    initial_value: "0"
+  - id: seconde_tonen
+    type: bool
+    initial_value: "false"
   # De plaat van Vierkant staat op zwart voor de nachtklok
   - id: plaat_nacht
     type: bool
@@ -242,6 +250,18 @@ select:
             - script.execute: ui_synchroniseren
 
   # Swipe omlaag/omhoog op de klok wisselt hiertussen
+  # Secondewijzer op de klok Analoog: elke seconde opnieuw tekenen kost
+  # rekenwerk; standaard alleen 20 s na een aanraking
+  - platform: template
+    id: secondewijzer
+    name: Secondewijzer
+    icon: mdi:timer-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options: [Altijd, Bij aanraken, Uit]
+    initial_option: Bij aanraken
+
   - platform: template
     id: klokontwerp
     name: Klokontwerp
@@ -984,10 +1004,13 @@ script:
           }
           lv_label_set_text(id(lbl_ontwerp_stippen),
                             alarmklok::stippen(id(klokontwerp).active_index().value_or(0), 8, "\n").c_str());
+          id(zichtbaar_ontwerp) = keuze;
           if (keuze == 4)
             id(zon_bijwerken).execute();
           if (keuze == 6)
             id(maan_tekenen).execute();
+      # Het nieuwe ontwerp meteen goed (scherm_bijwerken slaat verborgen ontwerpen over)
+      - script.execute: scherm_bijwerken
 
   # Nachtstand aan of uit: maanscherm met rode tekst, het rode filter, of
   # (Vierkant zwart) geen filter
@@ -1301,6 +1324,15 @@ script:
   - id: scherm_bijwerken
     then:
       - lambda: |-
+          // Alleen een andere tekst zetten: lv_label_set_text meet de tekst
+          // altijd opnieuw op en tekent het label opnieuw, ook als hij gelijk is
+          auto zet = [](lv_obj_t *label, const char *tekst) {
+            if (strcmp(lv_label_get_text(label), tekst) != 0)
+              lv_label_set_text(label, tekst);
+          };
+          // Alleen het zichtbare klokontwerp bijwerken, en alleen als de klok
+          // in beeld is (bij terugkomen werkt pagina_naar hem meteen bij)
+          const int o = id(pag_index) == 0 ? id(zichtbaar_ontwerp) : -1;
           auto nu = id(klok).now();
           std::string tijd = nu.is_valid() ? nu.strftime("%H:%M") : std::string("--:--");
           std::string datum = nu.is_valid()
@@ -1356,43 +1388,56 @@ script:
           }
 
           // Digitaal
-          lv_label_set_text(id(lbl_tijd), tijd.c_str());
-          lv_label_set_text(id(lbl_datum), datum.c_str());
-          lv_label_set_text(id(lbl_temperatuur), temp);
-          lv_label_set_text(id(lbl_wekker_info), wekker);
-          lv_label_set_text(id(lbl_verbinding),
+          if (o == 0) {
+          zet(id(lbl_tijd), tijd.c_str());
+          zet(id(lbl_datum), datum.c_str());
+          zet(id(lbl_temperatuur), temp);
+          zet(id(lbl_wekker_info), wekker);
+          zet(id(lbl_verbinding),
               id(api_verbonden).state ? "" : "Geen verbinding met Home Assistant");
+          }
           // Analoog (de wijzers worden hieronder gezet)
-          lv_label_set_text(id(lbl_a_tijd), tijd.c_str());
-          lv_label_set_text(id(lbl_a_datum), datum.c_str());
-          lv_label_set_text(id(lbl_a_temp), temp);
-          lv_label_set_text(id(lbl_a_wekker), wekker);
+          if (o == 1) {
+          zet(id(lbl_a_tijd), tijd.c_str());
+          zet(id(lbl_a_datum), datum.c_str());
+          zet(id(lbl_a_temp), temp);
+          zet(id(lbl_a_wekker), wekker);
+          }
           // Gestapeld
-          lv_label_set_text(id(lbl_s_uur), tijd.substr(0, 2).c_str());
-          lv_label_set_text(id(lbl_s_min), tijd.substr(3, 2).c_str());
-          lv_label_set_text(id(lbl_s_datum), datum.c_str());
-          lv_label_set_text(id(lbl_s_wekker), wekker);
+          if (o == 2) {
+          zet(id(lbl_s_uur), tijd.substr(0, 2).c_str());
+          zet(id(lbl_s_min), tijd.substr(3, 2).c_str());
+          zet(id(lbl_s_datum), datum.c_str());
+          zet(id(lbl_s_wekker), wekker);
+          }
           // Info
-          lv_label_set_text(id(lbl_i_tijd), tijd.c_str());
-          lv_label_set_text(id(lbl_i_datum), datum.c_str());
-          lv_label_set_text(id(lbl_i_temp), temp[0] ? temp : "--");
-          lv_label_set_text(id(lbl_i_wekker), wekker);
+          if (o == 3) {
+          zet(id(lbl_i_tijd), tijd.c_str());
+          zet(id(lbl_i_datum), datum.c_str());
+          zet(id(lbl_i_temp), temp[0] ? temp : "--");
+          zet(id(lbl_i_wekker), wekker);
           char wakeup[32];
           if (id(wakeup_minuten).state > 0)
             snprintf(wakeup, sizeof(wakeup), "%.0f min vooraf", id(wakeup_minuten).state);
           else
             snprintf(wakeup, sizeof(wakeup), "Uit");
-          lv_label_set_text(id(lbl_i_wakeup), wakeup);
+          zet(id(lbl_i_wakeup), wakeup);
+          }
           // Zon
-          lv_label_set_text(id(lbl_z_tijd), tijd.c_str());
-          lv_label_set_text(id(lbl_z_datum), datum.c_str());
-          lv_label_set_text(id(lbl_z_wekker), wekker);
+          if (o == 4) {
+          zet(id(lbl_z_tijd), tijd.c_str());
+          zet(id(lbl_z_datum), datum.c_str());
+          zet(id(lbl_z_wekker), wekker);
+          }
           // Zwevend
-          lv_label_set_text(id(lbl_f_uur), tijd.substr(0, 2).c_str());
-          lv_label_set_text(id(lbl_f_min), tijd.substr(3, 2).c_str());
-          lv_label_set_text(id(lbl_f_info), wekker);
+          if (o == 5) {
+          zet(id(lbl_f_uur), tijd.substr(0, 2).c_str());
+          zet(id(lbl_f_min), tijd.substr(3, 2).c_str());
+          zet(id(lbl_f_info), wekker);
+          }
           // Maan
-          lv_label_set_text(id(lbl_m_tijd), tijd.c_str());
+          if (o == 6) {
+          zet(id(lbl_m_tijd), tijd.c_str());
           {
             // Binnen (thermostaat) en buiten, rechtsboven
             char binnen[24] = "", buiten[24] = "";
@@ -1404,34 +1449,47 @@ script:
             if (binnen[0] && buiten[0])
               temps += "\n";
             temps += buiten;
-            lv_label_set_text(id(lbl_m_temp), temps.c_str());
+            zet(id(lbl_m_temp), temps.c_str());
           }
-          lv_label_set_text(id(lbl_m_wekker), wekker);
+          zet(id(lbl_m_wekker), wekker);
+          }
           // Vierkant: korte datum ("DONDERDAG 22") en de wekker
+          if (o == 7) {
           {
             std::string kort = datum.substr(0, datum.rfind(' '));
             for (auto &c : kort)
               c = toupper((unsigned char) c);
-            lv_label_set_text(id(lbl_v_datum), kort.c_str());
-            lv_label_set_text(id(lbl_v_wekker), wekker);
+            zet(id(lbl_v_datum), kort.c_str());
+            zet(id(lbl_v_wekker), wekker);
             // Buiten en binnen, zonder tekst (weericoon en huisje ervoor)
             char t[12];
             if (std::isnan(id(buitentemperatuur).state))
               snprintf(t, sizeof(t), "--");
             else
               snprintf(t, sizeof(t), "%.0f\u00B0", id(buitentemperatuur).state);
-            lv_label_set_text(id(lbl_v_buiten), t);
+            zet(id(lbl_v_buiten), t);
             if (std::isnan(id(klimaat_huidig).state))
               snprintf(t, sizeof(t), "--");
             else
               snprintf(t, sizeof(t), "%.0f\u00B0", id(klimaat_huidig).state);
-            lv_label_set_text(id(lbl_v_binnen), t);
+            zet(id(lbl_v_binnen), t);
+          }
           }
           // Wekker gaat af
-          lv_label_set_text(id(lbl_tijd_alarm), tijd.c_str());
+          zet(id(lbl_tijd_alarm), tijd.c_str());
+      # Analoog: wijzers; de secondewijzer volgens de instelling "Secondewijzer"
+      - lambda: |-
+          const std::string keuze = id(secondewijzer).current_option().str();
+          const bool tonen = keuze == "Altijd" ||
+              (keuze == "Bij aanraken" && millis() - id(laatste_aanraking_ms) < 20000);
+          if (tonen)
+            lv_obj_clear_flag(id(wijzer_seconde)->obj, LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_add_flag(id(wijzer_seconde)->obj, LV_OBJ_FLAG_HIDDEN);
+          id(seconde_tonen) = tonen;
       - if:
           condition:
-            lambda: return id(klok).now().is_valid();
+            lambda: return id(klok).now().is_valid() && id(pag_index) == 0 && id(zichtbaar_ontwerp) == 1;
           then:
             - lvgl.indicator.update:
                 id: wijzer_uur
@@ -1441,9 +1499,17 @@ script:
             - lvgl.indicator.update:
                 id: wijzer_minuut
                 value: !lambda return id(klok).now().minute;
-            - lvgl.indicator.update:
-                id: wijzer_seconde
-                value: !lambda return id(klok).now().second;
+            - if:
+                condition:
+                  lambda: return id(seconde_tonen);
+                then:
+                  - lvgl.indicator.update:
+                      id: wijzer_seconde
+                      value: !lambda return id(klok).now().second;
+      - if:
+          condition:
+            lambda: return id(klok).now().is_valid() && id(pag_index) == 0 && id(zichtbaar_ontwerp) == 7;
+          then:
             # Vierkant: wijzers (beelden) draaien, in tienden van graden; per minuut
             - lambda: |-
                 auto nu = id(klok).now();

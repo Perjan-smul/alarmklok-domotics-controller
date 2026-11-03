@@ -63,6 +63,7 @@ def maak(friendly, camera):
     uiterlijk = [
         (e("select", "Kleurthema"), None), (e("select", "Accentkleur"), None), (e("select", "Klokontwerp"), None),
         (e("select", "Klokkleur"), None), (e("select", "Wijzerplaat"), None), (e("select", "Nachtklok"), None),
+        (e("select", "Secondewijzer"), None),
     ]
     ontwerpen = [(e("switch", f"Klokontwerp {o}"), o) for o in
                  ("Digitaal", "Analoog", "Gestapeld", "Info", "Zon", "Zwevend", "Maan", "Vierkant")]
