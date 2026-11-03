@@ -3,6 +3,16 @@
 #  (thermostaat, rolluik, mediaspeler en de dimlamp)
 # =============================================================================
 
+# Bij het opstarten: welke entiteiten de bedieningspagina's gebruiken (zo zie je
+# in het log of je substitutions zijn overgenomen)
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - logger.log:
+            level: INFO
+            format: "Entiteiten: thermostaat ${thermostaat}, rolluik ${rolluik}, mediaspeler ${mediaspeler}, dimlamp ${dim_lamp}"
+
 sensor:
   # Helderheid (0-255) van de dimlamp; NaN als de lamp uit staat
   - platform: homeassistant

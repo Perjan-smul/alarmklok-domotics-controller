@@ -1018,6 +1018,9 @@ lvgl:
                                   data:
                                     entity_id: ${thermostaat}
                                     temperature: !lambda |-
+                                      if (std::isnan(id(klimaat_doel).state))
+                                        ESP_LOGW("klimaat", "Thermostaat ${thermostaat} geeft geen doeltemperatuur "
+                                                 "(attribuut 'temperature'): klopt de entiteit?");
                                       char buf[8];
                                       snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state - 0.5f);
                                       return std::string(buf);
@@ -1036,6 +1039,9 @@ lvgl:
                                   data:
                                     entity_id: ${thermostaat}
                                     temperature: !lambda |-
+                                      if (std::isnan(id(klimaat_doel).state))
+                                        ESP_LOGW("klimaat", "Thermostaat ${thermostaat} geeft geen doeltemperatuur "
+                                                 "(attribuut 'temperature'): klopt de entiteit?");
                                       char buf[8];
                                       snprintf(buf, sizeof(buf), "%.1f", id(klimaat_doel).state + 0.5f);
                                       return std::string(buf);
