@@ -74,12 +74,11 @@ script:
       kolom: int
       naam: string
     then:
-      - lvgl.tileview.select:
-          id: tv_hoofd
-          row: 0
-          column: !lambda return kolom;
-          animated: false
-      - script.execute: pagina_indicator_bijwerken
+      # Standaardvolgorde: Klok, Verlichting, Klimaat, Muziek, Scènes, Wekker
+      - script.execute:
+          id: pagina_naar
+          doel: !lambda return kolom;
+          animatie: false
       - script.execute:
           id: afdruk
           naam: !lambda return naam;
@@ -88,6 +87,9 @@ script:
   - id: demo
     then:
       - delay: 2s
+      # De demo speelt 's avonds (21:15): nachtstand alleen in het venster
+      # 22:30-07:00, niet al vanaf zonsondergang
+      - switch.turn_off: nacht_na_zonsondergang
       # Voorbeelddata zoals Home Assistant die zou sturen
       - lambda: |-
           id(buitentemperatuur).publish_state(8.4f);
@@ -168,11 +170,32 @@ script:
       - script.wait: pagina_afdruk
 
       # ---- Detailpagina (lang drukken op de eerste tegel) ----
-      - lvgl.tileview.select: {id: tv_hoofd, row: 0, column: 1, animated: false}
+      - script.execute: {id: pagina_naar, doel: 1, animatie: false}
       - script.execute: tegel_licht_1_detail
       - script.execute: {id: afdruk, naam: 15-detail}
       - script.wait: afdruk
       - script.execute: detail_sluiten
+
+      # ---- Instelbaar: 9 tegels en het thema Blauw ----
+      - lambda: |-
+          // Zonder herstart (ui_klaar uit): drie extra tegels voor de afdruk
+          id(ui_klaar) = false;
+          const char *naam[3] = {"Bureau", "Kast", "Buiten"};
+          const char *ent[3] = {"light.bureau", "light.kast", "light.buiten"};
+          text::Text *namen[3] = {id(tegel_licht_7_naam), id(tegel_licht_8_naam), id(tegel_licht_9_naam)};
+          text::Text *ents[3] = {id(tegel_licht_7_entiteit), id(tegel_licht_8_entiteit), id(tegel_licht_9_entiteit)};
+          for (int i = 0; i < 3; i++) {
+            namen[i]->publish_state(naam[i]);
+            ents[i]->publish_state(ent[i]);
+          }
+          id(tegel_licht_7_status) = "on";
+          id(ui_klaar) = true;
+      - select.set: {id: indeling_verlichting, option: 9 tegels}
+      - select.set: {id: kleurthema, option: Blauw}
+      - script.execute: {id: pagina_afdruk, kolom: 1, naam: 17-verlichting-9-tegels-blauw}
+      - script.wait: pagina_afdruk
+      - select.set: {id: indeling_verlichting, option: 6 tegels}
+      - select.set: {id: kleurthema, option: Donker}
 
       # ---- Melding van HA: batterij bijna leeg ----
       - script.execute: naar_klokscherm

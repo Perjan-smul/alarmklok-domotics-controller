@@ -37,6 +37,11 @@ esp32:
       CONFIG_ESP_HOSTED_DFLT_TASK_FROM_SPIRAM: "y"
       CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"
 
+substitutions:
+  # Camerapagina (camera.yaml) en swipe-animatie standaard aan (in HA te wijzigen)
+  heeft_camera: "true"
+  swipe_animatie: RESTORE_DEFAULT_ON
+
 psram:
   mode: hex
   speed: 200MHz

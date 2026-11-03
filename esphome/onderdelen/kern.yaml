@@ -15,18 +15,26 @@ packages:
   wekker_1: !include { file: wekker.yaml, vars: { nr: 1, tijd: "07:00:00", aan: RESTORE_DEFAULT_ON, dagen: Werkdagen } }
   wekker_2: !include { file: wekker.yaml, vars: { nr: 2, tijd: "08:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Weekend } }
   wekker_3: !include { file: wekker.yaml, vars: { nr: 3, tijd: "06:30:00", aan: RESTORE_DEFAULT_OFF, dagen: Eenmalig } }
-  tegel_licht_1: !include { file: tegel-instellingen.yaml, vars: { nr: licht_1, titel: "Tegel verlichting 1", naam: "${licht_1_naam}", entity: "${licht_1_entity}", icoon: "${licht_1_icoon}", schakelaar: "true" } }
-  tegel_licht_2: !include { file: tegel-instellingen.yaml, vars: { nr: licht_2, titel: "Tegel verlichting 2", naam: "${licht_2_naam}", entity: "${licht_2_entity}", icoon: "${licht_2_icoon}", schakelaar: "true" } }
-  tegel_licht_3: !include { file: tegel-instellingen.yaml, vars: { nr: licht_3, titel: "Tegel verlichting 3", naam: "${licht_3_naam}", entity: "${licht_3_entity}", icoon: "${licht_3_icoon}", schakelaar: "true" } }
-  tegel_licht_4: !include { file: tegel-instellingen.yaml, vars: { nr: licht_4, titel: "Tegel verlichting 4", naam: "${licht_4_naam}", entity: "${licht_4_entity}", icoon: "${licht_4_icoon}", schakelaar: "true" } }
-  tegel_licht_5: !include { file: tegel-instellingen.yaml, vars: { nr: licht_5, titel: "Tegel verlichting 5", naam: "${licht_5_naam}", entity: "${licht_5_entity}", icoon: "${licht_5_icoon}", schakelaar: "true" } }
-  tegel_licht_6: !include { file: tegel-instellingen.yaml, vars: { nr: licht_6, titel: "Tegel verlichting 6", naam: "${licht_6_naam}", entity: "${licht_6_entity}", icoon: "${licht_6_icoon}", schakelaar: "true" } }
-  tegel_scene_1: !include { file: tegel-instellingen.yaml, vars: { nr: scene_1, titel: "Tegel scène 1", naam: "${scene_1_naam}", entity: "${scene_1_entity}", icoon: "${scene_1_icoon}", schakelaar: "false" } }
-  tegel_scene_2: !include { file: tegel-instellingen.yaml, vars: { nr: scene_2, titel: "Tegel scène 2", naam: "${scene_2_naam}", entity: "${scene_2_entity}", icoon: "${scene_2_icoon}", schakelaar: "false" } }
-  tegel_scene_3: !include { file: tegel-instellingen.yaml, vars: { nr: scene_3, titel: "Tegel scène 3", naam: "${scene_3_naam}", entity: "${scene_3_entity}", icoon: "${scene_3_icoon}", schakelaar: "false" } }
-  tegel_scene_4: !include { file: tegel-instellingen.yaml, vars: { nr: scene_4, titel: "Tegel scène 4", naam: "${scene_4_naam}", entity: "${scene_4_entity}", icoon: "${scene_4_icoon}", schakelaar: "false" } }
-  tegel_scene_5: !include { file: tegel-instellingen.yaml, vars: { nr: scene_5, titel: "Tegel scène 5", naam: "${scene_5_naam}", entity: "${scene_5_entity}", icoon: "${scene_5_icoon}", schakelaar: "false" } }
-  tegel_scene_6: !include { file: tegel-instellingen.yaml, vars: { nr: scene_6, titel: "Tegel scène 6", naam: "${scene_6_naam}", entity: "${scene_6_entity}", icoon: "${scene_6_icoon}", schakelaar: "false" } }
+  # Instelbare pagina's: volgorde, indeling, thema, klokontwerpen, swipen
+  paginas: !include paginas.yaml
+  tegel_licht_1: !include { file: tegel-instellingen.yaml, vars: { nr: licht_1, titel: "Tegel verlichting 1", naam: "${licht_1_naam}", entity: "${licht_1_entity}", icoon: "${licht_1_icoon}", index: 1, aantal: aantal_verlichting } }
+  tegel_licht_2: !include { file: tegel-instellingen.yaml, vars: { nr: licht_2, titel: "Tegel verlichting 2", naam: "${licht_2_naam}", entity: "${licht_2_entity}", icoon: "${licht_2_icoon}", index: 2, aantal: aantal_verlichting } }
+  tegel_licht_3: !include { file: tegel-instellingen.yaml, vars: { nr: licht_3, titel: "Tegel verlichting 3", naam: "${licht_3_naam}", entity: "${licht_3_entity}", icoon: "${licht_3_icoon}", index: 3, aantal: aantal_verlichting } }
+  tegel_licht_4: !include { file: tegel-instellingen.yaml, vars: { nr: licht_4, titel: "Tegel verlichting 4", naam: "${licht_4_naam}", entity: "${licht_4_entity}", icoon: "${licht_4_icoon}", index: 4, aantal: aantal_verlichting } }
+  tegel_licht_5: !include { file: tegel-instellingen.yaml, vars: { nr: licht_5, titel: "Tegel verlichting 5", naam: "${licht_5_naam}", entity: "${licht_5_entity}", icoon: "${licht_5_icoon}", index: 5, aantal: aantal_verlichting } }
+  tegel_licht_6: !include { file: tegel-instellingen.yaml, vars: { nr: licht_6, titel: "Tegel verlichting 6", naam: "${licht_6_naam}", entity: "${licht_6_entity}", icoon: "${licht_6_icoon}", index: 6, aantal: aantal_verlichting } }
+  tegel_licht_7: !include { file: tegel-instellingen.yaml, vars: { nr: licht_7, titel: "Tegel verlichting 7", naam: "${licht_7_naam}", entity: "${licht_7_entity}", icoon: "${licht_7_icoon}", index: 7, aantal: aantal_verlichting } }
+  tegel_licht_8: !include { file: tegel-instellingen.yaml, vars: { nr: licht_8, titel: "Tegel verlichting 8", naam: "${licht_8_naam}", entity: "${licht_8_entity}", icoon: "${licht_8_icoon}", index: 8, aantal: aantal_verlichting } }
+  tegel_licht_9: !include { file: tegel-instellingen.yaml, vars: { nr: licht_9, titel: "Tegel verlichting 9", naam: "${licht_9_naam}", entity: "${licht_9_entity}", icoon: "${licht_9_icoon}", index: 9, aantal: aantal_verlichting } }
+  tegel_scene_1: !include { file: tegel-instellingen.yaml, vars: { nr: scene_1, titel: "Tegel scène 1", naam: "${scene_1_naam}", entity: "${scene_1_entity}", icoon: "${scene_1_icoon}", index: 1, aantal: aantal_scenes } }
+  tegel_scene_2: !include { file: tegel-instellingen.yaml, vars: { nr: scene_2, titel: "Tegel scène 2", naam: "${scene_2_naam}", entity: "${scene_2_entity}", icoon: "${scene_2_icoon}", index: 2, aantal: aantal_scenes } }
+  tegel_scene_3: !include { file: tegel-instellingen.yaml, vars: { nr: scene_3, titel: "Tegel scène 3", naam: "${scene_3_naam}", entity: "${scene_3_entity}", icoon: "${scene_3_icoon}", index: 3, aantal: aantal_scenes } }
+  tegel_scene_4: !include { file: tegel-instellingen.yaml, vars: { nr: scene_4, titel: "Tegel scène 4", naam: "${scene_4_naam}", entity: "${scene_4_entity}", icoon: "${scene_4_icoon}", index: 4, aantal: aantal_scenes } }
+  tegel_scene_5: !include { file: tegel-instellingen.yaml, vars: { nr: scene_5, titel: "Tegel scène 5", naam: "${scene_5_naam}", entity: "${scene_5_entity}", icoon: "${scene_5_icoon}", index: 5, aantal: aantal_scenes } }
+  tegel_scene_6: !include { file: tegel-instellingen.yaml, vars: { nr: scene_6, titel: "Tegel scène 6", naam: "${scene_6_naam}", entity: "${scene_6_entity}", icoon: "${scene_6_icoon}", index: 6, aantal: aantal_scenes } }
+  tegel_scene_7: !include { file: tegel-instellingen.yaml, vars: { nr: scene_7, titel: "Tegel scène 7", naam: "${scene_7_naam}", entity: "${scene_7_entity}", icoon: "${scene_7_icoon}", index: 7, aantal: aantal_scenes } }
+  tegel_scene_8: !include { file: tegel-instellingen.yaml, vars: { nr: scene_8, titel: "Tegel scène 8", naam: "${scene_8_naam}", entity: "${scene_8_entity}", icoon: "${scene_8_icoon}", index: 8, aantal: aantal_scenes } }
+  tegel_scene_9: !include { file: tegel-instellingen.yaml, vars: { nr: scene_9, titel: "Tegel scène 9", naam: "${scene_9_naam}", entity: "${scene_9_entity}", icoon: "${scene_9_icoon}", index: 9, aantal: aantal_scenes } }
 
 esphome:
   name: ${name}
@@ -821,12 +829,10 @@ script:
       - lvgl.page.show:
           id: pagina_hoofd
           animation: NONE
-      - lvgl.tileview.select:
-          id: tv_hoofd
-          row: 0
-          column: 0
-          animated: true
-      - script.execute: pagina_indicator_bijwerken
+      - script.execute:
+          id: pagina_naar
+          doel: 0
+          animatie: false
 
   # ---------------------------------------------------------------------------
   #  Tegels: naam, entiteit en icoon komen uit Home Assistant
@@ -840,12 +846,18 @@ script:
       - script.execute: tegel_licht_4_volgen
       - script.execute: tegel_licht_5_volgen
       - script.execute: tegel_licht_6_volgen
+      - script.execute: tegel_licht_7_volgen
+      - script.execute: tegel_licht_8_volgen
+      - script.execute: tegel_licht_9_volgen
       - script.execute: tegel_scene_1_volgen
       - script.execute: tegel_scene_2_volgen
       - script.execute: tegel_scene_3_volgen
       - script.execute: tegel_scene_4_volgen
       - script.execute: tegel_scene_5_volgen
       - script.execute: tegel_scene_6_volgen
+      - script.execute: tegel_scene_7_volgen
+      - script.execute: tegel_scene_8_volgen
+      - script.execute: tegel_scene_9_volgen
       - script.execute: lichtsensor_volgen
 
   - id: lichtsensor_volgen
@@ -871,12 +883,18 @@ script:
       - script.execute: tegel_licht_4_tonen
       - script.execute: tegel_licht_5_tonen
       - script.execute: tegel_licht_6_tonen
+      - script.execute: tegel_licht_7_tonen
+      - script.execute: tegel_licht_8_tonen
+      - script.execute: tegel_licht_9_tonen
       - script.execute: tegel_scene_1_tonen
       - script.execute: tegel_scene_2_tonen
       - script.execute: tegel_scene_3_tonen
       - script.execute: tegel_scene_4_tonen
       - script.execute: tegel_scene_5_tonen
       - script.execute: tegel_scene_6_tonen
+      - script.execute: tegel_scene_7_tonen
+      - script.execute: tegel_scene_8_tonen
+      - script.execute: tegel_scene_9_tonen
 
   # Een nieuwe entiteit achter een tegel wordt pas gevolgd na een herstart:
   # Home Assistant vraagt de gevolgde entiteiten alleen op bij het verbinden.
@@ -1280,18 +1298,6 @@ script:
           lv_obj_set_style_shadow_color(id(zon_bol), lv_color_hex(dag ? 0xFFB347 : 0x8FA3C8), 0);
 
   # Stippen onderaan: op welke pagina ben je?
-  - id: pagina_indicator_bijwerken
-    then:
-      - lvgl.label.update:
-          id: pagina_indicator
-          text: !lambda |-
-            auto *tile = lv_tileview_get_tile_active(id(tv_hoofd));
-            int index = tile == nullptr ? 0 : lv_obj_get_x(tile) / lv_obj_get_width(id(tv_hoofd));
-            return alarmklok::stippen(index, 6, "");
-
-  # ---------------------------------------------------------------------------
-  #  Scherm
-  # ---------------------------------------------------------------------------
   - id: scherm_bijwerken
     then:
       - lambda: |-

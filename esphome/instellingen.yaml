@@ -57,6 +57,16 @@ substitutions:
   licht_6_naam: Alle lampen
   licht_6_entity: light.alle_lampen
   licht_6_icoon: lightbulb-group
+  # Tegels 7-9: alleen bij de indeling "9 tegels" (in HA); leeg = geen tegel
+  licht_7_naam: ""
+  licht_7_entity: ""
+  licht_7_icoon: lightbulb
+  licht_8_naam: ""
+  licht_8_entity: ""
+  licht_8_icoon: lightbulb
+  licht_9_naam: ""
+  licht_9_entity: ""
+  licht_9_icoon: lightbulb
 
   # ---- Pagina "Klimaat & rolluik" -------------------------------------------
   thermostaat: climate.slaapkamer
@@ -74,6 +84,13 @@ substitutions:
   radio_2_url: https://icecast.omroep.nl/3fm-bb-mp3
   radio_3_naam: Radio 538
   radio_3_url: https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3
+
+  # ---- Pagina "Camera" (alleen 7" en 4B) -------------------------------------
+  # Camera en deurbel zijn later aan te passen in HA. ha_url: waar de klok Home
+  # Assistant bereikt (voor het camerabeeld).
+  camera_entiteit: ""
+  deurbel_entiteit: ""
+  ha_url: http://homeassistant.local:8123
 
   # ---- Pagina "Scènes": 6 knoppen ---------------------------------------------
   # Een tik doet "homeassistant.turn_on" (scene, script, automation, ...).
@@ -95,3 +112,13 @@ substitutions:
   scene_6_naam: Alles uit
   scene_6_entity: script.alles_uit
   scene_6_icoon: lightning-bolt
+  # Tegels 7-9: alleen bij de indeling "9 tegels" (in HA); leeg = geen tegel
+  scene_7_naam: ""
+  scene_7_entity: ""
+  scene_7_icoon: home
+  scene_8_naam: ""
+  scene_8_entity: ""
+  scene_8_icoon: home
+  scene_9_naam: ""
+  scene_9_entity: ""
+  scene_9_icoon: home

@@ -1,0 +1,323 @@
+# Dashboard voor de instellingen van 'Alarmklok 4 inch' (gemaakt met tools/dashboard.py)
+title: Alarmklok 4 inch
+views:
+  - title: Klok
+    path: klok
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: entities
+            title: Wekkers
+            entities:
+              - entity: switch.alarmklok_4_inch_wekker_1_aan
+                name: Wekker 1
+              - entity: time.alarmklok_4_inch_wekker_1_tijd
+                name: Tijd
+              - entity: select.alarmklok_4_inch_wekker_1_dagen
+                name: Dagen
+              - entity: switch.alarmklok_4_inch_wekker_2_aan
+                name: Wekker 2
+              - entity: time.alarmklok_4_inch_wekker_2_tijd
+                name: Tijd
+              - entity: select.alarmklok_4_inch_wekker_2_dagen
+                name: Dagen
+              - entity: switch.alarmklok_4_inch_wekker_3_aan
+                name: Wekker 3
+              - entity: time.alarmklok_4_inch_wekker_3_tijd
+                name: Tijd
+              - entity: select.alarmklok_4_inch_wekker_3_dagen
+                name: Dagen
+      - type: grid
+        cards:
+          - type: entities
+            title: Wekker-opties
+            entities:
+              - entity: switch.alarmklok_4_inch_volgende_wekker_overslaan
+              - entity: switch.alarmklok_4_inch_niet_op_feestdagen
+              - entity: number.alarmklok_4_inch_snooze_duur
+              - entity: number.alarmklok_4_inch_wake_up_light_vooraf
+              - entity: select.alarmklok_4_inch_wekgeluid
+              - entity: number.alarmklok_4_inch_wekvolume
+              - entity: number.alarmklok_4_inch_wekgeluid_oplopen
+              - entity: button.alarmklok_4_inch_wekker_testen
+              - entity: sensor.alarmklok_4_inch_volgende_wekker
+          - type: entities
+            title: Nachtstand
+            entities:
+              - entity: switch.alarmklok_4_inch_nachtstand_vanaf_zonsondergang
+              - entity: time.alarmklok_4_inch_nachtstand_vanaf
+              - entity: time.alarmklok_4_inch_nachtstand_tot
+              - entity: switch.alarmklok_4_inch_nachtstand_bij_weinig_licht
+              - entity: number.alarmklok_4_inch_nachtstand_onder
+              - entity: text.alarmklok_4_inch_lichtsensor
+              - entity: number.alarmklok_4_inch_helderheid_overdag
+              - entity: number.alarmklok_4_inch_helderheid_s_nachts
+              - entity: light.alarmklok_4_inch_schermhelderheid
+      - type: grid
+        cards:
+          - type: entities
+            title: Pagina's (swipen links/rechts)
+            entities:
+              - entity: select.alarmklok_4_inch_pagina_1
+              - entity: select.alarmklok_4_inch_pagina_2
+              - entity: select.alarmklok_4_inch_pagina_3
+              - entity: select.alarmklok_4_inch_pagina_4
+              - entity: select.alarmklok_4_inch_pagina_5
+              - entity: select.alarmklok_4_inch_pagina_6
+              - entity: switch.alarmklok_4_inch_swipe_animatie
+              - entity: select.alarmklok_4_inch_indeling_verlichting
+              - entity: select.alarmklok_4_inch_indeling_scenes
+                name: Indeling scènes
+          - type: entities
+            title: Uiterlijk
+            entities:
+              - entity: select.alarmklok_4_inch_kleurthema
+              - entity: select.alarmklok_4_inch_accentkleur
+              - entity: select.alarmklok_4_inch_klokontwerp
+              - entity: select.alarmklok_4_inch_klokkleur
+              - entity: select.alarmklok_4_inch_wijzerplaat
+              - entity: select.alarmklok_4_inch_nachtklok
+          - type: entities
+            title: Klokontwerpen bij omhoog/omlaag swipen
+            entities:
+              - entity: switch.alarmklok_4_inch_klokontwerp_digitaal
+                name: Digitaal
+              - entity: switch.alarmklok_4_inch_klokontwerp_analoog
+                name: Analoog
+              - entity: switch.alarmklok_4_inch_klokontwerp_gestapeld
+                name: Gestapeld
+              - entity: switch.alarmklok_4_inch_klokontwerp_info
+                name: Info
+              - entity: switch.alarmklok_4_inch_klokontwerp_zon
+                name: Zon
+              - entity: switch.alarmklok_4_inch_klokontwerp_zwevend
+                name: Zwevend
+              - entity: switch.alarmklok_4_inch_klokontwerp_maan
+                name: Maan
+              - entity: switch.alarmklok_4_inch_klokontwerp_vierkant
+                name: Vierkant
+      - type: grid
+        cards:
+          - type: entities
+            title: Bediening (Klimaat, Muziek, dimmer)
+            entities:
+              - entity: text.alarmklok_4_inch_thermostaat
+              - entity: text.alarmklok_4_inch_rolluik
+              - entity: text.alarmklok_4_inch_rolluik_batterij
+              - entity: text.alarmklok_4_inch_mediaspeler
+              - entity: text.alarmklok_4_inch_dimlamp
+              - entity: text.alarmklok_4_inch_dimlamp_naam
+  - title: Verlichting
+    path: verlichting
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: entities
+            title: Tegel 1
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_1_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_1_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_1_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_1_soort
+                name: Soort
+          - type: entities
+            title: Tegel 2
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_2_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_2_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_2_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_2_soort
+                name: Soort
+          - type: entities
+            title: Tegel 3
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_3_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_3_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_3_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_3_soort
+                name: Soort
+          - type: entities
+            title: Tegel 4
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_4_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_4_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_4_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_4_soort
+                name: Soort
+          - type: entities
+            title: Tegel 5
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_5_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_5_soort
+                name: Soort
+          - type: entities
+            title: Tegel 6
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_6_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_6_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_6_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_6_soort
+                name: Soort
+          - type: entities
+            title: Tegel 7
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_7_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_7_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_7_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_7_soort
+                name: Soort
+          - type: entities
+            title: Tegel 8
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_8_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_8_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_8_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_8_soort
+                name: Soort
+          - type: entities
+            title: Tegel 9
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_verlichting_9_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_verlichting_9_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_verlichting_9_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_verlichting_9_soort
+                name: Soort
+  - title: Scènes
+    path: scenes
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: entities
+            title: Scène 1
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_1_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_1_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_1_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_1_soort
+                name: Soort
+          - type: entities
+            title: Scène 2
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_2_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_2_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_2_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_2_soort
+                name: Soort
+          - type: entities
+            title: Scène 3
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_3_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_3_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_3_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_3_soort
+                name: Soort
+          - type: entities
+            title: Scène 4
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_4_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_4_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_4_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_4_soort
+                name: Soort
+          - type: entities
+            title: Scène 5
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_5_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_5_soort
+                name: Soort
+          - type: entities
+            title: Scène 6
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_6_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_6_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_6_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_6_soort
+                name: Soort
+          - type: entities
+            title: Scène 7
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_7_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_7_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_7_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_7_soort
+                name: Soort
+          - type: entities
+            title: Scène 8
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_8_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_8_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_8_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_8_soort
+                name: Soort
+          - type: entities
+            title: Scène 9
+            entities:
+              - entity: text.alarmklok_4_inch_tegel_scene_9_naam
+                name: Naam
+              - entity: text.alarmklok_4_inch_tegel_scene_9_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4_inch_tegel_scene_9_icoon
+                name: Icoon
+              - entity: select.alarmklok_4_inch_tegel_scene_9_soort
+                name: Soort
