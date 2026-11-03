@@ -71,7 +71,8 @@ toont oudere ontwerpweergaven van de 7".
 Verder:
 
 - **Nachtstand** ([screenshot](docs/screenshots/11-nachtstand.png)):
-  tussen twee instelbare tijden, en desgewenst ook als het donker is in de
+  vanaf zonsondergang (schakelaar *Nachtstand vanaf zonsondergang*, standaard
+  aan; uit = vanaf *Nachtstand vanaf*) tot *Nachtstand tot*, en desgewenst ook als het donker is in de
   kamer (lichtsensor uit Home Assistant), wordt het scherm gedimd en kleurt
   een rood filter álles rood: cijfers, wijzers, iconen en de lucht van het
   ontwerp Zon, zoals de nachtstand van StandBy. De eerste tik wekt alleen het

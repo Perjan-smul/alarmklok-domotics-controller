@@ -486,6 +486,16 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
 
+  # Nachtstand vanaf zonsondergang (in plaats van "Nachtstand vanaf") tot
+  # "Nachtstand tot"; zonsondergang voor de plaats in instellingen.yaml
+  - platform: template
+    id: nacht_na_zonsondergang
+    name: Nachtstand vanaf zonsondergang
+    icon: mdi:weather-sunset-down
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
   # Nachtstand ook bij weinig licht (alleen met een lichtsensor, zie hierboven)
   - platform: template
     id: nacht_op_licht
@@ -1002,15 +1012,24 @@ script:
   - id: klok_verschuiven
     then:
       - lambda: |-
+          // Ook het klokvlak en alles erin niet: anders is een veeg omhoog/omlaag
+          // een paar pixels scrollen (Vierkant is groter dan het scherm) in
+          // plaats van een swipe naar een ander klokontwerp
+          std::function<void(lv_obj_t *)> niet_scrollen = [&](lv_obj_t *o) {
+            lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+            for (uint32_t i = 0; i < lv_obj_get_child_count(o); i++)
+              niet_scrollen(lv_obj_get_child(o, i));
+          };
+          niet_scrollen(id(klok_vlak));
+          // Het verschoven vlak steekt een paar pixels uit: de tegel ook niet laten scrollen
+          lv_obj_t *tegel = lv_obj_get_parent(id(klok_vlak));
+          lv_obj_remove_flag(tegel, LV_OBJ_FLAG_SCROLLABLE);
+          lv_obj_set_scrollbar_mode(tegel, LV_SCROLLBAR_MODE_OFF);
           auto nu = id(klok).now();
           if (!nu.is_valid())
             return;
           int dx, dy;
           alarmklok::verschuiving(nu.day_of_year, (int) (8 * ${k}), dx, dy);
-          // Het verschoven vlak steekt een paar pixels uit: niet laten scrollen
-          lv_obj_t *tegel = lv_obj_get_parent(id(klok_vlak));
-          lv_obj_remove_flag(tegel, LV_OBJ_FLAG_SCROLLABLE);
-          lv_obj_set_scrollbar_mode(tegel, LV_SCROLLBAR_MODE_OFF);
           // De wijzerplaat van "Vierkant" is groter dan het scherm en mag
           // buiten het verschoven vlak doorlopen (geen zwarte rand)
           lv_obj_add_flag(id(klok_vlak), LV_OBJ_FLAG_OVERFLOW_VISIBLE);
@@ -1502,8 +1521,14 @@ script:
           auto nu = id(klok).now();
           bool nacht = false;
           if (nu.is_valid()) {
-            nacht = alarmklok::in_venster(nu.hour * 60 + nu.minute,
-                id(nacht_vanaf).hour * 60 + id(nacht_vanaf).minute,
+            int vanaf = id(nacht_vanaf).hour * 60 + id(nacht_vanaf).minute;
+            // Vanaf zonsondergang: de ondergang van vandaag (zon 0,833° onder de horizon)
+            if (id(nacht_na_zonsondergang).state) {
+              auto ondergang = id(zon).sunset(-0.833);
+              if (ondergang.has_value())
+                vanaf = ondergang->hour * 60 + ondergang->minute;
+            }
+            nacht = alarmklok::in_venster(nu.hour * 60 + nu.minute, vanaf,
                 id(nacht_tot).hour * 60 + id(nacht_tot).minute);
           }
           id(licht_donker) = alarmklok::donker(id(licht_lux), id(nacht_lux).state, id(licht_donker));
