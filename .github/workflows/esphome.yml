@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  ESPHOME_VERSION: "2026.10.0"
+  ESPHOME_VERSION: "2026.10.2"
 
 jobs:
   test:
@@ -33,6 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        id: python
         with:
           python-version: "3.12"
       - name: ESPHome installeren
@@ -53,15 +54,24 @@ jobs:
             ~/.platformio
             ~/.cache/pip
             esphome/.esphome
-          key: esphome-${{ env.ESPHOME_VERSION }}-${{ matrix.klok }}-${{ hashFiles('esphome/**/*.yaml', 'esphome/**/*.h') }}
+          # Met de precieze Python-versie: de build onthoudt het pad naar ninja
+          # in die Python-map; na een nieuwe Python op de runner faalt CMake
+          # anders met "ninja --version: no such file or directory"
+          key: esphome-${{ env.ESPHOME_VERSION }}-py${{ steps.python.outputs.python-version }}-${{ matrix.klok }}-${{ hashFiles('esphome/**/*.yaml', 'esphome/**/*.h') }}
           restore-keys: |
-            esphome-${{ env.ESPHOME_VERSION }}-${{ matrix.klok }}-
+            esphome-${{ env.ESPHOME_VERSION }}-py${{ steps.python.outputs.python-version }}-${{ matrix.klok }}-
       - name: Configuratie controleren
         working-directory: esphome
         run: esphome config ${{ matrix.klok }}.yaml > /dev/null
       - name: Compileren
         working-directory: esphome
-        run: esphome compile ${{ matrix.klok }}.yaml
+        # Lukt het niet met de build uit de cache, dan nog één keer schoon
+        run: |
+          esphome compile ${{ matrix.klok }}.yaml || {
+            echo "::warning::Build uit de cache mislukt, opnieuw zonder cache"
+            esphome clean ${{ matrix.klok }}.yaml
+            esphome compile ${{ matrix.klok }}.yaml
+          }
 
   afdrukken:
     name: Schermafdrukken 4" (computer-build)
