@@ -46,8 +46,8 @@ Alle maten van het bord komen uit het 3D-model en de maattekening van Waveshare
 (wiki ESP32-S3-Touch-LCD-4). Glas 84,2 × 84,2 × 0,7 mm, totale diepte 15 mm, afstandsbussen M2,5
 op 66,5 × 68,5 mm, USB-C midden 31,4 mm boven de onderrand van het glas.
 
-Aanpassen kan in `case.py` (bovenaan staan alle maten, o.a. `PLUG_LEN`/`PLUG_W` voor de
-stekkerkop en `TILT` voor de hoek). Opnieuw genereren:
+Aanpassen kan in `case.py`: bovenaan staan alle maten, o.a. `PLUG_LEN`, `PLUG_T`,
+`PLUG_DOWN` en `CABLE_D` voor de stekker en kabel, en `TILT` voor de hoek. Opnieuw genereren:
 
 ```bash
 pip install cadquery
