@@ -9,6 +9,8 @@ Three printed parts:
 
 Local frame of the tilted body ("slab"): X = right (seen from the front),
 Y = depth backwards from the front face, Z = up along the front face.
+The USB-C cable is an angled plug pointing down; it leaves at the bottom of
+the back cover and runs back through a groove in the base.
 All module dimensions come from Waveshare's STEP model (glass centre = 0,0).
 """
 import math
@@ -26,9 +28,15 @@ USB_FACE_X = 36.68    # receptacle opening, from glass centre
 USB_Z = -10.71        # centre height from glass centre
 USB_DEPTH = 10.77 - 1.6  # glass front -> receptacle axis (lip added below)
 
-# ---------------- 90 deg USB-C plug (please measure your own) ----------------
-PLUG_LEN = 12.0       # from receptacle face to the far side of the head
-PLUG_W = 13.0         # head width (along the board edge)
+# ---------------- 90 deg USB-C plug, cable pointing down (please measure) ---
+# The head stays inside; the cable runs down along the right wall, bends
+# backwards at the bottom and leaves through a notch in the cover's bottom edge.
+PLUG_LEN = 12.0       # receptacle face -> far side of the head (along the board)
+PLUG_T = 7.0          # head thickness (front to back)
+PLUG_UP = 4.0         # head above the receptacle axis
+PLUG_DOWN = 20.0      # head + strain relief below the receptacle axis
+CABLE_D = 4.0         # cable diameter
+CABLE_X = USB_FACE_X + PLUG_LEN / 2   # where the cable runs down
 
 # ---------------- case parameters ----------------
 TILT = 20.0           # screen leans back
@@ -59,8 +67,8 @@ TOP_OUT = UC + CAV_TOP + WALL
 BOX_BOTTOM = -20.0            # extend below and cut flat afterwards
 REB = 1.0                     # rebate ledge for the back cover
 # snap clips cover -> body: (side, position along that wall from glass centre)
-COVER_CLIPS = [("R", 22.0), ("R", -32.0), ("L", 22.0), ("L", -32.0),
-               ("T", -25.0), ("T", 25.0), ("B", -25.0), ("B", 25.0)]
+COVER_CLIPS = [("R", 36.0), ("R", 8.0), ("L", 22.0), ("L", -32.0),
+               ("T", -25.0), ("T", 25.0), ("B", -25.0), ("B", 28.0)]
 CLIP_W, CLIP_T, CLIP_L, CLIP_HOOK = 8.0, 1.4, 12.0, 0.8
 # snap clips base -> body (world)
 BASE_CLIPS_X = (-30.0, 30.0)
@@ -182,10 +190,10 @@ def achterklep():
     pry = slab_prism(-6, 6, UC + CAV_BOT - REB - 1, UC + CAV_BOT - REB + cl + 1.2,
                      T - 1.2, T + 1, 0)
     cover = cover.cut(pry)
-    # notch for the 90 deg plug head, open to the cover edge
-    nx0 = USB_FACE_X - 1.5
-    notch = slab_prism(nx0, CAV_X + 5, UC + USB_Z - PLUG_W / 2 - 1.5,
-                       UC + USB_Z + PLUG_W / 2 + 1.5, y0 - 1, T + 1, 0)
+    # notch in the bottom edge where the cable leaves, just above the base
+    notch = slab_prism(CABLE_X - CABLE_D / 2 - 0.8, CABLE_X + CABLE_D / 2 + 0.8,
+                       UC + CAV_BOT - REB - 1, UC + CAV_BOT + CABLE_D + 1.0,
+                       y0 - 1, T + 1, 0)
     cover = cover.cut(notch)
     # sound slots for the buzzer
     for i in range(-3, 4):
@@ -232,10 +240,10 @@ def voet():
         # hole from below to push the tab back with a small screwdriver
         base = base.cut(cq.Workplane("XY", origin=(0, 0, -1)).center(x, BCLIP_Y - 0.9)
                         .rect(BCLIP_W - 2, 1.4).extrude(BCLIP_ROOT + 1.1))
-    # cable groove on top, from below the plug to the back edge
-    usb_x = USB_FACE_X + PLUG_LEN / 2
-    g = (cq.Workplane("XY", origin=(0, 0, BASE_H - 2.5)).center(usb_x, (40 + BASE_DEPTH) / 2 + 2)
-         .slot2D(BASE_DEPTH - 40 + 8, 5.0, 90).extrude(5))
+    # cable groove on top, from the cover notch to the back edge
+    gy0, gy1 = T / c + 1.5, BASE_DEPTH + 4
+    g = (cq.Workplane("XY", origin=(0, 0, BASE_H - 2.5)).center(CABLE_X, (gy0 + gy1) / 2)
+         .slot2D(gy1 - gy0, CABLE_D + 1.0, 90).extrude(5))
     base = base.cut(g)
     # recesses for 4 rubber feet (10 mm)
     for x in (x0 + 12, x1 - 12):

@@ -1,9 +1,10 @@
 # Behuizing 4"-klok voor op het nachtkastje
 
 Voor het Waveshare **ESP32-S3-Touch-LCD-4** (board V4). Het scherm staat 20° achterover op
-een losse voet. Achter het scherm is ruimte voor een **haakse (90°) USB-C-kabel**: de
-stekkerkop steekt door een uitsparing in de achterklep, zodat de kabel achter uit de case komt.
-Op de voet loopt een gootje waar de kabel in valt.
+een losse voet. Achter het scherm is ruimte voor een **haakse (90°) USB-C-kabel** waarvan
+de kabel **naar beneden** wijst: de stekkerkop blijft binnen, de kabel loopt langs de
+rechterwand omlaag, buigt onderin naar achteren en komt via een inkeping onderaan de
+achterklep naar buiten, precies in het kabelgootje van de voet.
 
 ![Renders](render.png)
 
@@ -31,8 +32,9 @@ De STEP-bestanden zijn dezelfde onderdelen, om in CAD aan te passen. PETG is aan
    klein schroevendraaiertje door de sleufjes aan de onderkant de lipjes naar achteren duwen.
 2. Leg het scherm van achteren in de behuizing, glas tegen de rand. De klemmenstrook
    wijst naar beneden; de USB-C zit dan rechts (van voren gezien).
-3. Steek de haakse USB-C-stekker erin, met de kabel naar achteren.
-4. Klik de achterklep erop (de stekkerkop gaat door de uitsparing) en draai de vier
+3. Steek de haakse USB-C-stekker erin met de kabel naar beneden, leg de kabel onderin
+   naar achteren en door de inkeping rechtsonder (van achteren gezien: linksonder).
+4. Klik de achterklep erop en draai de vier
    M2,5-schroefjes in. Die trekken het scherm tegen de voorrand.
    Loshalen: schroefjes eruit en de klep met het inkepinkje aan de onderkant eraf wippen.
 
