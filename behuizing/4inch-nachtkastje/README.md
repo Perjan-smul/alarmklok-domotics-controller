@@ -1,10 +1,14 @@
 # Behuizing 4"-klok voor op het nachtkastje
 
-Voor het Waveshare **ESP32-S3-Touch-LCD-4** (board V4). Het scherm staat 20° achterover op
-een losse voet. Achter het scherm is ruimte voor een **haakse (90°) USB-C-kabel** waarvan
-de kabel **naar beneden** wijst: de stekkerkop blijft binnen, de kabel loopt langs de
-rechterwand omlaag, buigt onderin naar achteren en komt via een inkeping onderaan de
-achterklep naar buiten, precies in het kabelgootje van de voet.
+Voor het Waveshare **ESP32-S3-Touch-LCD-4** (board V4). Het scherm staat 20° achterover en de
+voet zit aan de voorkant vast: samen één printdeel. Het scherm zit **op z'n kop**
+(klemmenstrook boven, USB-C links van voren gezien); zet daarom `draaiing: "180"` in je
+klokbestand.
+
+Het glas ligt bijna vlak in de voorkant (0,3 mm verzonken), zonder rand eroverheen, op een
+randje erachter. Naast het scherm is 14 mm ruimte voor een forse **haakse USB-C-stekker met de
+kabel naar beneden**: de kabel loopt binnen langs de linkerwand omlaag, onderin naar achteren
+en via een inkeping onderaan de achterklep in het kabelgootje van de voet.
 
 ![Renders](render.png)
 
@@ -12,39 +16,39 @@ achterklep naar buiten, precies in het kabelgootje van de voet.
 
 | Bestand | Printen | Maat |
 |---|---|---|
-| `behuizing.stl` | met de voorkant (schermkant) op het bed, zonder support | 105 × 60 × 103 mm |
-| `achterklep.stl` | met de buitenkant op het bed, haakjes omhoog | 102 × 92 mm |
-| `voet.stl` | plat, onderkant op het bed | 105 × 82 × 7 mm |
+| `behuizing.stl` | met de voorkant op het bed (de voet staat dan schuin omhoog), zonder support | 117 × 83 × 120 mm |
+| `achterklep.stl` | met de buitenkant op het bed, haakjes omhoog | 114 × 101 mm |
 
 De STEP-bestanden zijn dezelfde onderdelen, om in CAD aan te passen. PETG is aan te raden
 (de klikhaakjes veren beter dan bij PLA); 0,2 mm laaghoogte en 3 wanden.
 
 ## Benodigd
 
-- 4 × **M2,5 × 5** (cilinderkop): achterklep op de afstandsbussen van het scherm.
+- 4 × **M2,5 × 5** (cilinderkop): het scherm op de achterklep.
 - 4 × rubber voetje Ø 10 mm (optioneel, er zitten uitsparingen van 1 mm in de voet).
-- Verder alleen clips: de achterklep klikt met 8 haakjes in de behuizing,
-  de behuizing klikt met 2 veerlipjes op de voet.
+- Verder geen schroeven: de achterklep klikt met 8 haakjes in de behuizing.
 
 ## In elkaar zetten
 
-1. Druk de behuizing op de voet tot de twee lipjes klikken. Loshalen: met een
-   klein schroevendraaiertje door de sleufjes aan de onderkant de lipjes naar achteren duwen.
-2. Leg het scherm van achteren in de behuizing, glas tegen de rand. De klemmenstrook
-   wijst naar beneden; de USB-C zit dan rechts (van voren gezien).
-3. Steek de haakse USB-C-stekker erin met de kabel naar beneden, leg de kabel onderin
-   naar achteren en door de inkeping rechtsonder (van achteren gezien: linksonder).
-4. Klik de achterklep erop en draai de vier
-   M2,5-schroefjes in. Die trekken het scherm tegen de voorrand.
-   Loshalen: schroefjes eruit en de klep met het inkepinkje aan de onderkant eraf wippen.
+1. Leg de kabel: van achteren onder door de inkeping linksonder (van voren gezien) en
+   langs de linkerwand omhoog naar de plek van de USB-C-aansluiting.
+2. Klik de achterklep erop.
+3. Steek de haakse stekker in het scherm, kabel naar beneden.
+4. Zet het scherm van voren erin: houd het haaks op de voorkant, steek de USB-kant met de
+   stekker als eerste naar binnen en draai het scherm om de linkerrand van het glas dicht
+   tot het glas op het randje ligt.
+5. Leg de klok op zijn voorkant en draai de vier M2,5-schroefjes door de achterklep in de
+   afstandsbussen van het scherm. Die trekken het glas op het randje.
 
-Staat het beeld op z'n kop? Zet dan `draaiing: "180"` in je klokbestand.
+Loshalen: schroefjes eruit, het scherm eruit draaien, en de klep met het inkepinkje aan de
+onderkant eraf wippen.
 
 ## Maten
 
 Alle maten van het bord komen uit het 3D-model en de maattekening van Waveshare
-(wiki ESP32-S3-Touch-LCD-4). Glas 84,2 × 84,2 × 0,7 mm, totale diepte 15 mm, afstandsbussen M2,5
-op 66,5 × 68,5 mm, USB-C midden 31,4 mm boven de onderrand van het glas.
+(wiki ESP32-S3-Touch-LCD-4): glas 84,2 × 84,2 × 0,7 mm met hoeken van R2,3, totale diepte
+15 mm, afstandsbussen M2,5 op 66,5 × 68,5 mm. Gemeten: de stekkerkop steekt 13 mm buiten
+de glasrand uit.
 
 Aanpassen kan in `case.py`: bovenaan staan alle maten, o.a. `PLUG_LEN`, `PLUG_T`,
 `PLUG_DOWN` en `CABLE_D` voor de stekker en kabel, en `TILT` voor de hoek. Opnieuw genereren:
