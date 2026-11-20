@@ -1,0 +1,721 @@
+{#- =========================================================================
+  Instellingendashboard voor een alarmklok, gemaakt door Home Assistant zelf.
+
+  1. Ontwikkelaarshulpmiddelen -> Sjabloon: wis het voorbeeld en plak dit hele
+     bestand.
+  2. Zet hieronder bij `klok` de naam van je klok, zoals bij Instellingen ->
+     Apparaten (bijvoorbeeld 'Alarmklok 4 inch').
+  3. Kopieer de uitkomst (rechts) naar een nieuw dashboard: potlood -> drie
+     puntjes -> Raw configuration editor, alles vervangen, opslaan.
+
+  Het sjabloon zoekt zelf de entiteiten van die klok op, ook als HA de ruimte
+  voor de ID's heeft gezet (select.slaapkamer_alarmklok_kleurthema). Gemaakt
+  met: python3 tools/dashboard.py --sjabloon
+========================================================================= -#}
+{%- set klok = 'Alarmklok 4 inch' -%}
+{%- set ns = namespace(apparaat=none) -%}
+{%- for a in integration_entities('esphome') | map('device_id') | reject('none') | unique -%}
+  {%- if klok in [device_attr(a, 'name_by_user'), device_attr(a, 'name')] -%}
+    {%- set ns.apparaat = a -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- set entiteiten = device_entities(ns.apparaat) if ns.apparaat else [] -%}
+{%- set heeft_camera = entiteiten | select('search', '^text[.](.*_)?camera$') | list | count > 0 -%}
+{%- macro z(domein, naam) -%}
+  {{- entiteiten | select('search', '^' ~ domein ~ '[.](.*_)?' ~ naam ~ '$') | first
+      | default(domein ~ '.niet_gevonden_' ~ naam) -}}
+{%- endmacro -%}
+{%- if not ns.apparaat %}
+# KLOK NIET GEVONDEN: er is geen ESPHome-apparaat met de naam '{{ klok }}'.
+# Zet bovenaan bij `klok` de naam zoals bij Instellingen -> Apparaten.
+{% endif -%}
+# Instellingen van {{ klok }} (gemaakt met homeassistant/dashboard/dashboard-sjabloon.jinja)
+# Nodig voor de knoppen: de script-blueprints uit homeassistant/blueprints/script/ (zie README).
+title: {{ klok }}
+views:
+  - title: Pagina's
+    path: paginas
+    icon: mdi:view-grid-outline
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Volgorde
+            heading_style: title
+          - type: markdown
+            content: >-
+              Welke pagina's na de klok komen bij omhoog/omlaag vegen.
+          - type: entities
+            entities:
+              - entity: {{ z('select', 'pagina_1') }}
+                name: Pagina 1
+              - entity: {{ z('select', 'pagina_2') }}
+                name: Pagina 2
+              - entity: {{ z('select', 'pagina_3') }}
+                name: Pagina 3
+              - entity: {{ z('select', 'pagina_4') }}
+                name: Pagina 4
+              - entity: {{ z('select', 'pagina_5') }}
+                name: Pagina 5
+              - entity: {{ z('select', 'pagina_6') }}
+                name: Pagina 6
+              - entity: {{ z('switch', 'swipe_animatie') }}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Verlichting
+            heading_style: title
+          - type: markdown
+            content: >-
+              Kies de indeling en per tegel wat erop staat. Met <b>Tegel instellen…</b> kies je de entiteit uit een lijst (klok, pagina <i>Verlichting</i>, nummer).
+          - type: entities
+            entities:
+              - entity: {{ z('select', 'indeling_verlichting') }}
+                name: Indeling
+          - type: button
+            name: Tegel instellen…
+            icon: mdi:gesture-tap-button
+            entity: script.alarmklok_tegel_instellen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: entities
+            title: Rij 1
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_1_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_1_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_1_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_1_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 1
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_1_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_1_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_1_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_1_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 2
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_2_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_2_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_2_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_2_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 2
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_2_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_2_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_2_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_2_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 3
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_3_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_3_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_3_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_3_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 3
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_3_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_3_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_3_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_3_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 4
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_4_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_4_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_4_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_4_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 4
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_4_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_4_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_4_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_4_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 5
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_5_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_5_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_5_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_5_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen"
+          - type: entities
+            title: Knop 1 (tegel 5)
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_5_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_5_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_5_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_5_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 5
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_5_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_5_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_5_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_5_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Knop 2 (tegel 6)
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_6_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_6_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_6_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_6_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 6
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_6_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_6_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_6_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_6_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Knop 3 (tegel 7)
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_7_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_7_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_7_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_7_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 7
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_7_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_7_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_7_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_7_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Knop 4 (tegel 8)
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_8_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_8_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_8_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_8_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 8
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_8_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_8_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_8_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_8_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Tegel 9
+            entities:
+              - entity: {{ z('text', 'tegel_verlichting_9_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_verlichting_9_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_verlichting_9_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_verlichting_9_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Dimmerkaart onder de tegels
+            entities:
+              - entity: {{ z('text', 'dimlamp') }}
+                name: Lamp
+              - entity: {{ z('text', 'dimlamp_naam') }}
+                name: Naam
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_verlichting') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+      - type: grid
+        cards:
+          - type: heading
+            heading: Scènes
+            heading_style: title
+          - type: markdown
+            content: >-
+              Knoppen voor scènes en scripts. Met <b>Tegel instellen…</b> kies je ze uit een lijst (pagina <i>Scènes</i>).
+          - type: entities
+            entities:
+              - entity: {{ z('select', 'indeling_scenes') }}
+                name: Indeling
+          - type: button
+            name: Tegel instellen…
+            icon: mdi:gesture-tap-button
+            entity: script.alarmklok_tegel_instellen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: entities
+            title: Scène 1
+            entities:
+              - entity: {{ z('text', 'tegel_scene_1_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_1_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_1_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_1_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 2
+            entities:
+              - entity: {{ z('text', 'tegel_scene_2_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_2_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_2_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_2_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 3
+            entities:
+              - entity: {{ z('text', 'tegel_scene_3_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_3_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_3_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_3_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 4
+            entities:
+              - entity: {{ z('text', 'tegel_scene_4_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_4_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_4_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_4_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 5
+            entities:
+              - entity: {{ z('text', 'tegel_scene_5_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_5_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_5_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_5_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 6
+            entities:
+              - entity: {{ z('text', 'tegel_scene_6_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_6_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_6_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_6_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 7
+            entities:
+              - entity: {{ z('text', 'tegel_scene_7_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_7_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_7_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_7_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Scène 8
+            entities:
+              - entity: {{ z('text', 'tegel_scene_8_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_8_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_8_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_8_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Scène 9
+            entities:
+              - entity: {{ z('text', 'tegel_scene_9_naam') }}
+                name: Naam
+              - entity: {{ z('text', 'tegel_scene_9_entiteit') }}
+                name: Entiteit
+              - entity: {{ z('select', 'tegel_scene_9_icoon') }}
+                name: Icoon
+              - entity: {{ z('select', 'tegel_scene_9_soort') }}
+                name: Soort
+            visibility:
+              - condition: state
+                entity: {{ z('select', 'indeling_scenes') }}
+                state:
+                  - "9 tegels"
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klimaat
+          - type: entities
+            entities:
+              - entity: {{ z('text', 'thermostaat') }}
+              - entity: {{ z('text', 'rolluik') }}
+              - entity: {{ z('text', 'rolluik_batterij') }}
+          - type: button
+            name: Entiteit kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: heading
+            heading: Muziek
+          - type: entities
+            entities:
+              - entity: {{ z('text', 'mediaspeler') }}
+          - type: button
+            name: Entiteit kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+{%- if heeft_camera %}
+          - type: heading
+            heading: Camera
+          - type: entities
+            entities:
+              - entity: {{ z('text', 'camera') }}
+              - entity: {{ z('text', 'deurbel') }}
+              - entity: {{ z('number', 'camera_verversen') }}
+{%- endif %}
+  - title: Klok
+    path: klok
+    icon: mdi:alarm
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wekkers
+          - type: entities
+            entities:
+              - entity: {{ z('switch', 'wekker_1_aan') }}
+                name: Wekker 1
+              - entity: {{ z('time', 'wekker_1_tijd') }}
+                name: Tijd
+              - entity: {{ z('select', 'wekker_1_dagen') }}
+                name: Dagen
+              - entity: {{ z('switch', 'wekker_2_aan') }}
+                name: Wekker 2
+              - entity: {{ z('time', 'wekker_2_tijd') }}
+                name: Tijd
+              - entity: {{ z('select', 'wekker_2_dagen') }}
+                name: Dagen
+              - entity: {{ z('switch', 'wekker_3_aan') }}
+                name: Wekker 3
+              - entity: {{ z('time', 'wekker_3_tijd') }}
+                name: Tijd
+              - entity: {{ z('select', 'wekker_3_dagen') }}
+                name: Dagen
+          - type: entities
+            title: Wekker-opties
+            entities:
+              - entity: {{ z('switch', 'volgende_wekker_overslaan') }}
+              - entity: {{ z('switch', 'niet_op_feestdagen') }}
+              - entity: {{ z('number', 'snooze_duur') }}
+              - entity: {{ z('number', 'wake_up_light_vooraf') }}
+              - entity: {{ z('select', 'wekgeluid') }}
+              - entity: {{ z('number', 'wekvolume') }}
+              - entity: {{ z('number', 'wekgeluid_oplopen') }}
+              - entity: {{ z('button', 'wekker_testen') }}
+              - entity: {{ z('sensor', 'volgende_wekker') }}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Uiterlijk
+          - type: entities
+            entities:
+              - entity: {{ z('select', 'kleurthema') }}
+              - entity: {{ z('select', 'accentkleur') }}
+              - entity: {{ z('select', 'klokontwerp') }}
+              - entity: {{ z('select', 'klokkleur') }}
+              - entity: {{ z('select', 'wijzerplaat') }}
+              - entity: {{ z('select', 'nachtklok') }}
+              - entity: {{ z('select', 'secondewijzer') }}
+          - type: entities
+            title: Klokontwerpen bij links/rechts vegen
+            entities:
+              - entity: {{ z('switch', 'klokontwerp_digitaal') }}
+                name: Digitaal
+              - entity: {{ z('switch', 'klokontwerp_analoog') }}
+                name: Analoog
+              - entity: {{ z('switch', 'klokontwerp_gestapeld') }}
+                name: Gestapeld
+              - entity: {{ z('switch', 'klokontwerp_info') }}
+                name: Info
+              - entity: {{ z('switch', 'klokontwerp_zon') }}
+                name: Zon
+              - entity: {{ z('switch', 'klokontwerp_zwevend') }}
+                name: Zwevend
+              - entity: {{ z('switch', 'klokontwerp_maan') }}
+                name: Maan
+              - entity: {{ z('switch', 'klokontwerp_vierkant') }}
+                name: Vierkant
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nachtstand
+          - type: entities
+            entities:
+              - entity: {{ z('switch', 'nachtstand_vanaf_zonsondergang') }}
+              - entity: {{ z('time', 'nachtstand_vanaf') }}
+              - entity: {{ z('time', 'nachtstand_tot') }}
+              - entity: {{ z('switch', 'nachtstand_bij_weinig_licht') }}
+              - entity: {{ z('number', 'nachtstand_onder') }}
+              - entity: {{ z('text', 'lichtsensor') }}
+              - entity: {{ z('number', 'helderheid_overdag') }}
+              - entity: {{ z('number', 'helderheid_s_nachts') }}
+              - entity: {{ z('number', 'fel_na_aanraken') }}
+              - entity: {{ z('light', 'schermhelderheid') }}
+          - type: button
+            name: Lichtsensor kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
