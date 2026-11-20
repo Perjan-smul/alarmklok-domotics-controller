@@ -519,6 +519,8 @@ Alleen knoppen met een entiteit doen mee en verdelen de breedte; geef een
 knop bijvoorbeeld `script.slapen` en de soort *Scène/script* (of laat
 *Automatisch* staan). Een knop met een lamp of schakelaar werkt als aan/uit.
 
+![Rijen + knoppen](docs/screenshots/4inch/18-verlichting-rijen-knoppen.png)
+
 Soort *Aan/uit* doet een `toggle` (werkt met `light`, `switch`, `fan`,
 `cover`, `input_boolean` en dergelijke), met status en lang drukken voor de
 detailpagina. *Scène/script* doet `turn_on` (`scene`, `script`, `automation`,
