@@ -1,15 +1,602 @@
 # Dashboard voor de instellingen van 'Alarmklok 4B' (gemaakt met tools/dashboard.py)
+# Nodig voor de knoppen: de scripts uit homeassistant/packages/alarmklok.yaml.
 title: Alarmklok 4B
 views:
+  - title: Pagina's
+    path: paginas
+    icon: mdi:view-grid-outline
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Volgorde
+            heading_style: title
+          - type: markdown
+            content: >-
+              Welke pagina's na de klok komen bij omhoog/omlaag vegen.
+          - type: entities
+            entities:
+              - entity: select.alarmklok_4b_pagina_1
+                name: Pagina 1
+              - entity: select.alarmklok_4b_pagina_2
+                name: Pagina 2
+              - entity: select.alarmklok_4b_pagina_3
+                name: Pagina 3
+              - entity: select.alarmklok_4b_pagina_4
+                name: Pagina 4
+              - entity: select.alarmklok_4b_pagina_5
+                name: Pagina 5
+              - entity: select.alarmklok_4b_pagina_6
+                name: Pagina 6
+              - entity: switch.alarmklok_4b_swipe_animatie
+      - type: grid
+        cards:
+          - type: heading
+            heading: Verlichting
+            heading_style: title
+          - type: markdown
+            content: >-
+              Kies de indeling en per tegel wat erop staat. Met <b>Tegel instellen…</b> kies je de entiteit uit een lijst (klok, pagina <i>Verlichting</i>, nummer).
+          - type: entities
+            entities:
+              - entity: select.alarmklok_4b_indeling_verlichting
+                name: Indeling
+          - type: button
+            name: Tegel instellen…
+            icon: mdi:gesture-tap-button
+            entity: script.alarmklok_tegel_instellen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: entities
+            title: Rij 1
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_1_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_1_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_1_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_1_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 1
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_1_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_1_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_1_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_1_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 2
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_2_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_2_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_2_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_2_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 2
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_2_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_2_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_2_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_2_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 3
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_3_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_3_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_3_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_3_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 3
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_3_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_3_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_3_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_3_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 4
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_4_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_4_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_4_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_4_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen"
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 4
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_4_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_4_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_4_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_4_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Rij 5
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_5_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_5_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen"
+          - type: entities
+            title: Knop 1 (tegel 5)
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_5_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_5_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 5
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_5_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_5_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Knop 2 (tegel 6)
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_6_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_6_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_6_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_6_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 6
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_6_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_6_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_6_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_6_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Knop 3 (tegel 7)
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_7_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_7_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_7_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_7_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 7
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_7_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_7_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_7_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_7_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Knop 4 (tegel 8)
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_8_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_8_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_8_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_8_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "Rijen + knoppen"
+          - type: entities
+            title: Tegel 8
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_8_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_8_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_8_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_8_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Tegel 9
+            entities:
+              - entity: text.alarmklok_4b_tegel_verlichting_9_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_verlichting_9_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_verlichting_9_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_verlichting_9_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Dimmerkaart onder de tegels
+            entities:
+              - entity: text.alarmklok_4b_dimlamp
+                name: Lamp
+              - entity: text.alarmklok_4b_dimlamp_naam
+                name: Naam
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_verlichting
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+      - type: grid
+        cards:
+          - type: heading
+            heading: Scènes
+            heading_style: title
+          - type: markdown
+            content: >-
+              Knoppen voor scènes en scripts. Met <b>Tegel instellen…</b> kies je ze uit een lijst (pagina <i>Scènes</i>).
+          - type: entities
+            entities:
+              - entity: select.alarmklok_4b_indeling_scenes
+                name: Indeling
+          - type: button
+            name: Tegel instellen…
+            icon: mdi:gesture-tap-button
+            entity: script.alarmklok_tegel_instellen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: entities
+            title: Scène 1
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_1_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_1_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_1_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_1_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 2
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_2_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_2_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_2_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_2_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 3
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_3_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_3_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_3_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_3_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 4
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_4_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_4_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_4_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_4_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "4 tegels"
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 5
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_5_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_5_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_5_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_5_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 6
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_6_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_6_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_6_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_6_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "6 tegels"
+                  - "9 tegels"
+          - type: entities
+            title: Scène 7
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_7_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_7_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_7_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_7_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Scène 8
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_8_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_8_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_8_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_8_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "9 tegels"
+          - type: entities
+            title: Scène 9
+            entities:
+              - entity: text.alarmklok_4b_tegel_scene_9_naam
+                name: Naam
+              - entity: text.alarmklok_4b_tegel_scene_9_entiteit
+                name: Entiteit
+              - entity: select.alarmklok_4b_tegel_scene_9_icoon
+                name: Icoon
+              - entity: select.alarmklok_4b_tegel_scene_9_soort
+                name: Soort
+            visibility:
+              - condition: state
+                entity: select.alarmklok_4b_indeling_scenes
+                state:
+                  - "9 tegels"
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klimaat
+          - type: entities
+            entities:
+              - entity: text.alarmklok_4b_thermostaat
+              - entity: text.alarmklok_4b_rolluik
+              - entity: text.alarmklok_4b_rolluik_batterij
+          - type: button
+            name: Entiteit kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: heading
+            heading: Muziek
+          - type: entities
+            entities:
+              - entity: text.alarmklok_4b_mediaspeler
+          - type: button
+            name: Entiteit kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          - type: heading
+            heading: Camera
+          - type: entities
+            entities:
+              - entity: text.alarmklok_4b_camera
+              - entity: text.alarmklok_4b_deurbel
+              - entity: number.alarmklok_4b_camera_verversen
   - title: Klok
     path: klok
+    icon: mdi:alarm
     type: sections
     max_columns: 3
     sections:
       - type: grid
         cards:
+          - type: heading
+            heading: Wekkers
           - type: entities
-            title: Wekkers
             entities:
               - entity: switch.alarmklok_4b_wekker_1_aan
                 name: Wekker 1
@@ -29,8 +616,6 @@ views:
                 name: Tijd
               - entity: select.alarmklok_4b_wekker_3_dagen
                 name: Dagen
-      - type: grid
-        cards:
           - type: entities
             title: Wekker-opties
             entities:
@@ -43,36 +628,11 @@ views:
               - entity: number.alarmklok_4b_wekgeluid_oplopen
               - entity: button.alarmklok_4b_wekker_testen
               - entity: sensor.alarmklok_4b_volgende_wekker
-          - type: entities
-            title: Nachtstand
-            entities:
-              - entity: switch.alarmklok_4b_nachtstand_vanaf_zonsondergang
-              - entity: time.alarmklok_4b_nachtstand_vanaf
-              - entity: time.alarmklok_4b_nachtstand_tot
-              - entity: switch.alarmklok_4b_nachtstand_bij_weinig_licht
-              - entity: number.alarmklok_4b_nachtstand_onder
-              - entity: text.alarmklok_4b_lichtsensor
-              - entity: number.alarmklok_4b_helderheid_overdag
-              - entity: number.alarmklok_4b_helderheid_s_nachts
-              - entity: number.alarmklok_4b_fel_na_aanraken
-              - entity: light.alarmklok_4b_schermhelderheid
       - type: grid
         cards:
+          - type: heading
+            heading: Uiterlijk
           - type: entities
-            title: Pagina's (omhoog/omlaag swipen)
-            entities:
-              - entity: select.alarmklok_4b_pagina_1
-              - entity: select.alarmklok_4b_pagina_2
-              - entity: select.alarmklok_4b_pagina_3
-              - entity: select.alarmklok_4b_pagina_4
-              - entity: select.alarmklok_4b_pagina_5
-              - entity: select.alarmklok_4b_pagina_6
-              - entity: switch.alarmklok_4b_swipe_animatie
-              - entity: select.alarmklok_4b_indeling_verlichting
-              - entity: select.alarmklok_4b_indeling_scenes
-                name: Indeling scènes
-          - type: entities
-            title: Uiterlijk
             entities:
               - entity: select.alarmklok_4b_kleurthema
               - entity: select.alarmklok_4b_accentkleur
@@ -82,7 +642,7 @@ views:
               - entity: select.alarmklok_4b_nachtklok
               - entity: select.alarmklok_4b_secondewijzer
           - type: entities
-            title: Klokontwerpen bij links/rechts swipen op de klok
+            title: Klokontwerpen bij links/rechts vegen
             entities:
               - entity: switch.alarmklok_4b_klokontwerp_digitaal
                 name: Digitaal
@@ -102,227 +662,27 @@ views:
                 name: Vierkant
       - type: grid
         cards:
+          - type: heading
+            heading: Nachtstand
           - type: entities
-            title: Bediening (Klimaat, Muziek, dimmer, camera)
             entities:
-              - entity: text.alarmklok_4b_thermostaat
-              - entity: text.alarmklok_4b_rolluik
-              - entity: text.alarmklok_4b_rolluik_batterij
-              - entity: text.alarmklok_4b_mediaspeler
-              - entity: text.alarmklok_4b_dimlamp
-              - entity: text.alarmklok_4b_dimlamp_naam
-              - entity: text.alarmklok_4b_camera
-              - entity: text.alarmklok_4b_deurbel
-              - entity: number.alarmklok_4b_camera_verversen
-  - title: Verlichting
-    path: verlichting
-    type: sections
-    max_columns: 3
-    sections:
-      - type: grid
-        cards:
-          - type: entities
-            title: Tegel 1
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_1_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_1_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_1_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_1_soort
-                name: Soort
-          - type: entities
-            title: Tegel 2
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_2_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_2_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_2_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_2_soort
-                name: Soort
-          - type: entities
-            title: Tegel 3
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_3_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_3_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_3_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_3_soort
-                name: Soort
-          - type: entities
-            title: Tegel 4
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_4_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_4_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_4_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_4_soort
-                name: Soort
-          - type: entities
-            title: Tegel 5
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_5_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_5_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_5_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_5_soort
-                name: Soort
-          - type: entities
-            title: Tegel 6
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_6_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_6_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_6_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_6_soort
-                name: Soort
-          - type: entities
-            title: Tegel 7
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_7_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_7_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_7_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_7_soort
-                name: Soort
-          - type: entities
-            title: Tegel 8
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_8_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_8_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_8_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_8_soort
-                name: Soort
-          - type: entities
-            title: Tegel 9
-            entities:
-              - entity: text.alarmklok_4b_tegel_verlichting_9_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_verlichting_9_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_verlichting_9_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_verlichting_9_soort
-                name: Soort
-  - title: Scènes
-    path: scenes
-    type: sections
-    max_columns: 3
-    sections:
-      - type: grid
-        cards:
-          - type: entities
-            title: Scène 1
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_1_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_1_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_1_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_1_soort
-                name: Soort
-          - type: entities
-            title: Scène 2
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_2_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_2_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_2_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_2_soort
-                name: Soort
-          - type: entities
-            title: Scène 3
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_3_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_3_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_3_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_3_soort
-                name: Soort
-          - type: entities
-            title: Scène 4
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_4_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_4_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_4_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_4_soort
-                name: Soort
-          - type: entities
-            title: Scène 5
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_5_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_5_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_5_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_5_soort
-                name: Soort
-          - type: entities
-            title: Scène 6
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_6_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_6_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_6_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_6_soort
-                name: Soort
-          - type: entities
-            title: Scène 7
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_7_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_7_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_7_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_7_soort
-                name: Soort
-          - type: entities
-            title: Scène 8
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_8_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_8_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_8_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_8_soort
-                name: Soort
-          - type: entities
-            title: Scène 9
-            entities:
-              - entity: text.alarmklok_4b_tegel_scene_9_naam
-                name: Naam
-              - entity: text.alarmklok_4b_tegel_scene_9_entiteit
-                name: Entiteit
-              - entity: select.alarmklok_4b_tegel_scene_9_icoon
-                name: Icoon
-              - entity: select.alarmklok_4b_tegel_scene_9_soort
-                name: Soort
+              - entity: switch.alarmklok_4b_nachtstand_vanaf_zonsondergang
+              - entity: time.alarmklok_4b_nachtstand_vanaf
+              - entity: time.alarmklok_4b_nachtstand_tot
+              - entity: switch.alarmklok_4b_nachtstand_bij_weinig_licht
+              - entity: number.alarmklok_4b_nachtstand_onder
+              - entity: text.alarmklok_4b_lichtsensor
+              - entity: number.alarmklok_4b_helderheid_overdag
+              - entity: number.alarmklok_4b_helderheid_s_nachts
+              - entity: number.alarmklok_4b_fel_na_aanraken
+              - entity: light.alarmklok_4b_schermhelderheid
+          - type: button
+            name: Lichtsensor kiezen…
+            icon: mdi:form-select
+            entity: script.alarmklok_entiteit_kiezen
+            show_state: false
+            icon_height: 32px
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info

@@ -346,8 +346,20 @@ meer. Pas die dingen dus altijd in HA aan.
 - **Bedienkaart:** dashboard bewerken → *Kaart toevoegen* → *Handmatig* → plak
   de inhoud van `homeassistant/dashboard-kaart.yaml`.
 - **Instellingen van de klok, overzichtelijk:** in plaats van de lange lijst
-  bij het apparaat staat alles op één dashboard, per onderwerp (wekkers,
-  pagina's, uiterlijk, nachtstand, bediening en per tegelpagina de tegels).
+  bij het apparaat staat alles op één dashboard.
+  - View **Pagina's**: per pagina een blok. *Volgorde* (welke pagina's),
+    *Verlichting* en *Scènes* (de indeling en alleen de tegels die daarbij
+    horen: bij *Rijen + knoppen* heten ze Rij 1-4 en Knop 1-4), *Klimaat* en
+    *Muziek*.
+  - View **Klok**: wekkers, uiterlijk en nachtstand.
+  - **Entiteitkiezer:** de knop *Tegel instellen…* opent een formulier: kies
+    de klok, de pagina, het nummer van de tegel en de entiteit uit de lijst
+    van HA (en eventueel naam, icoon en soort; zonder naam wordt het de naam
+    van de entiteit). *Entiteit kiezen…* doet hetzelfde voor thermostaat,
+    rolluik, mediaspeler, dimlamp en lichtsensor. Hiervoor zijn de scripts uit
+    `homeassistant/packages/alarmklok.yaml` nodig (stap 3) en HA 2024.3 of
+    nieuwer.
+
   *Instellingen → Dashboards → Dashboard toevoegen → Nieuw dashboard*, openen,
   potlood → drie puntjes → *Raw configuration editor*, en plak de inhoud van
   `homeassistant/dashboard/alarmklok_4_inch.yaml` (4"), `alarmklok.yaml` (7")
