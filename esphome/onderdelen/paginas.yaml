@@ -8,7 +8,7 @@
 #     (4 dimbare rijen en daaronder tegel 5-8 als knoppen naast elkaar) of
 #     4, 6 of 9 tegels; Scènes: 4, 6 of 9 tegels.
 #   - Kleurthema en accentkleur.
-#   - Welke klokontwerpen meedoen bij omhoog/omlaag swipen op de klok.
+#   - Welke klokontwerpen meedoen bij links/rechts vegen op de klok.
 #   - Swipe-animatie: aan = de pagina schuift mee (vloeiend, kost rekenwerk);
 #     uit = de nieuwe pagina staat er meteen (snel, standaard op de 4").
 #
@@ -42,6 +42,10 @@ esphome:
             static bool veeg_gebaar = false, veeg_mag = false;
             static auto veeg = [](lv_dir_t richting) {
               veeg_gebaar = true;
+              ESP_LOGI("vegen", "Veeg %s op pagina %d",
+                       richting == LV_DIR_TOP ? "omhoog" : richting == LV_DIR_BOTTOM ? "omlaag" :
+                       richting == LV_DIR_LEFT ? "links" : richting == LV_DIR_RIGHT ? "rechts" : "?",
+                       id(pag_index));
               if (richting == LV_DIR_TOP)
                 id(pagina_stap).execute(1);
               else if (richting == LV_DIR_BOTTOM)
@@ -255,7 +259,7 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: ${swipe_animatie}
-  # Klokontwerpen bij omhoog/omlaag swipen (allemaal uit = allemaal mee)
+  # Klokontwerpen bij links/rechts vegen (allemaal uit = allemaal mee)
   - platform: template
     id: ontwerp_aan_digitaal
     name: Klokontwerp Digitaal
@@ -403,7 +407,7 @@ script:
           id: pagina_indicator
           text: !lambda return alarmklok::stippen(id(pag_index), (int) id(pag_volgorde).size(), "\n");
 
-  # Klokontwerp wisselen met omhoog/omlaag swipen, alleen de ontwerpen die aan staan
+  # Klokontwerp wisselen met links/rechts vegen, alleen de ontwerpen die aan staan
   - id: ontwerp_wisselen
     parameters:
       richting: int
@@ -420,6 +424,11 @@ script:
           while (i < 8 && huidig != NAMEN[i])
             i++;
           const int nieuw = alarmklok::ontwerp_stap(i < 8 ? i : 0, richting, aan, 8);
+          if (nieuw == i)
+            ESP_LOGW("vegen", "Klokontwerp blijft %s: zet in HA meer klokontwerpen aan "
+                     "(Klokontwerp Digitaal ... Vierkant)", NAMEN[nieuw]);
+          else
+            ESP_LOGI("vegen", "Klokontwerp: %s", NAMEN[nieuw]);
           auto call = id(klokontwerp).make_call();
           call.set_option(NAMEN[nieuw]);
           call.perform();
