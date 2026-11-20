@@ -19,11 +19,12 @@ substitutions:
   dimmer_basis: "64"
 
 font:
-  - file: "gfonts://Roboto Condensed@700"
+  # Klokcijfers: Urbanist (modern, rond en smal)
+  - file: "gfonts://Urbanist@700"
     id: f_klok
     size: '${(150 * (k | float)) | int}'
     glyphs: "0123456789:-"
-  - file: "gfonts://Roboto Condensed@300"
+  - file: "gfonts://Urbanist@300"
     id: f_klok_mid
     size: '${(84 * (k | float)) | int}'
     glyphs: "0123456789:.-°"
