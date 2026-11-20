@@ -1,0 +1,154 @@
+# Alarmklok - tegel instellen (script-blueprint).
+# Importeren: Instellingen -> Automatiseringen en scènes -> Blueprints ->
+# Blueprint importeren, met de link hieronder (source_url). Daarna "Script
+# maken" en het script de naam "Alarmklok tegel instellen" geven, zodat de knoppen op het
+# instellingendashboard het vinden. Bijwerken: bij de blueprint "Opnieuw importeren".
+blueprint:
+  name: "Alarmklok: tegel instellen"
+  description: Kies voor een tegel op de klok een entiteit (met de entiteitkiezer van HA), naam, icoon en soort.
+  domain: script
+  source_url: https://github.com/Perjan-smul/alarmklok-domotics-controller/blob/claude/alarm-clock-home-assistant-ljscuo/homeassistant/blueprints/script/alarmklok_tegel_instellen.yaml
+icon: mdi:gesture-tap-button
+mode: queued
+fields:
+  klok:
+    name: Klok
+    required: true
+    selector:
+      device:
+        filter:
+          integration: esphome
+  pagina:
+    name: Pagina
+    required: true
+    default: Verlichting
+    selector:
+      select:
+        options: [Verlichting, Scènes]
+  tegel:
+    name: Tegel
+    description: >-
+      Nummer van de tegel. Verlichting met "Rijen + knoppen": 1-4 zijn de
+      rijen, 5-8 de knoppen (knop 1 = tegel 5).
+    required: true
+    default: 1
+    selector:
+      number:
+        min: 1
+        max: 9
+        mode: box
+  entiteit:
+    name: Entiteit
+    description: Leeg laten = niet wijzigen.
+    selector:
+      entity:
+  naam:
+    name: Naam
+    description: Leeg = de naam van de gekozen entiteit.
+    selector:
+      text:
+  icoon:
+    name: Icoon
+    description: Leeg = niet wijzigen.
+    selector:
+      select:
+        options:
+          - lightbulb
+          - lightbulb-on
+          - lightbulb-group
+          - ceiling-light
+          - floor-lamp
+          - desk-lamp
+          - lamp
+          - blinds
+          - window-shutter
+          - roller-shade
+          - curtains
+          - music
+          - radio
+          - radio-tower
+          - speaker
+          - television
+          - movie-open
+          - fan
+          - radiator
+          - thermostat
+          - power-sleep
+          - weather-night
+          - weather-sunset-up
+          - home
+          - sofa
+          - bed
+          - silverware-fork-knife
+          - lightning-bolt
+  soort:
+    name: Soort
+    description: >-
+      Automatisch: scènes, scripts en knoppen alleen aanzetten, de rest
+      aan/uit. Leeg = niet wijzigen.
+    selector:
+      select:
+        options: [Automatisch, Aan/uit, Scène/script]
+  verbergen:
+    name: Tegel verbergen
+    description: Maakt de entiteit leeg; de tegel verdwijnt van de klok.
+    default: false
+    selector:
+      boolean:
+sequence:
+  - variables:
+      basis: >-
+        tegel_{{ 'verlichting' if pagina == 'Verlichting' else 'scene' }}_{{ tegel | int }}
+      lijst: "{{ device_entities(klok) }}"
+      e_entiteit: >-
+        {{ lijst | select('search', '^text[.].*_' ~ basis ~ '_entiteit$') | first | default('') }}
+      e_naam: >-
+        {{ lijst | select('search', '^text[.].*_' ~ basis ~ '_naam$') | first | default('') }}
+      e_icoon: >-
+        {{ lijst | select('search', '^select[.].*_' ~ basis ~ '_icoon$') | first | default('') }}
+      e_soort: >-
+        {{ lijst | select('search', '^select[.].*_' ~ basis ~ '_soort$') | first | default('') }}
+      nieuw: "{{ entiteit | default('', true) }}"
+      nieuwe_naam: >-
+        {{ (naam | default('', true)) or (state_attr(nieuw, 'friendly_name') if nieuw else '') or '' }}
+  - if: "{{ not e_entiteit }}"
+    then:
+      - stop: Deze tegel bestaat niet op deze klok (kies een ESPHome-alarmklok en tegel 1-9)
+        error: true
+  - if: "{{ verbergen | default(false) }}"
+    then:
+      - action: text.set_value
+        target:
+          entity_id: "{{ e_entiteit }}"
+        data:
+          value: ""
+      - stop: Tegel verborgen
+  - if: "{{ nieuwe_naam != '' and e_naam != '' }}"
+    then:
+      - action: text.set_value
+        target:
+          entity_id: "{{ e_naam }}"
+        data:
+          value: "{{ nieuwe_naam[:24] }}"
+  - if: "{{ (icoon | default('', true)) != '' and e_icoon != '' }}"
+    then:
+      - action: select.select_option
+        target:
+          entity_id: "{{ e_icoon }}"
+        data:
+          option: "{{ icoon }}"
+  - if: "{{ (soort | default('', true)) != '' and e_soort != '' }}"
+    then:
+      - action: select.select_option
+        target:
+          entity_id: "{{ e_soort }}"
+        data:
+          option: "{{ soort }}"
+  # De entiteit als laatste: daarna herstart de klok even
+  - if: "{{ nieuw != '' }}"
+    then:
+      - action: text.set_value
+        target:
+          entity_id: "{{ e_entiteit }}"
+        data:
+          value: "{{ nieuw }}"

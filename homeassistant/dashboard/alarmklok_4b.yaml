@@ -1,5 +1,5 @@
 # Dashboard voor de instellingen van 'Alarmklok 4B' (gemaakt met tools/dashboard.py)
-# Nodig voor de knoppen: de scripts uit homeassistant/packages/alarmklok.yaml.
+# Nodig voor de knoppen: de script-blueprints uit homeassistant/blueprints/script/ (zie README).
 title: Alarmklok 4B
 views:
   - title: Pagina's

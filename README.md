@@ -356,9 +356,21 @@ meer. Pas die dingen dus altijd in HA aan.
     de klok, de pagina, het nummer van de tegel en de entiteit uit de lijst
     van HA (en eventueel naam, icoon en soort; zonder naam wordt het de naam
     van de entiteit). *Entiteit kiezen…* doet hetzelfde voor thermostaat,
-    rolluik, mediaspeler, dimlamp en lichtsensor. Hiervoor zijn de scripts uit
-    `homeassistant/packages/alarmklok.yaml` nodig (stap 3) en HA 2024.3 of
-    nieuwer.
+    rolluik, mediaspeler, dimlamp en lichtsensor. Hiervoor zijn twee scripts
+    nodig (HA 2024.3 of nieuwer). Die importeer je als blueprint met een klik,
+    en bijwerken gaat later met *Opnieuw importeren*:
+
+    | Script | Importeren |
+    |---|---|
+    | Alarmklok tegel instellen | [![Blueprint importeren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FPerjan-smul%2Falarmklok-domotics-controller%2Fblob%2Fclaude%2Falarm-clock-home-assistant-ljscuo%2Fhomeassistant%2Fblueprints%2Fscript%2Falarmklok_tegel_instellen.yaml) |
+    | Alarmklok entiteit kiezen | [![Blueprint importeren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FPerjan-smul%2Falarmklok-domotics-controller%2Fblob%2Fclaude%2Falarm-clock-home-assistant-ljscuo%2Fhomeassistant%2Fblueprints%2Fscript%2Falarmklok_entiteit_kiezen.yaml) |
+
+    Klik op de knop, kies *Blueprint importeren*, en daarna bij de blueprint
+    *Script maken*. Geef het script precies de naam uit de tabel (dan vinden
+    de knoppen op het dashboard het: `script.alarmklok_tegel_instellen` en
+    `script.alarmklok_entiteit_kiezen`) en sla op. Bijwerken: *Instellingen →
+    Automatiseringen en scènes → Blueprints*, drie puntjes bij de blueprint →
+    *Opnieuw importeren*.
 
   *Instellingen → Dashboards → Dashboard toevoegen → Nieuw dashboard*, openen,
   potlood → drie puntjes → *Raw configuration editor*, en plak de inhoud van
