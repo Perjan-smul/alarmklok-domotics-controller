@@ -372,20 +372,23 @@ meer. Pas die dingen dus altijd in HA aan.
     Automatiseringen en scènes → Blueprints*, drie puntjes bij de blueprint →
     *Opnieuw importeren*.
 
-  *Instellingen → Dashboards → Dashboard toevoegen → Nieuw dashboard*, openen,
-  potlood → drie puntjes → *Raw configuration editor*, en plak de inhoud van
-  `homeassistant/dashboard/alarmklok_4_inch.yaml` (4"), `alarmklok.yaml` (7")
-  of `alarmklok_4b.yaml` (4B). Heet je klok anders, maak er dan een met
-  `python3 tools/dashboard.py "Naam van je klok"` (`--camera` voor de 7"/4B).
+  **Zo maak je het, voor elke klok hetzelfde:**
+  1. *Ontwikkelaarshulpmiddelen → Sjabloon*: wis het voorbeeld en plak de hele
+     inhoud van `homeassistant/dashboard/dashboard-sjabloon.jinja`.
+  2. Zet bovenaan bij `klok` de naam van je klok, zoals bij *Instellingen →
+     Apparaten* (bijvoorbeeld `'Alarmklok 4 inch'`).
+  3. Kopieer de uitkomst (rechts). *Instellingen → Dashboards → Dashboard
+     toevoegen → Nieuw dashboard*, openen, potlood → drie puntjes → *Raw
+     configuration editor*, alles vervangen en opslaan.
 
-  **"Entiteit niet gevonden"?** Staat de klok in een ruimte, dan zet HA die
-  ruimte voor de ID's van entiteiten die er later bij kwamen
-  (`select.master_bedroom_alarmklok_4_inch_kleurthema`). Haal dan de echte
-  ID's op: *Ontwikkelaarshulpmiddelen → Sjabloon*, plak
-  `{{ device_entities(device_id('select.alarmklok_4_inch_klokontwerp')) | sort | join('\n') }}`
-  (met het ID van jouw Klokontwerp), zet de uitkomst in een bestand en maak
-  het dashboard met `python3 tools/dashboard.py "Alarmklok 4 inch" -e bestand.txt`.
-  De scripts van de knoppen hebben hier geen last van.
+  Home Assistant zoekt zo zelf de entiteiten van die klok op, ook als HA de
+  ruimte voor de ID's heeft gezet (`select.master_bedroom_alarmklok_4_inch_kleurthema`).
+  Staat er bovenaan *KLOK NIET GEVONDEN*, controleer dan de naam. Voor een
+  tweede klok: hetzelfde, met een andere naam en een nieuw dashboard.
+
+  (Het sjabloon komt uit `python3 tools/dashboard.py --sjabloon`. De vaste
+  bestanden `alarmklok_4_inch.yaml`, `alarmklok.yaml` en `alarmklok_4b.yaml`
+  werken alleen als de ID's precies de standaardnamen hebben.)
 
 ## Spraakassistent (7" en 4B)
 

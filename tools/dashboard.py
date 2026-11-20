@@ -36,7 +36,41 @@ def slug(tekst):
     return tekst.strip("_")
 
 
-def maak(friendly, camera, bestaand=None):
+SJABLOON_KOP = """{#- =========================================================================
+  Instellingendashboard voor een alarmklok, gemaakt door Home Assistant zelf.
+
+  1. Ontwikkelaarshulpmiddelen -> Sjabloon: wis het voorbeeld en plak dit hele
+     bestand.
+  2. Zet hieronder bij `klok` de naam van je klok, zoals bij Instellingen ->
+     Apparaten (bijvoorbeeld 'Alarmklok 4 inch').
+  3. Kopieer de uitkomst (rechts) naar een nieuw dashboard: potlood -> drie
+     puntjes -> Raw configuration editor, alles vervangen, opslaan.
+
+  Het sjabloon zoekt zelf de entiteiten van die klok op, ook als HA de ruimte
+  voor de ID's heeft gezet (select.slaapkamer_alarmklok_kleurthema). Gemaakt
+  met: python3 tools/dashboard.py --sjabloon
+========================================================================= -#}
+{%- set klok = 'Alarmklok 4 inch' -%}
+{%- set ns = namespace(apparaat=none) -%}
+{%- for a in integration_entities('esphome') | map('device_id') | reject('none') | unique -%}
+  {%- if klok in [device_attr(a, 'name_by_user'), device_attr(a, 'name')] -%}
+    {%- set ns.apparaat = a -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- set entiteiten = device_entities(ns.apparaat) if ns.apparaat else [] -%}
+{%- set heeft_camera = entiteiten | select('search', '^text[.](.*_)?camera$') | list | count > 0 -%}
+{%- macro z(domein, naam) -%}
+  {{- entiteiten | select('search', '^' ~ domein ~ '[.](.*_)?' ~ naam ~ '$') | first
+      | default(domein ~ '.niet_gevonden_' ~ naam) -}}
+{%- endmacro -%}
+{%- if not ns.apparaat %}
+# KLOK NIET GEVONDEN: er is geen ESPHome-apparaat met de naam '{{ klok }}'.
+# Zet bovenaan bij `klok` de naam zoals bij Instellingen -> Apparaten.
+{% endif -%}
+"""
+
+
+def maak(friendly, camera, bestaand=None, sjabloon=False):
     """bestaand: de echte entiteit-ID's van de klok in HA (of None). HA zet er
     soms de ruimte voor (select.slaapkamer_alarmklok_kleurthema): dan wordt
     per instelling het ID gebruikt dat op dezelfde naam eindigt."""
@@ -44,6 +78,9 @@ def maak(friendly, camera, bestaand=None):
     ontbreekt = []
 
     def e(domein, naam):
+        if sjabloon:
+            # HA zoekt het echte ID zelf op (macro z in de kop van het sjabloon)
+            return f"{{{{ z('{domein}', '{slug(naam)}') }}}}"
         standaard = f"{domein}.{pre}_{slug(naam)}"
         if not bestaand or standaard in bestaand:
             return standaard
@@ -134,9 +171,13 @@ def maak(friendly, camera, bestaand=None):
                knop("Entiteit kiezen…", "alarmklok_entiteit_kiezen", "mdi:form-select")]
     muziek = [kop("Muziek"), kaart(None, [(e("text", "Mediaspeler"), None)]),
               knop("Entiteit kiezen…", "alarmklok_entiteit_kiezen", "mdi:form-select")]
-    if camera:
-        muziek += [kop("Camera"), kaart(None, [(e("text", "Camera"), None), (e("text", "Deurbel"), None),
-                                               (e("number", "Camera verversen"), None)])]
+    if camera or sjabloon:
+        cam = [kop("Camera"), kaart(None, [(e("text", "Camera"), None), (e("text", "Deurbel"), None),
+                                           (e("number", "Camera verversen"), None)])]
+        if sjabloon:
+            # Alleen als de klok een camera heeft (7" en 4B)
+            cam = ["{%- if heeft_camera %}"] + cam + ["{%- endif %}"]
+        muziek += cam
     volgorde = [kop("Volgorde", "Welke pagina's na de klok komen bij omhoog/omlaag vegen."),
                 kaart(None, [(e("select", f"Pagina {n}"), f"Pagina {n}") for n in range(1, 7)] +
                       [(e("switch", "Swipe-animatie"), None)])]
@@ -170,6 +211,10 @@ def maak(friendly, camera, bestaand=None):
     uit = [f"# Dashboard voor de instellingen van '{friendly}' (gemaakt met tools/dashboard.py)",
            "# Nodig voor de knoppen: de script-blueprints uit homeassistant/blueprints/script/ (zie README).",
            f"title: {friendly}", "views:"]
+    if sjabloon:
+        uit = ["# Instellingen van {{ klok }} (gemaakt met homeassistant/dashboard/dashboard-sjabloon.jinja)",
+               "# Nodig voor de knoppen: de script-blueprints uit homeassistant/blueprints/script/ (zie README).",
+               "title: {{ klok }}", "views:"]
     uit += ["  - title: Pagina's", "    path: paginas", "    icon: mdi:view-grid-outline", "    type: sections",
             "    max_columns: 4", "    sections:",
             sectie(volgorde), sectie(licht), sectie(scenes), sectie(klimaat + muziek)]
@@ -180,6 +225,8 @@ def maak(friendly, camera, bestaand=None):
                     kaart("Klokontwerpen bij links/rechts vegen", ontwerpen)]),
             sectie([kop("Nachtstand"), kaart(None, nacht),
                     knop("Lichtsensor kiezen…", "alarmklok_entiteit_kiezen", "mdi:form-select")])]
+    if sjabloon:
+        return SJABLOON_KOP + "\n".join(uit) + "\n"
     if ontbreekt:
         print("Niet gevonden in de lijst (blijft de standaardnaam):", ", ".join(sorted(set(ontbreekt))))
     return "\n".join(uit) + "\n"
@@ -187,9 +234,13 @@ def maak(friendly, camera, bestaand=None):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("friendly_name", help='friendly_name van de klok, bv. "Alarmklok 4 inch"')
+    p.add_argument("friendly_name", nargs="?", default="Alarmklok 4 inch",
+                   help='friendly_name van de klok, bv. "Alarmklok 4 inch"')
     p.add_argument("--camera", action="store_true", help="met de camera-instellingen (7\" en 4B)")
     p.add_argument("-o", "--uit", help="uitvoerbestand")
+    p.add_argument("--sjabloon", action="store_true", help=(
+        "maak het HA-sjabloon homeassistant/dashboard/dashboard-sjabloon.jinja: Home Assistant zoekt de "
+        "entiteiten dan zelf op, voor elke klok"))
     p.add_argument("-e", "--entiteiten", help=(
         "bestand met de echte entiteit-ID's van de klok, één per regel (uit HA: Ontwikkelaarshulpmiddelen -> "
         "Sjabloon: {{ device_entities(device_id('select.<klok>_klokontwerp')) | sort | join('\\n') }})"))
@@ -198,6 +249,12 @@ def main():
     if a.entiteiten:
         with open(a.entiteiten) as f:
             bestaand = {r.strip() for r in f if "." in r and not r.strip().startswith("#")}
+    if a.sjabloon:
+        pad = a.uit or os.path.join(ROOT, "homeassistant", "dashboard", "dashboard-sjabloon.jinja")
+        with open(pad, "w") as f:
+            f.write(maak("klok", False, None, sjabloon=True))
+        print(pad)
+        return
     pad = a.uit or os.path.join(ROOT, "homeassistant", "dashboard", slug(a.friendly_name) + ".yaml")
     os.makedirs(os.path.dirname(pad), exist_ok=True)
     with open(pad, "w") as f:
