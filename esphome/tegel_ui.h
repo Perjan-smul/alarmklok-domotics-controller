@@ -25,12 +25,27 @@ struct Delen {
 };
 
 // Zet de onderdelen op hun plek en in de juiste kleur. k = schaal (480x480 = 1).
-inline void opmaak(const Delen &d, bool rij, bool aan, int procent, bool dimbaar, const char *status, float k) {
+// vorm: alarmklok::TegelVorm (0 = tegel, 1 = rij, 2 = knop)
+inline void opmaak(const Delen &d, int vorm, bool aan, int procent, bool dimbaar, const char *status, float k) {
   auto px = [k](int v) { return (int32_t) (v * k); };
+  const bool rij = vorm == 1, knop = vorm == 2;
   const bool toon_pct = rij && aan && dimbaar && procent >= 0;
   lv_obj_update_layout(d.tegel);
   const int32_t b = lv_obj_get_width(d.tegel);
-  if (rij) {
+  // Knop (smal, naast elkaar): kleiner icoonvlak midden boven, naam eronder,
+  // geen statusregel
+  const int32_t chip = px(knop ? 38 : 46);
+  lv_obj_set_size(d.chip, chip, chip);
+  if (knop)
+    lv_obj_add_flag(d.status, LV_OBJ_FLAG_HIDDEN);
+  else
+    lv_obj_clear_flag(d.status, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_set_style_text_align(d.naam, knop ? LV_TEXT_ALIGN_CENTER : LV_TEXT_ALIGN_LEFT, 0);
+  if (knop) {
+    lv_obj_align(d.chip, LV_ALIGN_TOP_MID, 0, px(8));
+    lv_obj_set_width(d.naam, b - px(12));
+    lv_obj_align(d.naam, LV_ALIGN_BOTTOM_MID, 0, px(-7));
+  } else if (rij) {
     lv_obj_align(d.chip, LV_ALIGN_LEFT_MID, px(12), 0);
     lv_obj_align(d.naam, LV_ALIGN_LEFT_MID, px(72), px(-11));
     lv_obj_align(d.status, LV_ALIGN_LEFT_MID, px(72), px(12));

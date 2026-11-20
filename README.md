@@ -486,7 +486,7 @@ Installatie, stap 4).
 | Instelling | Wat |
 |---|---|
 | *Pagina 1* t/m *Pagina 6* | Welke pagina na de klok komt bij omhoog/omlaag swipen: Verlichting, Klimaat, Muziek, Scènes, Wekker, Camera (7" en 4B) of Uit. Dubbele worden overgeslagen. |
-| *Indeling verlichting* | Rijen (5 brede, dimbare rijen; standaard), 4 tegels (2×2), 6 tegels of 9 tegels (3×3) |
+| *Indeling verlichting* | Rijen (5 brede, dimbare rijen; standaard), Rijen + knoppen (4 dimbare rijen en daaronder tegel 5-8 als knoppen naast elkaar, bijvoorbeeld voor scripts), 4 tegels (2×2), 6 tegels of 9 tegels (3×3) |
 | *Indeling scènes* | 4, 6 of 9 tegels |
 | *Kleurthema* | Donker, Zwart, Blauw of Warm: achtergrond van pagina's, kaarten en tegels |
 | *Accentkleur* | Kleur van de accenten op de klok (datum, tweede tijd, ...) |
@@ -512,6 +512,14 @@ Per tegel zijn er vier instellingen (tegels 1-9 op Verlichting en op Scènes):
 
 Je instellingen blijven bewaard, ook na een nieuwe firmware. Tegels boven de
 gekozen indeling (bijvoorbeeld 7-9 bij "6 tegels") zijn verborgen.
+
+Bij **Rijen + knoppen** zijn tegel 1-4 de dimbare rijen en tegel 5-8 de
+knoppen in de onderste rij: een icoon met de naam eronder, zonder statusregel.
+Alleen knoppen met een entiteit doen mee en verdelen de breedte; geef een
+knop bijvoorbeeld `script.slapen` en de soort *Scène/script* (of laat
+*Automatisch* staan). Een knop met een lamp of schakelaar werkt als aan/uit.
+
+![Rijen + knoppen](docs/screenshots/4inch/18-verlichting-rijen-knoppen.png)
 
 Soort *Aan/uit* doet een `toggle` (werkt met `light`, `switch`, `fan`,
 `cover`, `input_boolean` en dergelijke), met status en lang drukken voor de
@@ -607,7 +615,7 @@ daartegen doet:
 
 | Wat | Hoe |
 |---|---|
-| Klok verschuift elke dag | Het hele klokvlak (alle ontwerpen, ook de stippen) staat elke dag een paar pixels anders: een vaste ronde langs 9 posities, max. 8 px op 480×480 (12 px op 720×720). Om middernacht en na het opstarten. |
+| Klok verschuift elke dag | Het hele klokvlak (alle ontwerpen, ook de stippen) staat elke dag een paar pixels anders: een vaste ronde langs 9 posities, max. 8 px op 480×480 (12 px op 720×720). Om middernacht en na het opstarten. De donkere achtergrond van Zon, Maan en Vierkant loopt rondom een stukje door, zodat er na het verschuiven geen rand oplicht. |
 | Maan zwerft | Op het maanscherm schuift de maan elk uur naar een andere plek in een klein gebied (max. 14 px op 480×480). |
 | Dimmen | *Helderheid overdag* en *'s nachts*; een lagere stand overdag rekt de levensduur van de verlichting. |
 | Nachtstand | Donkere achtergrond met weinig, gedimd rood licht. |
@@ -625,6 +633,10 @@ paar uur wisselend beeld zien; bij LCD trekt dat meestal weg.
   voorbeelddata alle klokontwerpen en pagina's langs en zet de afdrukken als PNG
   in `docs/screenshots/4inch/` (met `overzicht.png`). Nodig: ESPHome 2026.10 en
   Pillow. Controleer na een wijziging in de indeling altijd de afdrukken.
+- **Vegen testen:** `esphome/veegtraag.yaml` speelt op de computer vegen af
+  met een nep-touchscreen dat alleen begin en eind doorgeeft (zoals een trage
+  S3 die een klokscherm tekent) en logt het resultaat; uitleg bovenin het
+  bestand.
 - Alles wat alleen op een ESP32 werkt (wifi, internettijd, updates, diagnose)
   staat in `onderdelen/esp.yaml`; zo kan de rest ook op de computer draaien.
 - Let op in de vierkante indeling: schrijf negatieve maten als

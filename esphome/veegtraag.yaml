@@ -1,0 +1,192 @@
+# =============================================================================
+#  Veegtest voor de 4"-klok, op de computer (zoals voorbeeld-4inch.yaml)
+#
+#  Een nep-touchscreen speelt op elk klokontwerp een veeg naar links en terug,
+#  en daarna omhoog en omlaag, en logt welk ontwerp en welke pagina het werd.
+#  Het touchscreen geeft alleen het begin- en het eindpunt door, zoals op een
+#  trage S3 die een klokscherm tekent: dan moet het vangnet in paginas.yaml de
+#  veeg herkennen.
+#
+#    cd esphome && ESPHOME_PCH_ENABLE=0 esphome compile veegtraag.yaml
+#    ./.esphome/build/alarmklok-veegtraag/.pioenvs/alarmklok-veegtraag/program | grep veegtest
+#
+#  Goed: "links op X -> ontwerp <volgende>", "omhoog -> pagina-index 1".
+# =============================================================================
+
+substitutions:
+  name: alarmklok-veegtraag
+  friendly_name: Alarmklok veegtest
+  mediaspeler: media_player.slaapkamer
+
+packages:
+  instellingen: !include instellingen.yaml
+  kern: !include onderdelen/kern.yaml
+  hardware: !include onderdelen/voorbeeld-host.yaml
+  scherm: !include onderdelen/scherm-vierkant.yaml
+  detail: !include onderdelen/detail-pagina.yaml
+
+# Geen touch op de computer
+lvgl:
+  touchscreens: !remove
+
+esphome:
+  on_boot:
+    - priority: -105
+      then:
+        - lambda: |-
+            // Nep-touchscreen: speelt een veeg af (veeg_*), afgelezen door LVGL
+            static lv_indev_t *in = nullptr;
+            if (in == nullptr) {
+              in = lv_indev_create();
+              lv_indev_set_type(in, LV_INDEV_TYPE_POINTER);
+              lv_indev_set_display(in, lv_display_get_default());
+              lv_indev_set_read_cb(in, [](lv_indev_t *, lv_indev_data_t *d) {
+                const uint32_t t = millis() - id(nep_start);
+                const uint32_t duur = 250;
+                if (id(nep_start) == 0 || t > duur + 100) {
+                  d->state = LV_INDEV_STATE_RELEASED;
+                  d->point.x = id(nep_x1); d->point.y = id(nep_y1);
+                  return;
+                }
+                // Traag scherm: alleen het begin en (na het loslaten) het eind
+                const float f = t >= duur ? 1.0f : 0.0f;
+                d->point.x = id(nep_x0) + (int) ((id(nep_x1) - id(nep_x0)) * f);
+                d->point.y = id(nep_y0) + (int) ((id(nep_y1) - id(nep_y0)) * f);
+                d->state = t >= duur ? LV_INDEV_STATE_RELEASED : LV_INDEV_STATE_PRESSED;
+              });
+            }
+
+    - priority: -200
+      then:
+        - script.execute: demo
+
+script:
+  # Tijd voor de volgende afdruk (in Nederland, 22 oktober 2026)
+  - id: demo_tijd_zetten
+    parameters:
+      tijdstip: int64_t
+    then:
+      - lambda: |-
+          id(demo_tijd) = tijdstip;
+          id(demo_start_ms) = millis();
+      - script.execute: scherm_bijwerken
+
+  - id: afdruk
+    parameters:
+      naam: string
+    then:
+      - delay: 1500ms
+      - snapshot.take:
+          id: scherm
+          filename: !lambda return naam;
+
+  - id: klokontwerp_afdruk
+    parameters:
+      ontwerp: string
+      naam: string
+    then:
+      - select.set:
+          id: klokontwerp
+          option: !lambda return ontwerp;
+      - script.execute:
+          id: afdruk
+          naam: !lambda return naam;
+      - script.wait: afdruk
+
+  - id: pagina_afdruk
+    parameters:
+      kolom: int
+      naam: string
+    then:
+      # Standaardvolgorde: Klok, Verlichting, Klimaat, Muziek, Scènes, Wekker
+      - script.execute:
+          id: pagina_naar
+          doel: !lambda return kolom;
+          animatie: false
+      - script.execute:
+          id: afdruk
+          naam: !lambda return naam;
+      - script.wait: afdruk
+
+  - id: demo
+    then:
+      - delay: 2s
+      - script.execute: naar_klokscherm
+      - delay: 1s
+      - select.set: {id: klokontwerp, option: Digitaal}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Digitaal"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Analoog}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Analoog"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Gestapeld}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Gestapeld"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Info}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Info"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Zon}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Zon"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Zwevend}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Zwevend"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Maan}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Maan"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - select.set: {id: klokontwerp, option: Vierkant}
+      - delay: 1s
+      - script.execute: {id: veeg, x0: 360, y0: 240, x1: 100, y1: 240, wat: "links op Vierkant"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 100, y0: 240, x1: 360, y1: 240, wat: "rechts (terug)"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 240, y0: 380, x1: 240, y1: 100, wat: "omhoog"}
+      - delay: 1500ms
+      - script.execute: {id: veeg, x0: 240, y0: 100, x1: 240, y1: 380, wat: "omlaag"}
+      - delay: 1500ms
+      - logger.log: "Veegtest klaar"
+      - lambda: exit(0);
+
+  - id: veeg
+    parameters:
+      x0: int
+      y0: int
+      x1: int
+      y1: int
+      wat: string
+    then:
+      - lambda: |-
+          id(nep_x0) = x0; id(nep_y0) = y0; id(nep_x1) = x1; id(nep_y1) = y1;
+          id(nep_start) = millis();
+      - delay: 800ms
+      - lambda: |-
+          ESP_LOGW("veegtest", "%s -> ontwerp %s, pagina-index %d", wat.c_str(),
+                   id(klokontwerp).current_option().c_str(), id(pag_index));
+
+globals:
+  - {id: nep_start, type: uint32_t, initial_value: "0"}
+  - {id: nep_x0, type: int, initial_value: "0"}
+  - {id: nep_y0, type: int, initial_value: "0"}
+  - {id: nep_x1, type: int, initial_value: "0"}
+  - {id: nep_y1, type: int, initial_value: "0"}

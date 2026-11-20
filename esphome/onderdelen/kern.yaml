@@ -1137,12 +1137,44 @@ script:
           auto nu = id(klok).now();
           if (!nu.is_valid())
             return;
+          const int max_schuif = (int) (8 * ${k});
           int dx, dy;
-          alarmklok::verschuiving(nu.day_of_year, (int) (8 * ${k}), dx, dy);
+          alarmklok::verschuiving(nu.day_of_year, max_schuif, dx, dy);
           // De wijzerplaat van "Vierkant" is groter dan het scherm en mag
           // buiten het verschoven vlak doorlopen (geen zwarte rand)
           lv_obj_add_flag(id(klok_vlak), LV_OBJ_FLAG_OVERFLOW_VISIBLE);
           lv_obj_set_pos(id(klok_vlak), dx, dy);
+          // De donkere hemel van "Zon" en "Maan" ook rondom laten doorlopen,
+          // anders licht na de verschuiving een rand van de pagina-achtergrond
+          // op. Zon: de lucht (met verloop) groter maken. Maan: een rand in
+          // dezelfde kleur buiten het vlak (outline).
+          const int m = max_schuif + 2;
+          lv_obj_update_layout(id(klok_vlak));
+          lv_obj_add_flag(id(ontwerp_zon), LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+          lv_obj_set_pos(id(zon_lucht), -m, -m);
+          lv_obj_set_size(id(zon_lucht), lv_obj_get_width(id(ontwerp_zon)) + 2 * m,
+                          lv_obj_get_height(id(ontwerp_zon)) + 2 * m);
+          lv_obj_set_style_outline_width(id(ontwerp_maan), m, 0);
+          lv_obj_set_style_outline_pad(id(ontwerp_maan), 0, 0);
+          lv_obj_set_style_outline_color(id(ontwerp_maan), lv_color_hex(0x000000), 0);
+          lv_obj_set_style_outline_opa(id(ontwerp_maan), LV_OPA_COVER, 0);
+          // LVGL tekent een object alleen in zijn eigen vlak (plus de
+          // "ext draw size"); wat erbuiten doorloopt (Vierkant: 12 px, Zon en
+          // Maan: m) zou in de strook naast het verschoven vlak wegvallen.
+          // Dus het klokvlak en het Zon-vlak een marge geven.
+          static bool marge_gezet = false;
+          if (!marge_gezet) {
+            marge_gezet = true;
+            const intptr_t marge = (intptr_t) (12 * ${k}) + m;
+            auto cb = [](lv_event_t *e) {
+              lv_event_set_ext_draw_size(e, (int32_t) (intptr_t) lv_event_get_user_data(e));
+            };
+            lv_obj_add_event_cb(id(klok_vlak), cb, LV_EVENT_REFR_EXT_DRAW_SIZE, (void *) marge);
+            lv_obj_add_event_cb(id(ontwerp_zon), cb, LV_EVENT_REFR_EXT_DRAW_SIZE, (void *) marge);
+          }
+          lv_obj_refresh_ext_draw_size(id(klok_vlak));
+          lv_obj_refresh_ext_draw_size(id(ontwerp_zon));
+          lv_obj_invalidate(lv_obj_get_parent(id(klok_vlak)));
 
   - id: maan_tekenen
     then:

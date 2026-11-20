@@ -6,11 +6,12 @@
 #  - Een andere entiteit laat de klok na 5 s even herstarten, zodat hij de
 #    status (aan/uit) van de nieuwe entiteit volgt.
 #  - Een lege entiteit verbergt de tegel; tegels boven de gekozen indeling
-#    ("4/6/9 tegels", paginas.yaml) ook.
+#    ("Rijen", "Rijen + knoppen", "4/6/9 tegels", paginas.yaml) ook.
 #  - Soort: Automatisch (scènes, scripts en knoppen alleen aanzetten, de rest
 #    aan/uit met status), Aan/uit of Scène/script.
 # Vars: nr, titel, naam, entity, icoon, index (1-9), aantal (global met het
-# aantal tegels op deze pagina) en rijen (global: pagina als rijen?).
+# aantal tegels op deze pagina) en rijen (global: hoeveel tegels, vanaf de
+# eerste, een brede rij zijn; bij "Rijen + knoppen" zijn de rest knoppen).
 text:
   - platform: template
     id: tegel_${nr}_naam
@@ -153,13 +154,14 @@ script:
           const std::string &status = id(tegel_${nr}_status);
           const bool schakelaar = id(tegel_${nr}_schakelaar);
           const bool aan = schakelaar && alarmklok::status_aan(status);
-          const bool rij = id(${rijen});
+          const int vorm = alarmklok::tegel_vorm(${index}, id(${rijen}));
+          const bool rij = vorm == alarmklok::V_RIJ;
           const bool dimbaar = alarmklok::waarde_attribuut(dom)[0] != '\0';
           // Als rij staat het percentage rechts: onder de naam dan alleen "Aan"
           std::string tekst = alarmklok::tegel_status(dom, status, rij && dimbaar ? -1 : id(tegel_${nr}_procent), schakelaar);
           tegelui::opmaak({id(tegel_${nr}), id(tegel_${nr}_vul), id(tegel_${nr}_chip), id(tegel_${nr}_icoon_tekst),
                            id(tegel_${nr}_naam_tekst), id(tegel_${nr}_status_tekst), id(tegel_${nr}_pct)},
-                          rij, aan, id(tegel_${nr}_procent), dimbaar, tekst.c_str(), ${k});
+                          vorm, aan, id(tegel_${nr}_procent), dimbaar, tekst.c_str(), ${k});
           if (schakelaar && !entiteit.empty() && id(detail_entiteit) == entiteit) {
             id(detail_status) = status;
             id(detail_procent) = id(tegel_${nr}_procent);
@@ -177,7 +179,8 @@ script:
           s->tegel = id(tegel_${nr});
           s->mag = []() {
             const std::string dom = alarmklok::domein(id(tegel_${nr}_entiteit).state);
-            return id(${rijen}) && id(tegel_${nr}_schakelaar) && alarmklok::waarde_attribuut(dom)[0] != '\0';
+            return alarmklok::tegel_vorm(${index}, id(${rijen})) == alarmklok::V_RIJ && id(tegel_${nr}_schakelaar) &&
+                   alarmklok::waarde_attribuut(dom)[0] != '\0';
           };
           s->procent = []() {
             return alarmklok::status_aan(id(tegel_${nr}_status)) ? id(tegel_${nr}_procent) : 0;
