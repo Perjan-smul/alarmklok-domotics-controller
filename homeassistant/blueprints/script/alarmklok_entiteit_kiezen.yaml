@@ -1,0 +1,76 @@
+# Alarmklok - entiteit kiezen (script-blueprint).
+# Importeren: Instellingen -> Automatiseringen en scènes -> Blueprints ->
+# Blueprint importeren, met de link hieronder (source_url). Daarna "Script
+# maken" en het script de naam "Alarmklok entiteit kiezen" geven, zodat de knoppen op het
+# instellingendashboard het vinden. Bijwerken: bij de blueprint "Opnieuw importeren".
+blueprint:
+  name: "Alarmklok: entiteit kiezen"
+  description: Kies de thermostaat, het rolluik, de mediaspeler, de dimlamp, de lichtsensor of (7" en 4B) de camera van de klok.
+  domain: script
+  source_url: https://github.com/Perjan-smul/alarmklok-domotics-controller/blob/claude/alarm-clock-home-assistant-ljscuo/homeassistant/blueprints/script/alarmklok_entiteit_kiezen.yaml
+icon: mdi:form-select
+mode: queued
+fields:
+  klok:
+    name: Klok
+    required: true
+    selector:
+      device:
+        filter:
+          integration: esphome
+  instelling:
+    name: Instelling
+    required: true
+    default: Thermostaat
+    selector:
+      select:
+        options:
+          - Thermostaat
+          - Rolluik
+          - Rolluik batterij
+          - Mediaspeler
+          - Dimlamp
+          - Lichtsensor
+          - Camera
+          - Deurbel
+  entiteit:
+    name: Entiteit
+    selector:
+      entity:
+  leegmaken:
+    name: Leegmaken
+    description: Niets gebruiken (bijvoorbeeld geen dimmerkaart).
+    default: false
+    selector:
+      boolean:
+sequence:
+  - variables:
+      naam_id: "{{ instelling | lower | replace(' ', '_') }}"
+      lijst: "{{ device_entities(klok) }}"
+      doel: >-
+        {{ lijst | select('search', '^text[.].*_' ~ naam_id ~ '$') | first | default('') }}
+      waarde: >-
+        {{ '' if leegmaken | default(false) else (entiteit | default('', true)) }}
+  - if: "{{ not doel }}"
+    then:
+      - stop: Deze instelling bestaat niet op deze klok
+        error: true
+  - if: "{{ waarde == '' and not (leegmaken | default(false)) }}"
+    then:
+      - stop: Kies een entiteit of zet Leegmaken aan
+        error: true
+  # Bij de dimlamp ook de naam op de dimmerkaart
+  - if: "{{ instelling == 'Dimlamp' and waarde != '' }}"
+    then:
+      - action: text.set_value
+        target:
+          entity_id: >-
+            {{ lijst | select('search', '^text[.].*_dimlamp_naam$') | first | default('') }}
+        data:
+          value: "{{ (state_attr(waarde, 'friendly_name') or waarde)[:24] }}"
+        continue_on_error: true
+  - action: text.set_value
+    target:
+      entity_id: "{{ doel }}"
+    data:
+      value: "{{ waarde }}"

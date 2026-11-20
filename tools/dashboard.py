@@ -5,8 +5,8 @@ In plaats van de lange lijst bij het apparaat in de ESPHome-integratie staat
 alles op één dashboard. View "Pagina's": per pagina een blok (Volgorde,
 Verlichting, Scènes, Klimaat, Muziek) met de indeling en alleen de tegels die
 bij die indeling horen; de knoppen "Tegel instellen…" en "Entiteit kiezen…"
-openen een formulier met de entiteitkiezer van HA (de scripts uit
-homeassistant/packages/alarmklok.yaml). View "Klok": wekkers, uiterlijk en
+openen een formulier met de entiteitkiezer van HA (de script-blueprints uit
+homeassistant/blueprints/script/, zie README). View "Klok": wekkers, uiterlijk en
 nachtstand.
 
 Gebruik:
@@ -153,7 +153,7 @@ def maak(friendly, camera):
     ]
 
     uit = [f"# Dashboard voor de instellingen van '{friendly}' (gemaakt met tools/dashboard.py)",
-           "# Nodig voor de knoppen: de scripts uit homeassistant/packages/alarmklok.yaml.",
+           "# Nodig voor de knoppen: de script-blueprints uit homeassistant/blueprints/script/ (zie README).",
            f"title: {friendly}", "views:"]
     uit += ["  - title: Pagina's", "    path: paginas", "    icon: mdi:view-grid-outline", "    type: sections",
             "    max_columns: 4", "    sections:",
