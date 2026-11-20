@@ -538,11 +538,21 @@ inline int pagina_stap(int index, int richting, int aantal) {
 }
 
 // Indeling van een tegelpagina: "Rijen" (5 brede, dimbare rijen onder elkaar),
-// "4 tegels" (2x2), "6 tegels" (3x2), "9 tegels" (3x3)
-inline bool tegel_rijen(const std::string &indeling) { return indeling == "Rijen"; }
+// "Rijen + knoppen" (4 rijen en daaronder tegel 5-8 als knoppen naast elkaar),
+// "4 tegels" (2x2), "6 tegels" (3x2), "9 tegels" (3x3).
+// tegel_rijen: hoeveel tegels (vanaf de eerste) een brede rij zijn.
+inline int tegel_rijen(const std::string &indeling) {
+  if (indeling == "Rijen")
+    return 5;
+  if (indeling == "Rijen + knoppen")
+    return 4;
+  return 0;
+}
 inline int tegel_aantal(const std::string &indeling) {
   if (indeling == "Rijen")
     return 5;
+  if (indeling == "Rijen + knoppen")
+    return 8;
   if (indeling == "4 tegels")
     return 4;
   if (indeling == "9 tegels")
@@ -563,6 +573,15 @@ inline void tegel_raster(int aantal, bool liggend, int &rijen, int &kolommen) {
     rijen = liggend ? 2 : 3;
     kolommen = liggend ? 3 : 2;
   }
+}
+
+// Vorm van tegel `index` (1-9) bij `rijen` rijen (tegel_rijen): een brede rij,
+// een knop in de knoppenrij onder de rijen, of een gewone tegel in het raster.
+enum TegelVorm { V_TEGEL = 0, V_RIJ = 1, V_KNOP = 2 };
+inline TegelVorm tegel_vorm(int index, int rijen) {
+  if (rijen <= 0)
+    return V_TEGEL;
+  return index <= rijen ? V_RIJ : V_KNOP;
 }
 
 // Gedraagt de tegel zich als schakelaar (status, aan/uit, lang drukken voor

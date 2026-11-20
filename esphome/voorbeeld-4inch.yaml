@@ -177,6 +177,34 @@ script:
       - script.wait: afdruk
       - script.execute: detail_sluiten
 
+      # ---- Instelbaar: 4 rijen en 3 knoppen voor scripts ----
+      - lambda: |-
+          id(ui_klaar) = false;
+          const char *naam[3] = {"Slapen", "Lezen", "Wakker"};
+          const char *ent[3] = {"script.slapen", "script.lezen", "script.wakker"};
+          const char *icoon[3] = {"power-sleep", "lamp", "weather-sunset-up"};
+          text::Text *namen[3] = {id(tegel_licht_5_naam), id(tegel_licht_6_naam), id(tegel_licht_7_naam)};
+          text::Text *ents[3] = {id(tegel_licht_5_entiteit), id(tegel_licht_6_entiteit), id(tegel_licht_7_entiteit)};
+          select::Select *iconen[3] = {id(tegel_licht_5_icoon), id(tegel_licht_6_icoon), id(tegel_licht_7_icoon)};
+          for (int i = 0; i < 3; i++) {
+            namen[i]->publish_state(naam[i]);
+            ents[i]->publish_state(ent[i]);
+            iconen[i]->publish_state(icoon[i]);
+          }
+          id(ui_klaar) = true;
+      - select.set: {id: indeling_verlichting, option: Rijen + knoppen}
+      - script.execute: {id: pagina_afdruk, kolom: 1, naam: 18-verlichting-rijen-knoppen}
+      - script.wait: pagina_afdruk
+      - lambda: |-
+          id(ui_klaar) = false;
+          id(tegel_licht_5_naam)->publish_state("Nachtlampje");
+          id(tegel_licht_5_entiteit)->publish_state("light.nachtlampje");
+          id(tegel_licht_5_icoon)->publish_state("lamp");
+          id(tegel_licht_6_naam)->publish_state("Alle lampen");
+          id(tegel_licht_6_entiteit)->publish_state("light.alle_lampen");
+          id(tegel_licht_6_icoon)->publish_state("lightbulb-group");
+          id(ui_klaar) = true;
+
       # ---- Instelbaar: 9 tegels en het thema Blauw ----
       - lambda: |-
           // Zonder herstart (ui_klaar uit): drie extra tegels voor de afdruk

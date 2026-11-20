@@ -250,7 +250,10 @@ int main() {
   CONTROLEER(camera_url("http://ha:8123", "", 800).empty() && camera_url("http://ha", "None", 8).empty());
 
   // Rijen en airco
-  CONTROLEER(tegel_rijen("Rijen") && !tegel_rijen("6 tegels") && tegel_aantal("Rijen") == 5);
+  CONTROLEER(tegel_rijen("Rijen") == 5 && tegel_rijen("6 tegels") == 0 && tegel_aantal("Rijen") == 5);
+  CONTROLEER(tegel_rijen("Rijen + knoppen") == 4 && tegel_aantal("Rijen + knoppen") == 8);
+  CONTROLEER(tegel_vorm(4, 4) == V_RIJ && tegel_vorm(5, 4) == V_KNOP && tegel_vorm(8, 4) == V_KNOP);
+  CONTROLEER(tegel_vorm(5, 5) == V_RIJ && tegel_vorm(1, 0) == V_TEGEL && tegel_vorm(9, 0) == V_TEGEL);
   {
     int r, k;
     tegel_raster(5, false, r, k);
