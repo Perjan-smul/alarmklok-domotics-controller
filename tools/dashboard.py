@@ -36,11 +36,26 @@ def slug(tekst):
     return tekst.strip("_")
 
 
-def maak(friendly, camera):
+def maak(friendly, camera, bestaand=None):
+    """bestaand: de echte entiteit-ID's van de klok in HA (of None). HA zet er
+    soms de ruimte voor (select.slaapkamer_alarmklok_kleurthema): dan wordt
+    per instelling het ID gebruikt dat op dezelfde naam eindigt."""
     pre = slug(friendly)
+    ontbreekt = []
 
     def e(domein, naam):
-        return f"{domein}.{pre}_{slug(naam)}"
+        standaard = f"{domein}.{pre}_{slug(naam)}"
+        if not bestaand or standaard in bestaand:
+            return standaard
+        staart = f"_{pre}_{slug(naam)}"
+        kandidaten = [x for x in bestaand if x.startswith(domein + ".") and x.endswith(staart)]
+        if not kandidaten:
+            staart = f"_{slug(naam)}"
+            kandidaten = [x for x in bestaand if x.startswith(domein + ".") and x.endswith(staart)]
+        if len(kandidaten) == 1:
+            return kandidaten[0]
+        ontbreekt.append(standaard)
+        return standaard
 
     def rij(ent, label=None, ind="              "):
         r = [f"{ind}- entity: {ent}"]
@@ -165,6 +180,8 @@ def maak(friendly, camera):
                     kaart("Klokontwerpen bij links/rechts vegen", ontwerpen)]),
             sectie([kop("Nachtstand"), kaart(None, nacht),
                     knop("Lichtsensor kiezen…", "alarmklok_entiteit_kiezen", "mdi:form-select")])]
+    if ontbreekt:
+        print("Niet gevonden in de lijst (blijft de standaardnaam):", ", ".join(sorted(set(ontbreekt))))
     return "\n".join(uit) + "\n"
 
 
@@ -173,11 +190,18 @@ def main():
     p.add_argument("friendly_name", help='friendly_name van de klok, bv. "Alarmklok 4 inch"')
     p.add_argument("--camera", action="store_true", help="met de camera-instellingen (7\" en 4B)")
     p.add_argument("-o", "--uit", help="uitvoerbestand")
+    p.add_argument("-e", "--entiteiten", help=(
+        "bestand met de echte entiteit-ID's van de klok, één per regel (uit HA: Ontwikkelaarshulpmiddelen -> "
+        "Sjabloon: {{ device_entities(device_id('select.<klok>_klokontwerp')) | sort | join('\\n') }})"))
     a = p.parse_args()
+    bestaand = None
+    if a.entiteiten:
+        with open(a.entiteiten) as f:
+            bestaand = {r.strip() for r in f if "." in r and not r.strip().startswith("#")}
     pad = a.uit or os.path.join(ROOT, "homeassistant", "dashboard", slug(a.friendly_name) + ".yaml")
     os.makedirs(os.path.dirname(pad), exist_ok=True)
     with open(pad, "w") as f:
-        f.write(maak(a.friendly_name, a.camera))
+        f.write(maak(a.friendly_name, a.camera, bestaand))
     print(pad)
 
 
