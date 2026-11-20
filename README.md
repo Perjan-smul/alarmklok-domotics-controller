@@ -378,6 +378,15 @@ meer. Pas die dingen dus altijd in HA aan.
   of `alarmklok_4b.yaml` (4B). Heet je klok anders, maak er dan een met
   `python3 tools/dashboard.py "Naam van je klok"` (`--camera` voor de 7"/4B).
 
+  **"Entiteit niet gevonden"?** Staat de klok in een ruimte, dan zet HA die
+  ruimte voor de ID's van entiteiten die er later bij kwamen
+  (`select.master_bedroom_alarmklok_4_inch_kleurthema`). Haal dan de echte
+  ID's op: *Ontwikkelaarshulpmiddelen → Sjabloon*, plak
+  `{{ device_entities(device_id('select.alarmklok_4_inch_klokontwerp')) | sort | join('\n') }}`
+  (met het ID van jouw Klokontwerp), zet de uitkomst in een bestand en maak
+  het dashboard met `python3 tools/dashboard.py "Alarmklok 4 inch" -e bestand.txt`.
+  De scripts van de knoppen hebben hier geen last van.
+
 ## Spraakassistent (7" en 4B)
 
 Zeg **"Hey Jarvis"** en stel je vraag, bijvoorbeeld *"doe de bedlamp uit"*. Het
