@@ -633,6 +633,10 @@ paar uur wisselend beeld zien; bij LCD trekt dat meestal weg.
   voorbeelddata alle klokontwerpen en pagina's langs en zet de afdrukken als PNG
   in `docs/screenshots/4inch/` (met `overzicht.png`). Nodig: ESPHome 2026.10 en
   Pillow. Controleer na een wijziging in de indeling altijd de afdrukken.
+- **Vegen testen:** `esphome/veegtraag.yaml` speelt op de computer vegen af
+  met een nep-touchscreen dat alleen begin en eind doorgeeft (zoals een trage
+  S3 die een klokscherm tekent) en logt het resultaat; uitleg bovenin het
+  bestand.
 - Alles wat alleen op een ESP32 werkt (wifi, internettijd, updates, diagnose)
   staat in `onderdelen/esp.yaml`; zo kan de rest ook op de computer draaien.
 - Let op in de vierkante indeling: schrijf negatieve maten als
