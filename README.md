@@ -636,6 +636,13 @@ Wat er in de configuratie staat om de klok betrouwbaar te houden, en waarom:
   `engineering_sample` op de andere waarde; dat hangt af van de chiprevisie.
 - **Flikkerend of verschoven beeld (4" Bosun-bord):** zet bij `display:` in
   `onderdelen/waveshare-s3-4.yaml` `pclk_frequency: 10MHz`.
+- **Backlight van de 4" (V4) bij lage helderheid:** de LED-driver gaat onder
+  een bepaalde stand helemaal uit (gemeten: PWM 239 van 247). 1 % helderheid is
+  daarom de zwakste stand die nog brandt (`backlight_zwakst: "237"` in
+  `onderdelen/waveshare-s3-4.yaml`), 100 % blijft vol en alleen *uit* is echt
+  uit. Blijft het scherm bij 1 % toch uit, zet in je klokbestand bij
+  `substitutions:` een lager getal (bijvoorbeeld `"234"`); is 1 % nog te fel,
+  een hoger getal (max. 238).
 - **Gebruik ESPHome 2026.10 of nieuwer** (de versie van de ESPHome-add-on in
   HA). De backlight gebruikt `restore_state`, dat pas sinds 2026.10 bestaat; met
   2026.5.3 werkte wifi op het P4-86-paneel niet meer (HA-forum), en

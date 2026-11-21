@@ -135,12 +135,22 @@ inline void begin(esphome::i2c::I2CBus *bus) {
   }
 }
 
-// Achtergrondverlichting 0-1. De TCA9554 (V3) kan alleen aan of uit.
-inline void backlight(esphome::i2c::I2CBus *bus, float niveau) {
+// Achtergrondverlichting 0-1 (na de gammacorrectie van de lamp). De TCA9554
+// (V3) kan alleen aan of uit. Op V4 gaat de LED-driver onder een bepaalde stand
+// helemaal uit; `zwakst` is de zwakste PWM-stand die nog brandt. Alles boven 0
+// valt tussen die stand en vol aan, zodat ook 1 % nog licht geeft.
+inline uint8_t backlight_pwm(float niveau, uint8_t zwakst) {
+  if (!(niveau > 0.0f))
+    return CH32_PWM_UIT;
+  const float n = niveau > 1.0f ? 1.0f : niveau;
+  if (zwakst > CH32_PWM_UIT)
+    zwakst = CH32_PWM_UIT;
+  return (uint8_t) (zwakst * (1.0f - n) + 0.5f);
+}
+
+inline void backlight(esphome::i2c::I2CBus *bus, float niveau, uint8_t zwakst = CH32_PWM_UIT) {
   if (chip == Chip::CH32) {
-    // 0-1 omzetten naar de omgekeerde PWM van V4 (247 = uit, 0 = vol aan)
-    const float n = niveau < 0.0f ? 0.0f : (niveau > 1.0f ? 1.0f : niveau);
-    schrijf(bus, CH32_ADRES, CH32_REG_PWM, (uint8_t) (CH32_PWM_UIT * (1.0f - n) + 0.5f));
+    schrijf(bus, CH32_ADRES, CH32_REG_PWM, backlight_pwm(niveau, zwakst));
   } else if (chip == Chip::TCA9554) {
     const uint8_t nieuw = niveau > 0.0f ? (uitgangen | TCA_BL) : (uitgangen & ~TCA_BL);
     if (nieuw != uitgangen) {

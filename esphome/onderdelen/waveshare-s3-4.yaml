@@ -31,6 +31,11 @@ substitutions:
   # Schermindeling (scherm-vierkant.yaml): 1.0 = 480x480
   k: "1.0"
   lvgl_buffer: 25%
+  # Zwakste stand van de backlight (V4, PWM 0-247, hoger = zwakker): de
+  # LED-driver gaat bij PWM 239 al uit (gemeten). 1 % helderheid wordt deze
+  # stand, 100 % blijft vol; alleen "uit" is echt uit. Blijft het scherm bij
+  # 1 % uit, kies dan een lager getal; is 1 % nog te fel, een hoger.
+  backlight_zwakst: "237"
 
 esphome:
   includes:
@@ -172,7 +177,7 @@ output:
     id: backlight_uitgang
     type: float
     write_action:
-      - lambda: ws_s3_4::backlight(id(i2c_bus), state);
+      - lambda: ws_s3_4::backlight(id(i2c_bus), state, ${backlight_zwakst});
 
 light:
   - platform: monochromatic
@@ -180,6 +185,10 @@ light:
     name: Schermhelderheid
     icon: mdi:brightness-6
     output: backlight_uitgang
+    # Minder gammacorrectie dan de standaard (2,8): de onderkant loopt dan
+    # zichtbaar op vanaf de zwakste stand (backlight_zwakst) in plaats van
+    # dat 1-10 % allemaal hetzelfde is
+    gamma_correct: 2.0
     # Na het opstarten altijd aan; niets bewaren (ESPHome 2026.10: restore_state)
     initial_state:
       state: ON
