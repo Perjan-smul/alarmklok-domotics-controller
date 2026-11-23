@@ -91,3 +91,5 @@ jobs:
         with:
           name: schermafdrukken-4inch
           path: afdrukken/*.png
+          # Na een week weg, zodat ze niet blijven meetellen voor de opslag
+          retention-days: 7
