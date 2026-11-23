@@ -48,7 +48,11 @@ jobs:
         run: pip install "esphome==${ESPHOME_VERSION}"
       - name: Test-secrets aanmaken
         run: tools/test-secrets.sh
-      - uses: actions/cache@v4
+      # Alleen ophalen; opslaan gebeurt alleen op de hoofdbranch (stap onderaan).
+      # Elke cache is zo'n 1 tot 2 GB; als ook elke PR en branch er een
+      # opslaat, zit de limiet van 10 GB van GitHub zo vol.
+      - uses: actions/cache/restore@v4
+        id: cache
         with:
           path: |
             ~/.platformio
@@ -72,6 +76,14 @@ jobs:
             esphome clean ${{ matrix.klok }}.yaml
             esphome compile ${{ matrix.klok }}.yaml
           }
+      - uses: actions/cache/save@v4
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+            esphome/.esphome
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
   afdrukken:
     name: Schermafdrukken 4" (computer-build)
