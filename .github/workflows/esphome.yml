@@ -4,10 +4,18 @@
 # de echte hardware; dat blijft met de hand testen.
 name: Controle
 
+# Pushes alleen op de hoofdbranch; werk op andere branches wordt via de pull
+# request gecontroleerd (anders draait alles dubbel). Met de hand starten kan altijd.
 on:
   push:
+    branches: [claude/alarm-clock-home-assistant-ljscuo]
   pull_request:
   workflow_dispatch:
+
+# Een nieuwe push op dezelfde branch of PR stopt de run die nog bezig is
+concurrency:
+  group: controle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   ESPHOME_VERSION: "2026.10.2"
@@ -39,15 +47,7 @@ jobs:
       - name: ESPHome installeren
         run: pip install "esphome==${ESPHOME_VERSION}"
       - name: Test-secrets aanmaken
-        working-directory: esphome
-        run: |
-          sleutel=$(python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())")
-          cat > secrets.yaml <<EOF
-          wifi_ssid: "test"
-          wifi_password: "testtest"
-          api_encryption_key: "${sleutel}"
-          fallback_ap_password: "testtest"
-          EOF
+        run: tools/test-secrets.sh
       - uses: actions/cache@v4
         with:
           path: |
@@ -84,15 +84,7 @@ jobs:
       - name: ESPHome en Pillow installeren
         run: pip install "esphome==${ESPHOME_VERSION}" pillow
       - name: Test-secrets aanmaken
-        working-directory: esphome
-        run: |
-          sleutel=$(python3 -c "import secrets,base64;print(base64.b64encode(secrets.token_bytes(32)).decode())")
-          cat > secrets.yaml <<EOF
-          wifi_ssid: "test"
-          wifi_password: "testtest"
-          api_encryption_key: "${sleutel}"
-          fallback_ap_password: "testtest"
-          EOF
+        run: tools/test-secrets.sh
       - name: Bouwen, draaien en afdrukken maken
         run: tools/afdrukken.sh afdrukken
       - uses: actions/upload-artifact@v4
